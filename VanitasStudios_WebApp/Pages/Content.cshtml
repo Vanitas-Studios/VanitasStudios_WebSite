@@ -1,0 +1,51 @@
+﻿@page "{id:int}"
+@model VanitasStudios_WebApp.Pages.ContentModel
+@{
+}
+<section class="content">
+    <div class="header-content">
+        <h1>@Model.Content.Title</h1>
+        <p>@Model.Content.DescC</p>
+    </div>
+    @foreach(var s in Model.Sections)
+    {
+        <div class="content-section">
+            <div class="container">
+                <div class="row">
+                    @foreach(var i in s.Images)
+                    {
+                        <div class="col-md-4">
+                            <img class="img-fluid" src="@i.ImageUrl" alt="" />
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="content-body">
+                <h2 id="@s.IdS">@s.Title</h2>
+                <p>@s.SectionText</p>
+            </div>
+        </div>
+    }
+    <div class="content-index">
+        @foreach(var s in Model.Sections)
+        {
+            <a href="#@s.IdS">@s.Title</a>
+        }
+    </div>
+    <div class="related-content">
+        <h4>Related content</h4>
+        @foreach(var c in Model.RelatedContents)
+        {
+            <div class="card" style="width: 18rem;">
+                <a asp-page="/Content" asp-route-id="@c.IdC">
+                    <img src="..." class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h3 class="card-title">@c.Title</h3>
+                        <p class="card-text">@c.DescC</p>
+                        <span>@c.DataPub</span>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</section>

@@ -1,0 +1,38 @@
+﻿@page
+@model VanitasStudios_WebApp.Pages.AdminInterfaceModel
+@{
+}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Role</th>
+            <th scope="col">#</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model.Users)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                <td>
+                    <span class="badge @(user.Role == "admin" ? "bg-danger" : "bg-info")">
+                        @user.Role
+                    </span>
+                </td>
+                <td>
+                    @if(user.Role != "admin")
+                    {
+                        <form method="post" asp-page-handler="Promote" asp-route-id="@user.Id" onsubmit="return confirm('Are you sure you want to promote this user?');">
+                            <button type="submit" class="btn btn-sm btn-info">Promote</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

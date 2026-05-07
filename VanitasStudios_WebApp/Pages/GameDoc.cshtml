@@ -1,0 +1,54 @@
+﻿@page
+@model VanitasStudios_WebApp.Pages.GameDocModel
+@{
+}
+
+<section class="hero-doc">
+    <div class="doc-container">
+        <div class="doc-text">
+            <h1 class="hero-doc-title">Technical_logs</h1>
+            <p class="hero-doc-desc">The structural blueprints of our digital ruins. From initial concept to code analysis.</p>
+        </div>
+        <div class="doc-visual">
+            <img src="/img/Horus.png" alt="Horus, Character Design" class="doc-image">
+        </div>
+    </div>
+</section>
+
+<section class="doc-archive">
+    <div class="archive-container">
+        <div class="header-archive">
+            <h3>Last Fragments</h3>
+            <form class="archive-search" method="get">
+                <div class="input-group">
+                    <input type="search" class="form-control bg-transparent text-white" asp-for="SearchQuery" />
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                </div>
+                <div class="tag-area">
+                    <button class="btn btn-outline-secondary" type="submit">Filter</button>
+                    @foreach(var tag in Model.Tags)
+                    {
+                        <input type="checkbox" name="SelectedTagIds" value="@tag.IdT" id="tag-@tag.IdT"
+                               @(Model.SelectedTagIds.Contains(tag.IdT) ? "checked" : "") />
+                        <label for="tag-@tag.IdT">@tag.TagName</label>
+                    }
+                </div>
+            </form>
+        </div>
+        <div class="archive-list">
+            @foreach(var content in Model.Contents)
+            {
+                <div class="card" style="width: 18rem;" >
+                    <a asp-page="/Content" asp-route-id="@content.IdC">
+                        <img src="..." class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h3 class="card-title">@content.Title</h3>
+                            <p class="card-text">@content.DescC</p>
+                            <span>@content.DataPub</span>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>

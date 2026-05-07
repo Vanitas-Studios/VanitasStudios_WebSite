@@ -1,0 +1,491 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
+:root {
+    --main-font-family: 'Syne', sans-serif;
+    --main-color: #0a0a0a;
+    --main-secondary-color: #1a1a1a;
+    --secondary-background-color: #333333;
+    --main-font-color: #e0e0e0;
+    --secondary-font-color: rgba(255, 255, 255, 0.4);
+    --danger-color: #950101;
+}
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    width: 100%;
+    margin-bottom: 60px;
+    font-family: var(--main-font-family);
+}
+
+section{
+    position: relative;
+    width : 100%;
+    height : 100vh;
+}
+
+header {
+    height: 100px;
+    max-height: 100px;
+    width: 100%;
+    position: absolute;
+    z-index: 100;
+}
+/*Style for the index page*/
+
+.hero {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh;
+    background-image: linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.05)), url('../img/background.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    top: 0;
+    overflow: hidden;
+}
+
+.hero-container {
+    width: 100%;
+    padding: 0rem 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-text h5 {
+    text-transform: uppercase;
+    letter-spacing: .2rem;
+}
+
+.hero-image-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+
+.hero-image-wrapper img{
+    width: 100%;
+    /* 1. La rendiamo più alta dello schermo per avere spazio per muoverla */
+    height: 120vh !important; 
+    
+    /* 2. Fondamentale per non schiacciarla */
+    object-fit: cover; 
+    
+    /* 3. Adesso 80% funzionerà perché c'è spazio extra! */
+    object-position: center 0%; 
+    
+    /* 4. Opzionale: la tiriamo su leggermente se scende troppo */
+    margin-top: 10vh;
+}
+
+.side-indicator {
+    position: absolute;
+    bottom: 5rem;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    z-index: 5;
+}
+
+.side-text {
+    writing-mode: vertical-rl; /* Ruota il testo verticalmente */
+    transform: rotate(180px); /* Lo orienta correttamente per la lettura dal basso */
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4); /* Grigio tenue come nel mockup */
+    font-size: 0.75rem;
+    letter-spacing: 0.3rem;
+}
+
+.side-line {
+    width: 1px;
+    height: 60px; /* Lunghezza della linea verticale */
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.mission {
+    background-color: var(--main-secondary-color);
+}
+
+.mission-container {
+    width: 100%;
+    height: 100%;
+    padding: 6rem 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5rem;
+}
+
+.mission-title {
+    display: flex;
+    flex-direction: column;
+    color: var(--main-font-color);
+    text-align: center;
+    gap: 1.5rem;
+}
+
+.mission-title h1 {
+    text-transform: uppercase;
+    letter-spacing: 1.5rem;
+}
+
+.mission-title p {
+   font-size: 1.25rem;
+   text-transform: uppercase;
+}
+
+.mission-projects {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 5rem;
+}
+
+.mission-projects .project-content{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    max-width: 400px;
+}
+
+.project-content h5 {
+    text-transform: uppercase;
+    color: var(--main-font-color);
+    font-weight: 600;
+    letter-spacing: .3rem;
+}
+
+.project-content p {
+    color: var(--secondary-font-color);
+    text-align: left;
+}
+
+.project-content .mission-btn {
+    background-color: var(--danger-color);
+    color: var(--main-font-color);
+    border: 0.5px solid var(--secondary-font-color);
+}
+
+.about {
+    padding: 2rem 5rem;
+    display: flex;
+    align-items: center;
+    background-color: var(--main-color);
+}
+
+.about-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 100%;
+}
+
+.about-container .about-body{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 2rem;
+}
+
+.about-body h1 {
+    text-transform: uppercase;
+    letter-spacing: 1rem;
+    color: var(--main-font-color);
+}
+
+.about-body p {
+    color: var(--secondary-font-color);
+    line-height: 1.5;
+}
+
+.about-container .about-visual{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.about-visual .square {
+    width: 200px;
+    height: 200px;
+    background-color: transparent;
+    border: 1px solid var(--secondary-font-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--main-font-color);
+}
+
+/*Style for the documentation page*/
+
+section.hero-doc {
+    width: 100%;
+    height: 50vh;
+    padding: 5rem 5rem 0 5rem;
+    display: flex;
+    align-items: center;
+    background-color: var(--main-secondary-color);
+    overflow: hidden;
+}
+
+.doc-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+}
+
+.doc-container .doc-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.doc-container .doc-text h1 {
+    text-transform: uppercase;
+    letter-spacing: 1rem;
+    color: var(--main-font-color);
+}
+
+.doc-container .doc-text p {
+    color: var(--secondary-font-color);
+    line-height: 1.5;
+}
+
+.doc-visual {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.doc-visual img{
+    width: 100%;      /* Prende tutta la larghezza del contenitore */
+    height: 100%;     /* Prende tutta l'altezza del contenitore */
+    object-fit: cover; 
+    object-position: center 0%;
+}
+
+.doc-archive {
+    display: flex;
+    padding: 2rem 5rem;
+    background-color: var(--main-color);
+}
+
+.doc-archive .archive-container{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.archive-container .header-archive {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.header-archive h3{
+    text-transform: uppercase;
+    letter-spacing: 0.5rem;
+    color: var(--main-font-color);
+}
+
+.header-archive .archive-search {
+    flex: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/*Style for the Blog page*/
+
+section.hero-blog {
+    width: 100%;
+    height: 50vh;
+    padding: 5rem 5rem 0 5rem;
+    display: flex;
+    align-items: center;
+    background-color: var(--main-secondary-color);
+    overflow: hidden;
+}
+
+.blog-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+}
+
+.blog-container .blog-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.blog-container .blog-text h1 {
+    text-transform: uppercase;
+    letter-spacing: 1rem;
+    color: var(--main-font-color);
+}
+
+.blog-container .blog-text p {
+    color: var(--secondary-font-color);
+    line-height: 1.5;
+}
+
+.blog-visual {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.blog-visual img{
+    width: 100%;      /* Prende tutta la larghezza del contenitore */
+    height: 100%;     /* Prende tutta l'altezza del contenitore */
+    object-fit: cover; 
+    object-position: center 0%;
+}
+
+.blog-archive {
+    display: flex;
+    padding: 2rem 5rem;
+    background-color: var(--main-color);
+}
+
+.blog-archive .archive-container {
+     display: flex;
+     flex-direction: column;
+     width: 100%;
+}
+
+.archive-container .header-archive {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.header-archive h3 {
+    text-transform: uppercase;
+    letter-spacing: 0.5rem;
+    color: var(--main-font-color);
+}
+
+.header-archive .archive-search {
+    flex: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/*Style for the Add_Content Page*/
+
+.editor-container {
+    padding: 7rem 5rem;
+    background: #1a1a1a;
+    color: white;
+}
+
+#article-title {
+    width: 100%;
+    margin-bottom: 15px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #444;
+    color: white;
+    font-size: 1.5rem;
+    outline: none;
+}
+
+#markdown-editor {
+    background: #121212;
+    color: #dcdcdc;
+    border: 1px solid #333;
+    padding: 15px;
+    border-radius: 4px;
+    resize: none;
+}
+
+#section-checklist {
+    background: #222;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #333;
+}
+
+#checklist-items {
+    list-style: none;
+    padding: 0;
+}
+
+#checklist-items li {
+    padding: 5px 0;
+    border-bottom: 1px solid #333;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.drop-zone-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 123, 255, 0.9); /* Blu semi-trasparente */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3 dashed #fff;
+    border-radius: 5px;
+    z-index: 10;
+    visibility: hidden; /* Nascosto di default */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+    /* Classe attivata da JS quando l'utente trascina qualcosa */
+    .drop-zone-overlay.active {
+        visibility: visible;
+        opacity: 1;
+    }
