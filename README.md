@@ -20,4 +20,16 @@ Il progetto è in fase di evoluzione costante. Attualmente, lo sviluppo è focal
 - [ ] Ottimizzazione del rendering grafico lato client.
 
 ---
+
+## 📖 Documentazione e Diario di Bordo
+Per una comprensione profonda delle scelte architettoniche, della logica del database e del processo di sviluppo iterativo, consulta il documento dettagliato:
+
+👉 **[Diario Tecnico di Vanitas Studios (DEVLOG.md)](./DEVLOG.md)**
+
+All'interno troverai:
+* Analisi dei requisiti e Diagrammi E/R.
+* Implementazione SQL e logica delle tabelle.
+* Dettagli sul workflow dell'Editor e sulla sicurezza del sistema.
+
+---
 *“Memento mori, ma costruisci per l'eternità.”*
