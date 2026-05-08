@@ -2,13 +2,13 @@
 Questo documento analizza le scelte architettoniche e le decisioni di design intraprese per supportare la visione finale dell'applicativo. Il modus operandi adottato mira a gestire consapevolmente il trade-off tra velocità di sviluppo, sicurezza del dato e complessità strutturale.
 
 ## 📑 Indice dei Contenuti
-1. [Analisi dei Requisiti & Progettazione](#1-analisi-dei-requisiti-&-progettazione)
+1. [Analisi dei Requisiti & Progettazione](#1-analisi-dei-requisiti--progettazione)
    - [Requisiti Funzionali](#requisiti-funzionali)
    - [Modellazione del Database](#modellazione-del-database)
    - [Schema Logico](#schema-logico-relational-mapping)
 2. [Realizzazione Database (DDL)](#2-realizzazione-database-ddl)
    - [Implementazione SQL](#implementazione-sql)
-   - [Note Tecniche & Refactoring](#note-tecniche-&-refactoring)
+   - [Note Tecniche & Refactoring](#note-tecniche--refactoring)
 
 ## 1. Analisi dei Requisiti & Progettazione
 Il progetto nasce come ecosistema web per centralizzare la Ricerca & Studio del team. L'obiettivo è fornire uno strumento professionale per documentare il game development e pubblicare case studies di reverse engineering.
@@ -251,3 +251,57 @@ Durante la fase di implementazione, sono stati adottati i seguenti accorgimenti 
 - **Bespoke Naming Convention**: Passaggio a nomi di attributi più descrittivi per migliorare la leggibilità del codice C# post-scaffolding.
 
 > *Avviso*: Sebbene il database implementi vincoli di validità, la logica di business e la sanificazione dei dati (Input Validation) restano delegate al layer applicativo in C#.
+
+## 3. Progettazione Interfaccia e User Experience (UX/UI)
+In questa fase, l'obiettivo è stato tradurre i requisiti funzionali in un'esperienza visiva coerente con il Design del Silenzio. L'approccio adottato è minimalista: eliminare il superfluo per dare peso a ogni singolo elemento architettonico e testuale.
+
+### Stack Tecnologico e Architettura Frontend
+
+- **Razor Pages (.NET Core)**: Utilizzate per garantire una gestione robusta del routing e una perfetta integrazione con la logica backend in C#.
+
+- **Bootstrap 5 (Layout Base)**: Adottato per accelerare lo sviluppo della griglia responsive, permettendo un approccio **Mobile-First** nativo.
+
+- **Custom CSS & Identity Design**: Sovrascrittura dei componenti standard per riflettere l'identità visiva dark e asimmetrica di Vanitas Studios.
+
+### Principi di Progettazione e Workflow Creativo
+Il processo di creazione dell'interfaccia segue un protocollo rigoroso basato su standard di design industriale:
+
+- **Ideazione Analogica (Paper at Hand)**: Ogni layout nasce su carta. Questo permette una sintesi rapida delle forme e una selezione critica delle bozze, focalizzandosi sull'atmosfera prima che sul codice.
+
+- **Scala di Grigi (Black & White First)**: Il design viene testato inizialmente in assenza di colore. Questo garantisce che la gerarchia visiva e i contrasti siano efficaci indipendentemente dalla palette cromatica finale.
+
+- **Design of Silence (Negative Space)**: Utilizzo strategico dello spazio "vuoto" per permettere agli elementi di respirare. Nel progetto Vanitas, lo spazio bianco (o nero) è un elemento narrativo che guida lo sguardo dell'utente verso la verità oggettiva dei contenuti.
+
+- **Visual Consistency**: Scelta di uno stile artistico unitario applicato a ogni componente, garantendo che l'interfaccia comunichi un messaggio univoco e professionale.
+
+Case Study: Landing Page (Index)
+La Index rappresenta il punto d'ingresso nell'ecosistema Vanitas. È stata progettata per bilanciare le convenzioni di navigazione a cui l'utente è abituato con un impatto visivo distintivo.
+#### 1. Schizzo su carta (Low Fidelity Wireframe)
+Il primo passo per visualizzare l'architettura delle informazioni. In questa fase si decide la gerarchia degli elementi (Menu, Hero Section, CTA).
+
+<img width="3339" height="1341" alt="SketchDesign" src="https://github.com/user-attachments/assets/4b9e9954-f1a3-488d-a915-29aaee0a6ba9" />
+
+> *Figura 1.0: Bozza analogica iniziale della Landing page*
+
+#### 2. Prototipo Digitale
+Trasposizione dello schizzo in ambiente digitale. Qui si definisce la griglia (usando Photoshop) per gestire i volumi, gli allineamenti e il responsive design.
+
+<img width="1600" height="900" alt="LandingPageDesign" src="https://github.com/user-attachments/assets/202d816b-1728-4f86-913c-1a3ed83bb878" />
+
+> *Figura 1.1: Wireframe digitale e studio della griglia resposive*
+
+#### 3. Implementazione finale (Live Setup)
+Il risultato finale nel browser, con l'integrazione di stili dark, typography e la logica di navigazione base.
+
+<img width="1895" height="862" alt="LandingPageUI" src="https://github.com/user-attachments/assets/fa0ee4f2-4708-478e-9cda-962c669a1832" />
+
+> *Figura 1.2: Screenshot dell'interfaccia implementata nel browser*
+
+##### ⚠️ Nota Tecnica sulla Resa Cromatica (Black Level Management):
+Durante i test su diversi dispositivi, è emersa una discrepanza nella resa della profondità del nero. A seconda della calibrazione del display (OLED vs LCD), il contrasto tra il soggetto (la statua) e lo sfondo può variare, causando talvolta un risalto eccessivo del soggetto rispetto all'atmosfera "immersiva" ricercata.
+
+Soluzione Futura: Per le prossime iterazioni di design, è prevista l'introduzione di varianti di grigio e l'uso di gradienti dinamici o texture sottili. Questo garantirà una coerenza visiva maggiore tra i vari pannelli, evitando il fenomeno dei "neri schiacciati" e mantenendo il focus sul Design del Silenzio indipendentemente dall'hardware dell'utente.
+
+> **Nota sull'Evoluzione del Design**: Sebbene l'attuale prototipo segua una struttura asimmetrica per gli asset grafici e i titoli, le iterazioni future prevedono l'integrazione della **Sezione Aurea (Golden Ratio)** e della **Psicologia della Gestalt (Design)** per una distribuzione ancora più rigorosa e armoniosa dei volumi.
+
+Current Status: La pagina funge da prototipo per il testing della logica di navigazione e della UX. 
