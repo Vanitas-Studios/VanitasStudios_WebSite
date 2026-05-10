@@ -6,18 +6,17 @@ Questo documento analizza le scelte architettoniche e le decisioni di design int
    - [Requisiti Funzionali](#requisiti-funzionali)
    - [Modellazione del Database](#modellazione-del-database)
    - [Schema Logico](#schema-logico-relational-mapping)
-2. [Realizzazione Database (DDL)](#2-realizzazione-database-ddl)
-   - [Implementazione SQL](#implementazione-sql)
+2. [Realizzazione Database (DDL)](#2-realizzazione-database)
    - [Note Tecniche & Refactoring](#note-tecniche--refactoring)
-3. [Progettazione Interfaccia e User Experience (UX/UI)](#3-progettazione-interfaccia-e-user-experience-ux-ui)
+3. [Progettazione Interfaccia e User Experience (UX/UI)](#3-progettazione-interfaccia-e-user-experience-uxui)
    - [Stack Tecnologico e Architettura Frontend](#stack-tecnologico-e-architettura-frontend)
    - [Principi di progettazione (Design Principles)](#principi-di-progettazione-e-workflow-creativo)
    - [Case Study: Landing Page (Index)](#case-study-landing-page-index)
 4. [Editor Page](#4-editor-page--content-management-workflow-in-progress)
    - [Funzionalità implementate](#funzionalità-implementate-punti-realizzati)
    - [Roadmap dello Sviluppo](#roadmap-dello-sviluppo-cosa-manca)
-5. [Rianalisi dei Requisiti](#rianalisi-dei-requisiti--refactoring-del-database)
-   - [Note Tecniche](note-tecniche--ottimizzazione-server-side)
+5. [Rianalisi dei Requisiti](#5-rianalisi-dei-requisiti--refactoring-del-database)
+   - [Note Tecniche](#%EF%B8%8F-note-tecniche--ottimizzazione-server-side)
 
 ## 1. Analisi dei Requisiti & Progettazione
 Il progetto nasce come ecosistema web per centralizzare la Ricerca & Studio del team. L'obiettivo è fornire uno strumento professionale per documentare il game development e pubblicare case studies di reverse engineering.
