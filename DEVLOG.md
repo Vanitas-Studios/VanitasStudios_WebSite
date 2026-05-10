@@ -9,6 +9,15 @@ Questo documento analizza le scelte architettoniche e le decisioni di design int
 2. [Realizzazione Database (DDL)](#2-realizzazione-database-ddl)
    - [Implementazione SQL](#implementazione-sql)
    - [Note Tecniche & Refactoring](#note-tecniche--refactoring)
+3. [Progettazione Interfaccia e User Experience (UX/UI)](#3-progettazione-interfaccia-e-user-experience-ux-ui)
+   - [Stack Tecnologico e Architettura Frontend](#stack-tecnologico-e-architettura-frontend)
+   - [Principi di progettazione (Design Principles)](#principi-di-progettazione-e-workflow-creativo)
+   - [Case Study: Landing Page (Index)](#case-study-landing-page-index)
+4. [Editor Page](#4-editor-page--content-management-workflow-in-progress)
+   - [Funzionalità implementate](#funzionalità-implementate-punti-realizzati)
+   - [Roadmap dello Sviluppo](#roadmap-dello-sviluppo-cosa-manca)
+5. [Rianalisi dei Requisiti](#rianalisi-dei-requisiti--refactoring-del-database)
+   - [Note Tecniche](note-tecniche--ottimizzazione-server-side)
 
 ## 1. Analisi dei Requisiti & Progettazione
 Il progetto nasce come ecosistema web per centralizzare la Ricerca & Studio del team. L'obiettivo è fornire uno strumento professionale per documentare il game development e pubblicare case studies di reverse engineering.
@@ -274,7 +283,7 @@ Il processo di creazione dell'interfaccia segue un protocollo rigoroso basato su
 
 - **Visual Consistency**: Scelta di uno stile artistico unitario applicato a ogni componente, garantendo che l'interfaccia comunichi un messaggio univoco e professionale.
 
-Case Study: Landing Page (Index)
+### Case Study: Landing Page (Index)
 La Index rappresenta il punto d'ingresso nell'ecosistema Vanitas. È stata progettata per bilanciare le convenzioni di navigazione a cui l'utente è abituato con un impatto visivo distintivo.
 #### 1. Schizzo su carta (Low Fidelity Wireframe)
 Il primo passo per visualizzare l'architettura delle informazioni. In questa fase si decide la gerarchia degli elementi (Menu, Hero Section, CTA).
@@ -305,3 +314,60 @@ Soluzione Futura: Per le prossime iterazioni di design, è prevista l'introduzio
 > **Nota sull'Evoluzione del Design**: Sebbene l'attuale prototipo segua una struttura asimmetrica per gli asset grafici e i titoli, le iterazioni future prevedono l'integrazione della **Sezione Aurea (Golden Ratio)** e della **Psicologia della Gestalt (Design)** per una distribuzione ancora più rigorosa e armoniosa dei volumi.
 
 Current Status: La pagina funge da prototipo per il testing della logica di navigazione e della UX. 
+
+## 4. Editor Page & Content Management Workflow (In Progress)
+Lo sviluppo dell'Editor rappresenta la sfida tecnica più significativa del progetto. L'obiettivo è creare uno strumento che permetta la creazione di contenuti complessi (Articoli e Documentazione) mantenendo il rigore estetico del Design del Silenzio.
+#### Obiettivi della Progettazione
+A differenza di un semplice campo di testo, l'editor di Vanitas Studios è concepito come un compositore modulare. Ogni articolo è visto come un insieme di sezioni dinamiche che l'utente può manipolare individualmente.
+
+### Funzionalità implementate (Punti realizzati)
+Allo stato attuale, il modulo editor dispone delle seguenti fondamenta logiche e tecniche:
+
+* **Architettura modulare e ricorsiva**: Ogni sezione è concepita come una struttura gerarchica. Per gestire questa complessità, ho implementato una **funzione ricorsiva** che itera gli elementi in base alla relazione "padre-figlio", permettendo una nidificazione dei contenuti teoricamente infinita e una gestione pulita dell'ordinamento.
+* **Blocchi atomici**: I titoli e i media vengono trattati come componenti rigide. Questo garantisce che l'editor non possa "rompere" accidentalmente il layout, mantenendo la coerenza visiva e la pulizia del **Design del Silenzio**.
+* **Outline Dinamico (Indice Struttura)**: Per migliorare la UX dell'autore, ho inserito un indice laterale che permette il monitoraggio costante della struttura. Include funzionalità di **Drag & Drop** per il riordinamento rapido e link interni per il salto rapido tra le sezioni (Focus-driven UI).
+* **Data Mapping Strutturato**: Predisposizione dei modelli C# per accogliere una collezione di sezioni (`List<Section>`), garantendo l'integrità dell'attributo `Order_num` durante la persistenza sul database.
+* **Auto-save & Drafts**: Implementazione di una logica di salvataggio asincrono per prevenire la perdita di dati, separando lo stato di "Bozza" da quello di "Pubblicazione".
+  
+### Roadmap dello Sviluppo (Cosa Manca)
+Per completare l'editor e renderlo un tool di produzione professionale, sono in fase di sviluppo i seguenti moduli:
+- **Raffinazione della logica**: affinare i metodi e le funzioni per definire una maggiore sicurezza e resilienza del dato.
+- **Sistema di Tagging Dinamico**: Interfaccia per la selezione e creazione di Tag in tempo reale durante la stesura (collegamento con la tabella di giunzione Content_Tags).
+- **Live Preview Engine**: Un sistema di anteprima istantanea che permette all'editor di vedere esattamente come apparirà l'articolo (rispetto dei volumi, della tipografia e del nero) prima del salvataggio definitivo.
+- **UI/UX Responsive**: L'interfaccia dell'editor deve seguire i principi di design del resto del sito, garantendo che la dashboard di scrittura sia pulita e priva di distrazioni.
+  
+### L'impatto sulla Struttura Dati
+È stato proprio durante la scrittura del codice per il caricamento delle sezioni che è emersa la necessità di una Rianalisi del Database. La gestione delle relazioni uno-a-molti tra Section e Image/Video ha richiesto un affinamento dei vincoli di integrità che non era stato previsto inizialmente nello schema logico.
+
+## 5. Rianalisi dei Requisiti & Refactoring del Database
+Durante lo sviluppo del modulo Editor e della logica di gestione dei contenuti, è emersa la necessità di evolvere lo schema iniziale. Invece di procedere a modifiche immediate, è stato scelto un approccio di progettazione critica, identificando i cambiamenti necessari per supportare funzionalità avanzate.
+
+### 🔄 Modifiche all'Architettura dei Dati
+### 1. Gestione del Ciclo di Vita (Status & Soft Delete):
+
+- Per evitare la perdita accidentale di dati, la tabella `Content` necessita di un attributo `Status` (Bozza, Pubblicato, Cestinato).
+
+- Implementazione del **Soft Delete**: aggiunta dell'attributo `Eliminated_At`. I contenuti eliminati non verranno rimossi fisicamente dal DB per 30 giorni, permettendo il ripristino.
+
+### 2. Unificazione degli Asset (Tabella Media):
+
+- Semplificazione della struttura: passaggio da tabelle separate (`Image`, `Video`) a una tabella generica `Media`.
+
+- Gestione ibrida: la tabella ospiterà sia URL esterni (es. YouTube per i video) sia percorsi fisici per le immagini.
+
+- Attributo `IsThumbnail` (Boolean) per identificare la copertina del contenuto direttamente nell'asset.
+
+### 3. Semplificazione della Tassonomia:
+
+- Rimozione dell'attributo `Type_T` nella tabella `Tag`. La pratica di sviluppo ha dimostrato che la distinzione dei tag in base al tipo di contenuto era ridondante, favorendo un sistema di tagging universale e più flessibile.
+
+### 4. Ordinamento Dinamico Media:
+
+- Introduzione di un attributo di ordinamento per le immagini all'interno delle sezioni. La logica di posizionamento non sarà calcolata al caricamento (upload), ma consolidata solo durante il salvataggio della bozza o la pubblicazione definitiva.
+
+### 🛠️ Note Tecniche & Ottimizzazione Server-Side
+Oltre alla struttura dati, sono stati definiti protocolli per la gestione efficiente delle risorse:
+
+- **Deduplicazione tramite Hashing**: Le immagini caricate verranno identificate tramite un hash univoco. Se un utente carica un'immagine già presente sul server, il sistema punterà al file esistente incrementando un contatore di utilizzi, risparmiando spazio su disco.
+
+- **Garbage Collection dei Media**: Per prevenire la cancellazione di asset durante operazioni fallite o perdite di connessione, le immagini con contatore a zero non verranno eliminate istantaneamente. È previsto un processo di pulizia (Background Task) eseguito in orari di basso traffico (es. alle 00:00) per verificare la persistenza degli orfani.
