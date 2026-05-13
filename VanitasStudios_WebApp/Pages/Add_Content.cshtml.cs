@@ -15,11 +15,16 @@ namespace VanitasStudios_WebApp.Pages
     [Authorize(Roles = "Admin,Editor")]
     public class Add_ContentModel : PageModel
     {
+        public int? ArticleId { get; set; } // ID del contenuto nel caso esistesse già come bozza, oppure pubblicato ma da editare.
+        public DateTime ArticleLastUpdate { get; set; }
+
+        // Variabili per settare configurazione per i secrets e database. 
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _context;
+
         [BindProperty]
         public List<Tag> AvailableTags { get; set; } 
-        public Content NewContent { get; set; }
+        public Content CurrentContent { get; set; }
         [BindProperty]
         public SectionViewModel Section { get; set; }
 
@@ -37,36 +42,37 @@ namespace VanitasStudios_WebApp.Pages
             _context = context;
             _config = config;
         }
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(int? id)
         {
-            AvailableTags = await _context.Tags
-                            .OrderBy(t => t.TagName)
-                            .AsNoTracking()
-                            .ToListAsync();
-        }
-
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> OnPostSaveContentAsync(string publish, string Title, string Content)
-        {
-            bool isPublishing = publish == "true";
-
-            bool hasIntro = Content.Contains("##Introduzione");
-            bool hasEnd = Content.Contains("##Conclusione");
-
-            List<string> SectionsList = Content.Split(new string[] { "##" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-
-            
-            
-
-            if(isPublishing && (hasIntro || hasEnd))
+            if (id.HasValue)
             {
-                TempData["Success"] = "Pubblicazione ruscita: reinvio alla pagina della revisione.";
-                return RedirectToAction("Editor");
+                // CARICAMENTO ESISTENTE
+                CurrentContent = await _context.Contents.FindAsync(id.Value);
+                if (CurrentContent == null) return NotFound();
+
+                // La data è quella che leggiamo dal DB
+                ArticleLastUpdate = (DateTime)CurrentContent.DataEdit;
+                ArticleId = id;
+            }
+            else
+            {
+                // NUOVO CONTENUTO
+                CurrentContent = new Content
+                {
+                    Title = "Nuovo Articolo",
+                    // Inizializziamo la data al momento della creazione
+                    DataEdit = DateTime.Now
+                };
+
+                ArticleLastUpdate = DateTime.UtcNow;
             }
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostSaveContentAsync([FromBody] List<EditorSectionView> fullContent)
+        {
+           //iteriamo sulla lista
         }
         public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file)
         {
