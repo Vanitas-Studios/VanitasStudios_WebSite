@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
+ï»¿@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
 :root {
     --main-font-family: 'Syne', sans-serif;
     --main-color: #0a0a0a;
@@ -86,13 +86,13 @@ header {
 
 .hero-image-wrapper img{
     width: 100%;
-    /* 1. La rendiamo più alta dello schermo per avere spazio per muoverla */
+    /* 1. La rendiamo piÃ¹ alta dello schermo per avere spazio per muoverla */
     height: 120vh !important; 
     
     /* 2. Fondamentale per non schiacciarla */
     object-fit: cover; 
     
-    /* 3. Adesso 80% funzionerà perché c'è spazio extra! */
+    /* 3. Adesso 80% funzionerÃ  perchÃ© c'Ã¨ spazio extra! */
     object-position: center 0%; 
     
     /* 4. Opzionale: la tiriamo su leggermente se scende troppo */
@@ -420,72 +420,73 @@ section.hero-blog {
 
 /*Style for the Add_Content Page*/
 
-.editor-container {
-    padding: 7rem 5rem;
-    background: #1a1a1a;
-    color: white;
-}
-
-#article-title {
-    width: 100%;
-    margin-bottom: 15px;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid #444;
-    color: white;
-    font-size: 1.5rem;
-    outline: none;
-}
-
-#markdown-editor {
-    background: #121212;
-    color: #dcdcdc;
-    border: 1px solid #333;
-    padding: 15px;
-    border-radius: 4px;
-    resize: none;
-}
-
-#section-checklist {
-    background: #222;
-    padding: 15px;
-    border-radius: 4px;
-    border: 1px solid #333;
-}
-
-#checklist-items {
-    list-style: none;
-    padding: 0;
-}
-
-#checklist-items li {
-    padding: 5px 0;
-    border-bottom: 1px solid #333;
-    font-size: 0.9rem;
-    color: #888;
-}
-
-.drop-zone-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
+.editor-drag-over {
+    position: relative;
     width: 100%;
     height: 100%;
-    background: rgba(0, 123, 255, 0.9); /* Blu semi-trasparente */
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3 dashed #fff;
-    border-radius: 5px;
-    z-index: 10;
-    visibility: hidden; /* Nascosto di default */
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: transform 0.2s ease;
 }
 
-    /* Classe attivata da JS quando l'utente trascina qualcosa */
-    .drop-zone-overlay.active {
-        visibility: visible;
-        opacity: 1;
+    .editor-drag-over::after {
+        content: "ðŸ“¥ Rilascia i file qui";
+        position: absolute;
+        inset: 5px; /* Crea un piccolo margine interno */
+        background-color: rgba(37, 140, 251, 0.15);
+        border: 3px dashed #258cfb;
+        border-radius: 12px; /* Angoli piÃ¹ morbidi */
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #258cfb;
+        font-weight: bold;
+        font-size: 1.5rem;
+        pointer-events: none;
+        z-index: 10;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
+/* Stati del pallino */
+.dot-success {
+    background-color: #28a745;
+}
+/* Verde */
+.dot-warning {
+    background-color: #ffc107;
+}
+/* Giallo (In corso/Local) */
+.dot-danger {
+    background-color: #dc3545;
+}
+/* Rosso (Errore) */
+
+/* Animazione per quando sta salvando */
+.dot-saving {
+    background-color: #007bff; /* Blu */
+    animation: pulse-blue 1.5s infinite;
+}
+
+@keyframes pulse-blue {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 5px rgba(0, 123, 255, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}

@@ -25,16 +25,20 @@ namespace VanitasStudios_WebApp.Pages
         [BindProperty]
         public List<Tag> AvailableTags { get; set; } 
         public Content CurrentContent { get; set; }
-        [BindProperty]
-        public SectionViewModel Section { get; set; }
+
+        public class EditorSavePayload
+        {
+            public int ArticleId { get; set; }
+            public List<SectionViewModel> SectionList { get; set; }
+        }
 
         public class SectionViewModel
         {
-            public int Id { get; set; }
+            public int ArticleId { get; set; }
+            public string Id { get; set; }
             public string? Title { get; set; }
             public string? Content { get; set; }
             public int Order { get; set; }
-            public string[]? TagList { get; set; }
         }
 
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
@@ -61,19 +65,137 @@ namespace VanitasStudios_WebApp.Pages
                 {
                     Title = "Nuovo Articolo",
                     // Inizializziamo la data al momento della creazione
-                    DataEdit = DateTime.Now
+                    DataEdit = DateTime.UtcNow
                 };
 
                 ArticleLastUpdate = DateTime.UtcNow;
+                _context.Contents.Add(CurrentContent);
+                await _context.SaveChangesAsync(); // Qui il DB genera l'ID
+
+                // Ora reindirizziamo alla stessa pagina ma con l'ID appena creato
+                // Questo evita che l'utente crei mille articoli vuoti premendo F5
+                return RedirectToPage(new { id = CurrentContent.IdC });
             }
 
             return Page();
         }
 
-        public async Task<IActionResult> OnPostSaveContentAsync([FromBody] List<EditorSectionView> fullContent)
+        public async Task<IActionResult> OnPostSaveContentAsync([FromBody] EditorSavePayload payload)
         {
-           //iteriamo sulla lista
+           // Controllo di base: Validazione 
+           if(payload == null || payload.ArticleId == 0)
+            {
+                return new JsonResult(new { success = false, message = "Invalid Data" });
+            }
+
+           // Controlliamo che il contenuto esista e preleviamo le sezioni esistenti per aggiornarle.
+           var article = await _context.Contents
+                            .Include(c => c.Sections)
+                            .FirstOrDefaultAsync(i => i.IdC == payload.ArticleId);
+
+            if (article == null) return new JsonResult(new { success = false, message = "Article not Found" });
+
+            var incomingIds = payload.SectionList
+                                .Where(i => !i.Id.StartsWith("temp-"))
+                                .Select(s => int.Parse(s.Id))
+                                .ToList();
+
+            var sectionsToRemove = article.Sections
+                                    .Where(i => !incomingIds.Contains(i.IdS))
+                                    .ToList();
+            if (sectionsToRemove.Any())
+            {
+                _context.Sections.RemoveRange(sectionsToRemove);
+            }
+
+            foreach( var sDto in payload.SectionList)
+            {
+                if (sDto.Id.StartsWith("temp-")) continue;
+
+                if(int.TryParse(sDto.Id, out int realId))
+                {
+                    var existingSections = article.Sections.FirstOrDefault(s => s.IdS == realId);
+
+                    if (existingSections != null)
+                    {
+                        // TODO: Implementare HtmlSanitizer per pulire sDto.Content
+                        string cleanContent = sDto.Content
+                            .Replace("\u200B", "").Trim();
+
+                        existingSections.SectionText = cleanContent;
+                        existingSections.Title = sDto.Title?.Trim();
+                        existingSections.OrderNum = sDto.Order;
+                    }
+                }
+            }
+
+            article.DataEdit = DateTime.UtcNow;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return new JsonResult(new { success = true, lastUpdate = article.DataEdit });
+            }
+            catch (DbUpdateException ex)
+            {
+                // Logga l'errore per Vanitas Studios
+                return new JsonResult(new { success = false, message = "Errore durante il salvataggio nel database" });
+            }
         }
+
+
+        public async Task<IActionResult> OnPostSaveSectionAsync([FromBody] SectionViewModel sDto)
+        {
+            if (sDto == null) return new JsonResult(new { success = false });
+
+            Section section;
+            bool isNew = sDto.Id.StartsWith("temp-");
+
+            if (isNew)
+            {
+                // L'utente ha appena premuto invio: creiamo la sezione "vuota"
+                section = new Section
+                {
+                    ContentSId = sDto.ArticleId,
+                    Title = sDto.Title?.Trim() ?? "Senza Titolo",
+                    SectionText = sDto.Content ?? "", // Sarà probabilmente stringa vuota all'inizio
+                    OrderNum = sDto.Order
+                };
+                _context.Sections.Add(section);
+            }
+            else
+            {
+                // Aggiornamento di una sezione esistente (già dotata di ID)
+                if (!int.TryParse(sDto.Id, out int realId)) return BadRequest();
+
+                section = await _context.Sections.FindAsync(realId);
+                if (section == null) return NotFound();
+
+                // Aggiorniamo solo se i dati sono effettivamente diversi (ottimizzazione)
+                section.Title = sDto.Title?.Trim() ?? section.Title;
+                section.OrderNum = sDto.Order;
+
+                // Se sDto.Content è null (magari non lo invii per risparmiare banda), 
+                // non sovrascrivere il testo esistente.
+                if (sDto.Content != null)
+                {
+                    section.SectionText = sDto.Content.Replace("\u200B", "").Trim();
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Aggiorniamo il timestamp dell'articolo per mostrare "Ultima modifica: poco fa"
+            var article = await _context.Contents.FindAsync(sDto.ArticleId);
+            if (article != null)
+            {
+                article.DataEdit = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return new JsonResult(new { success = true, sectionId = section.IdS });
+        }
+
         public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file)
         {
 
@@ -168,7 +290,7 @@ namespace VanitasStudios_WebApp.Pages
                 return sb.ToString();
             }
         }
-        [IgnoreAntiforgeryToken]
+
         public IActionResult OnPostDeleteMedia(string fileUrl)
         {
             try

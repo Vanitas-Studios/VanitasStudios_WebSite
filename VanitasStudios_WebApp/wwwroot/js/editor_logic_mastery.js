@@ -9,6 +9,11 @@ const triggerAutosave = debounce(() => saveFullContent(), DEBOUNCE_DELAY);
 // Variabile per il badge in stato di drag 
 let draggedBadge = null;
 
+let isSavingSection = false; // "Semaforo" per le sezioni singole
+let isSavingFull = false;    // "Semaforo" per il salvataggio globale
+let sectionTaskQueue = [];
+let isProcessingQueue = false;
+
 
 // Funzione per ottenere il token antiforgery
 const getAntiforgeryToken = () => {
@@ -150,10 +155,10 @@ async function handleEnterKey(e) {
             }
         }
 
-        // 5. SALVATAGGIO: È una nuova sezione, quindi chiamiamo handleNewSection
+        // 5. SALVATAGGIO: È una nuova sezione, quindi chiamiamo enqueueSectionSave
         // Non facciamo l'update qui, perché l'utente ha esplicitamente usato "##" 
         // per creare un nuovo capitolo/sezione.
-        await handleNewSection(titleText, wrapper);
+        await enqueueSectionSave(titleText, wrapper);
 
         // 6. FOCUS
         updateCursorPos(contentArea);
@@ -186,6 +191,34 @@ async function handleEnterKey(e) {
         selection.addRange(range);
     }
 }
+
+// Funzione per la queue di Task...attendiamo il salvataggio di ciascuna sezione.
+async function enqueueSectionSave(title, wrapper) {
+    // Aggiungiamo il compito alla coda
+    sectionTaskQueue.push({ title, wrapper });
+
+    // Se il "motore" è spento, lo accendiamo
+    if (!isProcessingQueue) {
+        await processQueue();
+    }
+}
+
+async function processQueue() {
+    if (isProcessingQueue) return;
+    isProcessingQueue = true;
+
+    while (sectionTaskQueue.length > 0) {
+        const { title, wrapper } = sectionTaskQueue.shift();
+        try {
+            await handleNewSection(title, wrapper);
+        } catch (e) {
+            console.error("Errore nel processing della coda:", e);
+        }
+    }
+
+    isProcessingQueue = false;
+}
+
 // Funzione per creare un blocco di sezione con badge e area di testo
 function createSectionBlock(id, titleText, existingWrapper = null) {
     // Crea un wrapper per la sezione, se non esiste
@@ -251,6 +284,16 @@ function updateCursorPos(element) {
     selection.addRange(newRange);
 }
 
+// Funzione per il cursore dopo nodi di testo
+//function updateCursorPosAfterNode(node) {
+//    const selection = window.getSelection();
+//    const range = document.createRange();
+//    range.setStartAfter(node);
+//    range.collapse(true);
+//    selection.removeAllRanges();
+//    selection.addRange(range);
+//}
+
 // Funzione per gestire l'aggiornamento di una sezione esistente
 async function handleUpdateSection(sectionId, title = null, content = null) {
     // Non facciamo Update su sezioni temporanee
@@ -282,45 +325,70 @@ async function handleUpdateSection(sectionId, title = null, content = null) {
 // Impacchetta i dati per spedire al server e gestisce la risposta
 async function handleNewSection(title, wrapper) {
 
+    if (isSavingFull || isSavingSection) {
+        console.warn("Posticipated section save: process loading")
+        return;
+    }
+
+    isSavingSection = true;
+
     // Definiamo il nome Handler per la creazione
     const handlerName = "SaveSection";
 
     // 1. Chiamiamo il metodo che determina l'ordine
     const order = calculateOrder(wrapper);
 
-    // 2. Prepariamo i dati
-    const payload = {
-        Content: title,
-        Order: order,
-        ArticleId: articleId
-    };
+    try {
 
-    // 3. Mandiamo al server
-    const result = await commitToServer(handlerName, payload);
+        const textContent = wrapper.querySelector(".editor-content").innerHTML
+            .replace(/\u200B/g, '')
+            .trim();
 
-    if (result.success) {
+        // Se è un invio rapido e il contenuto è solo un <br> vuoto, puliscilo
+        const finalContent = textContent === "<br>" ? "" : textContent;
 
-        // Controlliamo che ci sia ancora effettivamente la sezione (l'utente potrebbe averla cancellata mentre aspettavamo la risposta)
-        if (editor.contains(wrapper)) {
-            wrapper.setAttribute("data-section-id", result.sectionId);
-            wrapper.classList.remove("section-loading");
+        // 2. Prepariamo i dati
+        const payload = {
+            ArticleId: articleId,
+            Id: wrapper.getAttribute("data-section-id"),
+            Title: title,
+            Content: textContent,
+            Order: order,
+        };
 
-            // 4. Sincronizziamo gli ID esistenti, ora che abbiamo un nuovo ID reale
-            syncExistingIds();
+        // 3. Mandiamo al server
+        const result = await commitToServer(handlerName, payload);
 
-            console.log(`Sezione salvata! ID: ${result.sectionId}, Ordine: ${order}`);
+        if (result.success) {
 
-            // 5. Aggiorniamo la sidebar laterale
-            updateSidebar();
+            // Controlliamo che ci sia ancora effettivamente la sezione (l'utente potrebbe averla cancellata mentre aspettavamo la risposta)
+            if (editor.contains(wrapper)) {
+                wrapper.setAttribute("data-section-id", result.sectionId);
+                wrapper.classList.remove("section-loading");
+
+                // 4. Sincronizziamo gli ID esistenti, ora che abbiamo un nuovo ID reale
+                syncExistingIds();
+
+                console.log(`Sezione salvata! ID: ${result.sectionId}, Ordine: ${order}`);
+
+                // 5. Aggiorniamo la sidebar laterale
+                updateSidebar();
+            }
+            else {
+                console.warn("La sezione non è più presente nell'editor. Preparando per la cancellazione.");
+                await deleteSectionFromServer(result.sectionId);
+            }
         }
         else {
-            console.warn("La sezione non è più presente nell'editor. Preparando per la cancellazione.");
-            await deleteSectionFromServer(result.sectionId);
+            throw new Error("Server rejection");
         }
     }
-    else {
+    catch (error) {
         console.error("Errore nel salvataggio della sezione.");
         wrapper.querySelector(".badge").classList.replace("bg-primary", "bg-danger");
+    }
+    finally {
+        isSavingSection = false;
     }
 }
 // Calcola l'ordine
@@ -645,6 +713,15 @@ function debounce(func, timeout) {
 
 // Funzione per il salvataggio prima su Client e poi Server
 async function saveFullContent() {
+
+    if (isSavingFull || isSavingSection) {
+        console.warn("Posticipated Save: process loading");
+        return;
+    }
+
+    isSavingFull = true;
+    updateSaveStatusIndicator("Salvataggio in corso...");
+
     // Serializziamo contenuto editor
     const articleData = serializedEditorContent();
 
@@ -672,6 +749,9 @@ async function saveFullContent() {
         isDirty = true;
         updateSaveStatusIndicator("Salvataggio locale (Offline)", "warning");
     }
+    finally {
+        isSavingFull = false;
+    }
 }
 
 // Funzione per serializzare il contenuto dell'editor
@@ -682,15 +762,14 @@ function serializedEditorContent() {
             title: wrapper.querySelector(".section-title-badge")?.textContent || "",
             // Verificare se salvare solo testo oppure tutto contenuto HTML 
             //P.S. Meglio salvare direttamente HTML, evitiamo di ricreare tutta la struttura
-            content: wrapper.querySelector(".section-content").innerHTML.replace(/\u200B/g, ''), // .replace(/\u200B/g, '') --> puliamo eventuali punti critici per la formattazione del documento
+            content: wrapper.querySelector(".section-content").innerHTML.replace(/\u200B/g, '').replace(/<div><br><\/div>/g, '<br>'), // .replace(/\u200B/g, '') --> puliamo eventuali punti critici per la formattazione del documento
             order: calculateOrder(wrapper)
         };
     });
 
     return {
         articleId: articleId,
-        sections: sections,
-        lastUpdate: new Date().toISOString()
+        sections: sections
     };
 }
 
