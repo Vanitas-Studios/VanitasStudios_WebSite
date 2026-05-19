@@ -41,6 +41,12 @@ namespace VanitasStudios_WebApp.Pages
             public int Order { get; set; }
         }
 
+        public class DeleteSectionDto
+        {
+            public int SectionId { get; set; }
+            public int ArticleId { get; set; }
+        }
+
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
@@ -194,6 +200,46 @@ namespace VanitasStudios_WebApp.Pages
             }
 
             return new JsonResult(new { success = true, sectionId = section.IdS });
+        }
+
+        public async Task<IActionResult> OnPostDeleteSectionAsync(DeleteSectionDto dto)
+        {
+            // 1. Recupera la sezione controllando la proprietà di navigazione (o FK) dell'articolo
+            Section section = await _context.Sections
+                .FirstOrDefaultAsync(s => s.IdS == dto.SectionId && s.ContentSId == dto.ArticleId);
+
+            // Se non esiste, rispondiamo comunque success: true (idempotenza: se era già cancellata, il risultato desiderato è ottenuto)
+            if (section == null)
+                return new JsonResult(new { success = true, message = "Section already deleted or not found" });
+
+            int eliminatedOrder = section.OrderNum;
+            _context.Sections.Remove(section);
+
+            // 2. Recupera le sezioni successive per scalare l'ordine
+            var nextSections = await _context.Sections
+                .Where(s => s.ContentSId == dto.ArticleId && s.OrderNum > eliminatedOrder)
+                .ToListAsync();
+
+            // Se ci sono sezioni successive, scala il loro indice di 1
+            if (nextSections.Any())
+            {
+                foreach (var s in nextSections)
+                {
+                    s.OrderNum--;
+                }
+            }
+
+            // 3. Aggiorna la data di modifica dell'articolo padre (Coerenza temporale)
+            var article = await _context.Contents.FindAsync(dto.ArticleId);
+            if (article != null)
+            {
+                article.DataEdit = DateTime.UtcNow; // Usiamo sempre UtcNow come stabilito!
+            }
+
+            // 4. Unico salvataggio per ottimizzare le transazioni sul DB
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = "Section deleted and structural order synchronized" });
         }
 
         public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file)

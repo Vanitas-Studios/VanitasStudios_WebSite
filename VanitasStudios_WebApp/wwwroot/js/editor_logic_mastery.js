@@ -158,7 +158,7 @@ async function handleEnterKey(e) {
         // 5. SALVATAGGIO: È una nuova sezione, quindi chiamiamo enqueueSectionSave
         // Non facciamo l'update qui, perché l'utente ha esplicitamente usato "##" 
         // per creare un nuovo capitolo/sezione.
-        await enqueueSectionSave(titleText, wrapper);
+        await enqueueSectionSave(wrapper);
 
         // 6. FOCUS
         updateCursorPos(contentArea);
@@ -193,9 +193,9 @@ async function handleEnterKey(e) {
 }
 
 // Funzione per la queue di Task...attendiamo il salvataggio di ciascuna sezione.
-async function enqueueSectionSave(title, wrapper) {
+async function enqueueSectionSave(wrapper) {
     // Aggiungiamo il compito alla coda
-    sectionTaskQueue.push({ title, wrapper });
+    sectionTaskQueue.push(wrapper);
 
     // Se il "motore" è spento, lo accendiamo
     if (!isProcessingQueue) {
@@ -208,9 +208,9 @@ async function processQueue() {
     isProcessingQueue = true;
 
     while (sectionTaskQueue.length > 0) {
-        const { title, wrapper } = sectionTaskQueue.shift();
+        const wrapper = sectionTaskQueue.shift();
         try {
-            await handleNewSection(title, wrapper);
+            await syncSectionToServer(wrapper);
         } catch (e) {
             console.error("Errore nel processing della coda:", e);
         }
@@ -295,35 +295,35 @@ function updateCursorPos(element) {
 //}
 
 // Funzione per gestire l'aggiornamento di una sezione esistente
-async function handleUpdateSection(sectionId, title = null, content = null) {
-    // Non facciamo Update su sezioni temporanee
-    if (sectionId.startsWith("temp-")) return;
+//async function handleUpdateSection(sectionId, title = null, content = null) {
+//    // Non facciamo Update su sezioni temporanee
+//    if (sectionId.startsWith("temp-")) return;
 
-    // Definiamo il nome Handler per l'update
-    const handlerName = "UpdateSection";
+//    // Definiamo il nome Handler per l'update
+//    const handlerName = "UpdateSection";
 
-    // Preleviamo il wrapper conoscendo il sio ID
-    const wrapper = editor.querySelector(`.editor-section[data-section-id="${sectionId}"]`);
+//    // Preleviamo il wrapper conoscendo il sio ID
+//    const wrapper = editor.querySelector(`.editor-section[data-section-id="${sectionId}"]`);
 
-    const payload = {
-        SectionId: sectionId,
-        ArticleId: articleId,
-        Order: calculateOrder(wrapper)
-    };
+//    const payload = {
+//        SectionId: sectionId,
+//        ArticleId: articleId,
+//        Order: calculateOrder(wrapper)
+//    };
 
-    // Aggiorniamo solo i campi che sono stati modificati (title o content)
-    if (title !== null) payload.Title = title;
-    if (content !== null) payload.Content = content;
+//    // Aggiorniamo solo i campi che sono stati modificati (title o content)
+//    if (title !== null) payload.Title = title;
+//    if (content !== null) payload.Content = content;
 
-    const result = await commitToServer(handlerName, payload);
-    if (result.success) {
-        console.log(`Sezione aggiornata! ID: ${sectionId}, Ordine: ${payload.Order}`);
-        updateSidebar();
-    }
-}
+//    const result = await commitToServer(handlerName, payload);
+//    if (result.success) {
+//        console.log(`Sezione aggiornata! ID: ${sectionId}, Ordine: ${payload.Order}`);
+//        updateSidebar();
+//    }
+//}
 
-// Impacchetta i dati per spedire al server e gestisce la risposta
-async function handleNewSection(title, wrapper) {
+// Impacchetta i dati per spedire al server e gestisce la risposta 
+async function syncSectionToServer(wrapper) {
 
     if (isSavingFull || isSavingSection) {
         console.warn("Posticipated section save: process loading")
@@ -331,6 +331,7 @@ async function handleNewSection(title, wrapper) {
     }
 
     isSavingSection = true;
+    wrapper.classList.add("section-loading");
 
     // Definiamo il nome Handler per la creazione
     const handlerName = "SaveSection";
@@ -339,6 +340,8 @@ async function handleNewSection(title, wrapper) {
     const order = calculateOrder(wrapper);
 
     try {
+
+        const titleText = wrapper.querySelector(".section-title-badge")?.textContent.replace("##", "").trim() ?? "Sezione senza titolo";
 
         const textContent = wrapper.querySelector(".editor-content").innerHTML
             .replace(/\u200B/g, '')
@@ -351,8 +354,8 @@ async function handleNewSection(title, wrapper) {
         const payload = {
             ArticleId: articleId,
             Id: wrapper.getAttribute("data-section-id"),
-            Title: title,
-            Content: textContent,
+            Title: titleText,
+            Content: finalContent,
             Order: order,
         };
 
@@ -376,7 +379,7 @@ async function handleNewSection(title, wrapper) {
             }
             else {
                 console.warn("La sezione non è più presente nell'editor. Preparando per la cancellazione.");
-                await deleteSectionFromServer(result.sectionId);
+                await checkDeletedSections(result.sectionId);
             }
         }
         else {
@@ -455,10 +458,10 @@ async function checkDeletedSections() {
             console.log(`Rilevata eliminazione ID: ${id}`);
             await commitToServer(handlerName, payload);
         }
-    }
 
-    // Dopo la cancellazione , aggiorniamo la sidebar per riflettere i cambiamenti
-    updateSidebar();
+        // Dopo la cancellazione , aggiorniamo la sidebar per riflettere i cambiamenti
+        updateSidebar();
+    }
 }
 
 // Aggiorna la sidebar laterale con i titoli e ID delle sezioni
