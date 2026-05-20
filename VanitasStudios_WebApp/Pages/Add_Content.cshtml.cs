@@ -16,7 +16,7 @@ namespace VanitasStudios_WebApp.Pages
     public class Add_ContentModel : PageModel
     {
         public int? ArticleId { get; set; } // ID del contenuto nel caso esistesse già come bozza, oppure pubblicato ma da editare.
-        public DateTime ArticleLastUpdate { get; set; }
+        public DateTime LastModified { get; set; }
 
         // Variabili per settare configurazione per i secrets e database. 
         private readonly IConfiguration _config;
@@ -61,7 +61,7 @@ namespace VanitasStudios_WebApp.Pages
                 if (CurrentContent == null) return NotFound();
 
                 // La data è quella che leggiamo dal DB
-                ArticleLastUpdate = (DateTime)CurrentContent.DataEdit;
+                LastModified = (DateTime)CurrentContent.DataEdit;
                 ArticleId = id;
             }
             else
@@ -74,7 +74,7 @@ namespace VanitasStudios_WebApp.Pages
                     DataEdit = DateTime.UtcNow
                 };
 
-                ArticleLastUpdate = DateTime.UtcNow;
+                LastModified = DateTime.UtcNow;
                 _context.Contents.Add(CurrentContent);
                 await _context.SaveChangesAsync(); // Qui il DB genera l'ID
 
@@ -242,7 +242,7 @@ namespace VanitasStudios_WebApp.Pages
             return new JsonResult(new { success = true, message = "Section deleted and structural order synchronized" });
         }
 
-        public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file)
+        public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int ArticleId)
         {
 
             if (file == null || file.Length == 0)
@@ -337,28 +337,28 @@ namespace VanitasStudios_WebApp.Pages
             }
         }
 
-        public IActionResult OnPostDeleteMedia(string fileUrl)
-        {
-            try
-            {
-                string? baseroot = _config["ExternalAssetsPath"];
-                // Trasformiamo l'URL pubblico in percorso fisico
-                string relativePath = fileUrl.Replace("/media/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
-                string fullPath = Path.Combine(baseroot, relativePath);
+        //public IActionResult OnPostDeleteMedia(string fileUrl)
+        //{
+        //    try
+        //    {
+        //        string? baseroot = _config["ExternalAssetsPath"];
+        //        // Trasformiamo l'URL pubblico in percorso fisico
+        //        string relativePath = fileUrl.Replace("/media/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
+        //        string fullPath = Path.Combine(baseroot, relativePath);
 
-                if (!fullPath.StartsWith(baseroot, StringComparison.OrdinalIgnoreCase))
-                {
-                    return BadRequest("Tentativo di accesso non autorizzato.");
-                }
+        //        if (!fullPath.StartsWith(baseroot, StringComparison.OrdinalIgnoreCase))
+        //        {
+        //            return BadRequest("Tentativo di accesso non autorizzato.");
+        //        }
 
-                if (System.IO.File.Exists(fullPath))
-                {
-                    System.IO.File.Delete(fullPath);
-                    return new JsonResult(new { success = true });
-                }
-                return BadRequest();
-            }
-            catch { return StatusCode(500); }
-        }
+        //        if (System.IO.File.Exists(fullPath))
+        //        {
+        //            System.IO.File.Delete(fullPath);
+        //            return new JsonResult(new { success = true });
+        //        }
+        //        return BadRequest();
+        //    }
+        //    catch { return StatusCode(500); }
+        //}
     }
 }

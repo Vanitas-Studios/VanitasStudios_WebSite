@@ -638,10 +638,13 @@ async function handleFileDrop(e) {
 
         // Inseriamo il wrapper nella posizione del mouse
         if (range) {
+            //Risoluzione bug? Ho aggiunto un br per evitare che il puntatore rimanga incastrato all'interno del blocco media
+            const br = document.createElement("br");
+            range.insertNode(br);
             range.insertNode(mediaWrapper);
             // Sposta il punto di inserimento dopo il blocco appena creato
-            range.setStartAfter(mediaWrapper);
-            range.collapse(true);
+            range.setStartAfter(br);
+            range.collapse(true); // Da capire la differenza reale true/false 
         } else {
             editor.appendChild(mediaWrapper);
         }

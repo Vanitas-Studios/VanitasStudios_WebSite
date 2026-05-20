@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <div class="row py-3">
+   @*  <div class="row py-3">
         <div class="col">
             <input type="text" class="form-control mb-2" placeholder="Search tag" />
             <div class="d-flex flex-wrap gap-1">
@@ -44,7 +44,7 @@
                 }
             </div>
         </div>
-    </div>
+    </div> *@
 </section>
 
 @section Scripts {
@@ -56,7 +56,7 @@
             initMyEditor({
                 editorId: 'editor',
                 sidebarId: 'editor-structure',
-                articleId: '@Model.ArticleID',
+                articleId: '@Model.ArticleId',
                 lastModified: '@Model.LastModified.ToString("yyyy-MM-ddTHH:mm:ss")'
             });
         });
