@@ -46,6 +46,11 @@ namespace VanitasStudios_WebApp.Pages
             public int SectionId { get; set; }
             public int ArticleId { get; set; }
         }
+        public class NewOrder
+        {
+            public int ArticleId { get; set; }
+            public List<string> SortedIds { get; set; }
+        }
 
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
         {
@@ -240,6 +245,40 @@ namespace VanitasStudios_WebApp.Pages
             await _context.SaveChangesAsync();
 
             return new JsonResult(new { success = true, message = "Section deleted and structural order synchronized" });
+        }
+
+
+        public async Task<IActionResult> OnPostUpdateOrderAsync([FromBody] NewOrder sectionOrder)
+        {
+            // 1. Usiamo l'await corretto per verificare se l'articolo esiste
+            var articleExists = await _context.Contents.AnyAsync(c => c.IdC == sectionOrder.ArticleId);
+            if (!articleExists)
+            {
+                return new JsonResult(new { success = false, message = "Articolo non trovato." });
+            }
+
+            // 2. Recuperiamo TUTTE le sezioni di questo articolo con UNA SOLA query
+            var articleSections = await _context.Sections
+                .Where(s => s.ContentSId == sectionOrder.ArticleId)
+                .ToListAsync();
+
+            // 3. Cicliamo l'array ricevuto dal frontend
+            for (int i = 0; i < sectionOrder.SortedIds.Count; i++)
+            {
+                string badgeId = sectionOrder.SortedIds[i];
+
+                // Cerchiamo la sezione nella lista in memoria (molto più veloce, non tocca il DB)
+                var section = articleSections.FirstOrDefault(s => s.IdS.ToString() == badgeId);
+                if (section != null)
+                {
+                    section.OrderNum = i + 1; // Aggiorna l'ordine (1-based)
+                }
+            }
+
+            // 4. FONDAMENTALE: Salviamo le modifiche sul database fisicamente
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true });
         }
 
         public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int ArticleId)
