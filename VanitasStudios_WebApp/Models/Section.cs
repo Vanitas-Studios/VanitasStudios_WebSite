@@ -1,23 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VanitasStudios_WebApp.Models;
 
+[Table("Sections")]
 public partial class Section
 {
-    public int IdS { get; set; }
+    [Key]
+    public int Id { get; set; }
 
+    [StringLength(255)]
     public string Title { get; set; } = null!;
 
-    public string SectionText { get; set; } = null!;
+    [Required]
+    public string HtmlText { get; set; } = null!;
 
-    public int OrderNum { get; set; }
+    [Required]
+    public int Order { get; set; }
 
-    public int ContentSId { get; set; }
+    [Required]
+    public int ContentId { get; set; }
 
-    public virtual Content ContentS { get; set; } = null!;
+    [ForeignKey("ContentId")]
+    [InverseProperty("Sections")]
+    public virtual Content Content { get; set; } = null!;
 
-    public virtual ICollection<Image> Images { get; set; } = new List<Image>();
+    // Collezione unificata dei file multimediali associati a questo blocco
+    [InverseProperty("Section")]
+    public virtual ICollection<Media> MediaElements { get; set; } = new List<Media>();
 
-    public virtual ICollection<Video> Videos { get; set; } = new List<Video>();
+    //public virtual ICollection<Image> Images { get; set; } = new List<Image>();
+
+    //public virtual ICollection<Video> Videos { get; set; } = new List<Video>();
 }

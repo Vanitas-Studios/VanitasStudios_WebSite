@@ -25,26 +25,25 @@ namespace VanitasStudios_WebApp.Pages
         public async Task OnGetAsync()
         {
             var query = _context.Contents
-                .Include(c => c.TagOrds)
-                .Where(c => c.TypeC == "documentation")
-                .OrderByDescending(c => c.DataPub)
+                .Include(c => c.ContentTags)
+                .OrderByDescending(c => c.CreatedAt)
                 .AsQueryable();
 
-            if (SelectedTagIds != null && SelectedTagIds.Count > 0)
-            {
-                query = query.Where(c => c.TagOrds.Any(t => SelectedTagIds.Contains(t.IdT)));
-            }
-            if (!string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                query = query.Where(c => c.Title.Contains(SearchQuery) || c.DescC.Contains(SearchQuery));
-            }
+            //if (SelectedTagIds != null && SelectedTagIds.Count > 0)
+            //{
+            //    query = query.Where(c => c.ContentTags.Any(t => SelectedTagIds.Contains(t.IdT)));
+            //}
+            //if (!string.IsNullOrWhiteSpace(SearchQuery))
+            //{
+            //    query = query.Where(c => c.Title.Contains(SearchQuery) || c.Description.Contains(SearchQuery));
+            //}
 
-            Contents = await query
-                .AsNoTracking()
-                .ToListAsync();
-            Tags = Contents.SelectMany(c => c.TagOrds)
-                .Distinct()
-                .ToList();
+            //Contents = await query
+            //    .AsNoTracking()
+            //    .ToListAsync();
+            //Tags = Contents.SelectMany(c => c.ContentTags)
+            //    .Distinct()
+            //    .ToList();
         }
     }
 }

@@ -29,9 +29,9 @@
                     <button class="btn btn-outline-secondary" type="submit">Filter</button>
                     @foreach (var tag in Model.Tags)
                     {
-                        <input type="checkbox" name="SelectedTagIds" value="@tag.IdT" id="tag-@tag.IdT"
-                               @(Model.SelectedTagIds.Contains(tag.IdT) ? "checked" : "") />
-                        <label for="tag-@tag.IdT">@tag.TagName</label>
+                        <input type="checkbox" name="SelectedTagIds" value="@tag.Id" id="tag-@tag.Id"
+                               @(Model.SelectedTagIds.Contains(tag.Id) ? "checked" : "") />
+                        <label for="tag-@tag.Id">@tag.Name</label>
                     }
                 </div>
             </form>
@@ -40,12 +40,12 @@
             @foreach (var content in Model.Contents)
             {
                 <div class="card" style="width: 18rem;">
-                    <a asp-page="/Content" asp-route-id="@content.IdC">
+                    <a asp-page="/Content" asp-route-id="@content.Id">
                         <img src="..." class="card-img-top" alt="...">
                         <div class="card-body">
                             <h3 class="card-title">@content.Title</h3>
-                            <p class="card-text">@content.DescC</p>
-                            <span>@content.DataPub</span>
+                            <p class="card-text">@content.Description</p>
+                            <span>@content.CreatedAt</span>
                         </div>
                     </a>
                 </div>

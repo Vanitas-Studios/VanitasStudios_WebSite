@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VanitasStudios_WebApp.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentityAndSchema : Migration
+    public partial class InitialVanitasCMSDopoRistrutturazione : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -53,17 +53,17 @@ namespace VanitasStudios_WebApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tag",
+                name: "Tags",
                 columns: table => new
                 {
-                    ID_T = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Tag_Name = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false),
-                    Type_T = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false, defaultValue: "articolo")
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CategoryGroup = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Tag__B87EA51889DF0D54", x => x.ID_T);
+                    table.PrimaryKey("PK_Tags", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -112,8 +112,8 @@ namespace VanitasStudios_WebApp.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -157,8 +157,8 @@ namespace VanitasStudios_WebApp.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -173,197 +173,263 @@ namespace VanitasStudios_WebApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Content",
+                name: "Contents",
                 columns: table => new
                 {
-                    ID_C = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Type_C = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false, defaultValue: "articolo"),
                     Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Desc_C = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Data_Pub = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: false, defaultValueSql: "(getdate())"),
-                    Data_Edit = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: true),
-                    Editor_ID = table.Column<int>(type: "int", nullable: false)
+                    Slug = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CoverImageUrl = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    IsPinned = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    PublishState = table.Column<int>(type: "int", nullable: false),
+                    GlobalScore = table.Column<float>(type: "real", nullable: false, defaultValue: 0f),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: false, defaultValueSql: "(getdate())"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: true),
+                    EliminatedAt = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: true),
+                    AuthorId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Content__B87EA50961BA4A46", x => x.ID_C);
+                    table.PrimaryKey("PK_Contents", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Editor",
-                        column: x => x.Editor_ID,
+                        name: "FK_Contents_Users",
+                        column: x => x.AuthorId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Promotion",
+                name: "Promotions",
                 columns: table => new
                 {
-                    ID_Promotion = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Promoted_ID = table.Column<int>(type: "int", nullable: false),
-                    Admin_Promoter_ID = table.Column<int>(type: "int", nullable: false),
-                    Data_Promotion = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(getdate())")
+                    PromotedId = table.Column<int>(type: "int", nullable: false),
+                    PromoterId = table.Column<int>(type: "int", nullable: false),
+                    PromotedAt = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: false, defaultValueSql: "(getdate())")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Promotio__ECECECBEA1BEC634", x => x.ID_Promotion);
+                    table.PrimaryKey("PK_Promotions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Admin_Promoter_ID",
-                        column: x => x.Admin_Promoter_ID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Promoted_ID",
-                        column: x => x.Promoted_ID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Comment",
-                columns: table => new
-                {
-                    ID_Comm = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Comm_Text = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    Data_Pub = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: false, defaultValueSql: "(getdate())"),
-                    Content_ID = table.Column<int>(type: "int", nullable: false),
-                    Comment_User_ID = table.Column<int>(type: "int", nullable: false),
-                    Answer_ID = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__Comment__560C251E2B77EB82", x => x.ID_Comm);
-                    table.ForeignKey(
-                        name: "FK_Answer_ID",
-                        column: x => x.Answer_ID,
-                        principalTable: "Comment",
-                        principalColumn: "ID_Comm");
-                    table.ForeignKey(
-                        name: "FK_Comment_User_ID",
-                        column: x => x.Comment_User_ID,
+                        name: "FK_Promotions_Users_Promoted",
+                        column: x => x.PromotedId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Content_ID",
-                        column: x => x.Content_ID,
-                        principalTable: "Content",
-                        principalColumn: "ID_C");
+                        name: "FK_Promotions_Users_Promoter",
+                        column: x => x.PromoterId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Order",
+                name: "TagSynonyms",
                 columns: table => new
                 {
-                    Content_Ord_ID = table.Column<int>(type: "int", nullable: false),
-                    Tag_Ord_ID = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__Order__16EB5FFAF718821E", x => new { x.Content_Ord_ID, x.Tag_Ord_ID });
-                    table.ForeignKey(
-                        name: "FK_Content_Ord_ID",
-                        column: x => x.Content_Ord_ID,
-                        principalTable: "Content",
-                        principalColumn: "ID_C");
-                    table.ForeignKey(
-                        name: "FK_Tag_Ord_ID",
-                        column: x => x.Tag_Ord_ID,
-                        principalTable: "Tag",
-                        principalColumn: "ID_T");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Section",
-                columns: table => new
-                {
-                    ID_S = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
-                    Section_Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Order_num = table.Column<int>(type: "int", nullable: false),
-                    Content_S_ID = table.Column<int>(type: "int", nullable: false)
+                    SynonymName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TagId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Section__B87EA5193321E3F5", x => x.ID_S);
+                    table.PrimaryKey("PK_TagSynonyms", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Content_S_ID",
-                        column: x => x.Content_S_ID,
-                        principalTable: "Content",
-                        principalColumn: "ID_C",
+                        name: "FK_TagSynonyms_Tags",
+                        column: x => x.TagId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Evaluate",
+                name: "Comments",
                 columns: table => new
                 {
-                    User_Like_ID = table.Column<int>(type: "int", nullable: false),
-                    Comm_Like_ID = table.Column<int>(type: "int", nullable: false),
-                    isLike = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Text = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2(0)", precision: 0, nullable: false, defaultValueSql: "(getdate())"),
+                    ContentId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    ParentCommentId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Evaluate__1F28091D4ECADA78", x => new { x.User_Like_ID, x.Comm_Like_ID });
+                    table.PrimaryKey("PK_Comments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Comm_Like_ID",
-                        column: x => x.Comm_Like_ID,
-                        principalTable: "Comment",
-                        principalColumn: "ID_Comm");
-                    table.ForeignKey(
-                        name: "FK_User_Like_ID",
-                        column: x => x.User_Like_ID,
-                        principalTable: "AspNetUsers",
+                        name: "FK_Comments_Contents",
+                        column: x => x.ContentId,
+                        principalTable: "Contents",
                         principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Comments_ParentComments",
+                        column: x => x.ParentCommentId,
+                        principalTable: "Comments",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Comments_Users",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Image",
+                name: "ContentTags",
                 columns: table => new
                 {
-                    ID_I = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Image_Url = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: false),
-                    Is_Thumbnail = table.Column<bool>(type: "bit", nullable: false),
-                    Section_Image_ID = table.Column<int>(type: "int", nullable: false)
+                    ContentId = table.Column<int>(type: "int", nullable: false),
+                    TagId = table.Column<int>(type: "int", nullable: false),
+                    Weight = table.Column<float>(type: "real", nullable: false, defaultValue: 0f)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Image__B87EA503141B6819", x => x.ID_I);
+                    table.PrimaryKey("PK_ContentTags", x => new { x.ContentId, x.TagId });
                     table.ForeignKey(
-                        name: "FK_Section_Image_ID",
-                        column: x => x.Section_Image_ID,
-                        principalTable: "Section",
-                        principalColumn: "ID_S");
+                        name: "FK_ContentTags_Contents",
+                        column: x => x.ContentId,
+                        principalTable: "Contents",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ContentTags_Tags",
+                        column: x => x.TagId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Video",
+                name: "SearchHistory",
                 columns: table => new
                 {
-                    ID_V = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Video_Url = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: false),
-                    Section_Video_ID = table.Column<int>(type: "int", nullable: false),
-                    Image_Video_ID = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<int>(type: "int", nullable: true),
+                    QueryTags = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ResultContentId = table.Column<int>(type: "int", nullable: true),
+                    IsSuccessful = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Video__B87EA516CAC63B2A", x => x.ID_V);
+                    table.PrimaryKey("PK_SearchHistory", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Image_Video_ID",
-                        column: x => x.Image_Video_ID,
-                        principalTable: "Image",
-                        principalColumn: "ID_I");
+                        name: "FK_SearchHistory_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Section_Video_ID",
-                        column: x => x.Section_Video_ID,
-                        principalTable: "Section",
-                        principalColumn: "ID_S");
+                        name: "FK_SearchHistory_Contents_ResultContentId",
+                        column: x => x.ResultContentId,
+                        principalTable: "Contents",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Sections",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    ContentId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sections", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Sections_Contents",
+                        column: x => x.ContentId,
+                        principalTable: "Contents",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StatisticalWeights",
+                columns: table => new
+                {
+                    TagId = table.Column<int>(type: "int", nullable: false),
+                    ContentId = table.Column<int>(type: "int", nullable: false),
+                    PopularityWeight = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StatisticalWeights", x => new { x.TagId, x.ContentId });
+                    table.ForeignKey(
+                        name: "FK_StatisticalWeights_Contents_ContentId",
+                        column: x => x.ContentId,
+                        principalTable: "Contents",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StatisticalWeights_Tags_TagId",
+                        column: x => x.TagId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CommentLikes",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    CommentId = table.Column<int>(type: "int", nullable: false),
+                    IsLike = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CommentLikes", x => new { x.UserId, x.CommentId });
+                    table.ForeignKey(
+                        name: "FK_CommentLikes_Comments",
+                        column: x => x.CommentId,
+                        principalTable: "Comments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CommentLikes_Users",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Media",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Url = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    Caption = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    IsThumbnail = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    Order = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    ReferenceCount = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
+                    SectionId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Media", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Media_Sections",
+                        column: x => x.SectionId,
+                        principalTable: "Sections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -406,65 +472,74 @@ namespace VanitasStudios_WebApp.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Comment_Answer_ID",
-                table: "Comment",
-                column: "Answer_ID");
+                name: "IX_CommentLikes_CommentId",
+                table: "CommentLikes",
+                column: "CommentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Comment_Comment_User_ID",
-                table: "Comment",
-                column: "Comment_User_ID");
+                name: "IX_Comments_ContentId",
+                table: "Comments",
+                column: "ContentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Comment_Content_ID",
-                table: "Comment",
-                column: "Content_ID");
+                name: "IX_Comments_ParentCommentId",
+                table: "Comments",
+                column: "ParentCommentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Content_Editor_ID",
-                table: "Content",
-                column: "Editor_ID");
+                name: "IX_Comments_UserId",
+                table: "Comments",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Evaluate_Comm_Like_ID",
-                table: "Evaluate",
-                column: "Comm_Like_ID");
+                name: "IX_Contents_AuthorId",
+                table: "Contents",
+                column: "AuthorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Image_Section_Image_ID",
-                table: "Image",
-                column: "Section_Image_ID");
+                name: "IX_ContentTags_TagId",
+                table: "ContentTags",
+                column: "TagId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Order_Tag_Ord_ID",
-                table: "Order",
-                column: "Tag_Ord_ID");
+                name: "IX_Media_SectionId",
+                table: "Media",
+                column: "SectionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Promotion_Admin_Promoter_ID",
-                table: "Promotion",
-                column: "Admin_Promoter_ID");
+                name: "IX_Promotions_PromotedId",
+                table: "Promotions",
+                column: "PromotedId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Promotion_Promoted_ID",
-                table: "Promotion",
-                column: "Promoted_ID");
+                name: "IX_Promotions_PromoterId",
+                table: "Promotions",
+                column: "PromoterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Section_Content_S_ID",
-                table: "Section",
-                column: "Content_S_ID");
+                name: "IX_SearchHistory_ResultContentId",
+                table: "SearchHistory",
+                column: "ResultContentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Video_Section_Video_ID",
-                table: "Video",
-                column: "Section_Video_ID");
+                name: "IX_SearchHistory_UserId",
+                table: "SearchHistory",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Video__57417FA3F6E793E4",
-                table: "Video",
-                column: "Image_Video_ID",
-                unique: true);
+                name: "IX_Sections_ContentId",
+                table: "Sections",
+                column: "ContentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StatisticalWeights_ContentId",
+                table: "StatisticalWeights",
+                column: "ContentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TagSynonyms_TagId",
+                table: "TagSynonyms",
+                column: "TagId");
         }
 
         /// <inheritdoc />
@@ -486,34 +561,40 @@ namespace VanitasStudios_WebApp.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Evaluate");
+                name: "CommentLikes");
 
             migrationBuilder.DropTable(
-                name: "Order");
+                name: "ContentTags");
 
             migrationBuilder.DropTable(
-                name: "Promotion");
+                name: "Media");
 
             migrationBuilder.DropTable(
-                name: "Video");
+                name: "Promotions");
+
+            migrationBuilder.DropTable(
+                name: "SearchHistory");
+
+            migrationBuilder.DropTable(
+                name: "StatisticalWeights");
+
+            migrationBuilder.DropTable(
+                name: "TagSynonyms");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Comment");
+                name: "Comments");
 
             migrationBuilder.DropTable(
-                name: "Tag");
+                name: "Sections");
 
             migrationBuilder.DropTable(
-                name: "Image");
+                name: "Tags");
 
             migrationBuilder.DropTable(
-                name: "Section");
-
-            migrationBuilder.DropTable(
-                name: "Content");
+                name: "Contents");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

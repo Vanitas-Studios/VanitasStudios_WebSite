@@ -916,3 +916,44 @@ function handlePasteEvent(e) {
     // 7. Sincronizzazione
     triggerAutosave();
 }
+
+//Funzione del preview 
+async function contentPreview() {
+    /*contentHtml = editor.innerHTML;*/
+    // invece di prendere il contenuto tramite editor, forziamo un salvataggio globale del progetto, richiediamo al server il contenuto pulito
+
+    saveFullContent();
+
+    // inizializziamo payload per la richiesta al server di tutti i dati che necessitiamo
+    const payload = {
+        ArticleId = articleId
+        // mandiamo solamente id...dovrebbe bastare come dato.
+    }
+
+    try {
+        const response = await commitToServer("LoadPreview", payload);
+
+        if (response.success) {
+            // Abilitiamo lo stile? o il funzionamento di qualche evento importante...
+        }
+    }
+    catch (error) {
+        
+    }
+
+    iframeContainer = document.getElementById("sectionsBodyContent");
+
+    iframeContainer.innerHTML = '';
+
+    iframe = document.createElement("iframe");
+    iframe.style.height = "100%";
+    iframe.style.width = "100%";
+    iframe.style.border = "none";
+
+    iframeContainer.append(iframe);
+
+    docIframe = iframe.contentWindow.document;
+    docIframe.open();
+    docIframe.write(contentHtml);
+    docIframe.close();
+}

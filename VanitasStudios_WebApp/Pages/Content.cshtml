@@ -5,31 +5,31 @@
 <section class="content">
     <div class="header-content">
         <h1>@Model.Content.Title</h1>
-        <p>@Model.Content.DescC</p>
+        <p>@Model.Content.Description</p>
     </div>
     @foreach(var s in Model.Sections)
     {
         <div class="content-section">
             <div class="container">
                 <div class="row">
-                    @foreach(var i in s.Images)
+                    @* @foreach(var i in s.Images)
                     {
                         <div class="col-md-4">
                             <img class="img-fluid" src="@i.ImageUrl" alt="" />
                         </div>
-                    }
+                    } *@
                 </div>
             </div>
             <div class="content-body">
-                <h2 id="@s.IdS">@s.Title</h2>
-                <p>@s.SectionText</p>
+                <h2 id="@s.Id">@s.Title</h2>
+                <p>@s.HtmlText</p>
             </div>
         </div>
     }
     <div class="content-index">
         @foreach(var s in Model.Sections)
         {
-            <a href="#@s.IdS">@s.Title</a>
+            <a href="#@s.Id">@s.Title</a>
         }
     </div>
     <div class="related-content">
@@ -37,12 +37,12 @@
         @foreach(var c in Model.RelatedContents)
         {
             <div class="card" style="width: 18rem;">
-                <a asp-page="/Content" asp-route-id="@c.IdC">
+                <a asp-page="/Content" asp-route-id="@c.Id">
                     <img src="..." class="card-img-top" alt="...">
                     <div class="card-body">
                         <h3 class="card-title">@c.Title</h3>
-                        <p class="card-text">@c.DescC</p>
-                        <span>@c.DataPub</span>
+                        <p class="card-text">@c.Description</p>
+                        <span>@c.CreatedAt</span>
                     </div>
                 </a>
             </div>

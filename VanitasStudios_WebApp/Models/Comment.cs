@@ -1,29 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VanitasStudios_WebApp.Models;
-
+[Table("Comments")]
 public partial class Comment
 {
-    public int IdComm { get; set; }
+    [Key]
+    public int Id { get; set; }
 
-    public string CommText { get; set; } = null!;
+    [Required]
+    // Mettiamo un limite ragionevole al testo di un commento (es. 2000 caratteri) per evitare che intasino il DB
+    [StringLength(2000)]
+    public string Text { get; set; } = null!;
 
-    public DateTime DataPub { get; set; }
+    [Required]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [Required]
     public int ContentId { get; set; }
 
-    public int CommentUserId { get; set; }
+    [Required]
+    public int UserId { get; set; }
 
-    public int? AnswerId { get; set; }
+    public int? ParentCommentId { get; set; }
 
+    [ForeignKey("UserId")]
+    [InverseProperty("Comments")]
     public virtual ApplicationUser User { get; set; } = null!;
 
-    public virtual Comment? Answer { get; set; }
+    [ForeignKey("ParentCommentId")]
+    public virtual Comment? ParentComment { get; set; }
 
+    [ForeignKey("ContentId")]
     public virtual Content Content { get; set; } = null!;
 
-    public virtual ICollection<Evaluate> Evaluates { get; set; } = new List<Evaluate>();
+    [InverseProperty("Comment")]
+    public virtual ICollection<CommentLike> CommentLikes { get; set; } = new List<CommentLike>();
 
-    public virtual ICollection<Comment> InverseAnswer { get; set; } = new List<Comment>();
+    [InverseProperty("ParentComment")]
+    public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>();
 }

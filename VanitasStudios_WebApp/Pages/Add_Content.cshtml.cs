@@ -29,13 +29,13 @@ namespace VanitasStudios_WebApp.Pages
         public class EditorSavePayload
         {
             public int ArticleId { get; set; }
-            public List<SectionViewModel> SectionList { get; set; }
+            public List<SectionViewModel>? SectionList { get; set; }
         }
 
         public class SectionViewModel
         {
             public int ArticleId { get; set; }
-            public string Id { get; set; }
+            public string? Id { get; set; }
             public string? Title { get; set; }
             public string? Content { get; set; }
             public int Order { get; set; }
@@ -49,7 +49,7 @@ namespace VanitasStudios_WebApp.Pages
         public class NewOrder
         {
             public int ArticleId { get; set; }
-            public List<string> SortedIds { get; set; }
+            public List<string>? SortedIds { get; set; }
         }
 
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
@@ -66,7 +66,7 @@ namespace VanitasStudios_WebApp.Pages
                 if (CurrentContent == null) return NotFound();
 
                 // La data è quella che leggiamo dal DB
-                LastModified = (DateTime)CurrentContent.DataEdit;
+                LastModified = (DateTime)CurrentContent.UpdatedAt;
                 ArticleId = id;
             }
             else
@@ -76,7 +76,7 @@ namespace VanitasStudios_WebApp.Pages
                 {
                     Title = "Nuovo Articolo",
                     // Inizializziamo la data al momento della creazione
-                    DataEdit = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 LastModified = DateTime.UtcNow;
@@ -85,7 +85,7 @@ namespace VanitasStudios_WebApp.Pages
 
                 // Ora reindirizziamo alla stessa pagina ma con l'ID appena creato
                 // Questo evita che l'utente crei mille articoli vuoti premendo F5
-                return RedirectToPage(new { id = CurrentContent.IdC });
+                return RedirectToPage(new { id = CurrentContent.Id });
             }
 
             return Page();
@@ -102,7 +102,7 @@ namespace VanitasStudios_WebApp.Pages
            // Controlliamo che il contenuto esista e preleviamo le sezioni esistenti per aggiornarle.
            var article = await _context.Contents
                             .Include(c => c.Sections)
-                            .FirstOrDefaultAsync(i => i.IdC == payload.ArticleId);
+                            .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
 
             if (article == null) return new JsonResult(new { success = false, message = "Article not Found" });
 
@@ -112,7 +112,7 @@ namespace VanitasStudios_WebApp.Pages
                                 .ToList();
 
             var sectionsToRemove = article.Sections
-                                    .Where(i => !incomingIds.Contains(i.IdS))
+                                    .Where(i => !incomingIds.Contains(i.Id))
                                     .ToList();
             if (sectionsToRemove.Any())
             {
@@ -125,7 +125,7 @@ namespace VanitasStudios_WebApp.Pages
 
                 if(int.TryParse(sDto.Id, out int realId))
                 {
-                    var existingSections = article.Sections.FirstOrDefault(s => s.IdS == realId);
+                    var existingSections = article.Sections.FirstOrDefault(s => s.Id == realId);
 
                     if (existingSections != null)
                     {
@@ -133,19 +133,19 @@ namespace VanitasStudios_WebApp.Pages
                         string cleanContent = sDto.Content
                             .Replace("\u200B", "").Trim();
 
-                        existingSections.SectionText = cleanContent;
+                        existingSections.HtmlText = cleanContent;
                         existingSections.Title = sDto.Title?.Trim();
-                        existingSections.OrderNum = sDto.Order;
+                        existingSections.Order = sDto.Order;
                     }
                 }
             }
 
-            article.DataEdit = DateTime.UtcNow;
+            article.UpdatedAt = DateTime.UtcNow;
 
             try
             {
                 await _context.SaveChangesAsync();
-                return new JsonResult(new { success = true, lastUpdate = article.DataEdit });
+                return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt });
             }
             catch (DbUpdateException ex)
             {
@@ -167,10 +167,10 @@ namespace VanitasStudios_WebApp.Pages
                 // L'utente ha appena premuto invio: creiamo la sezione "vuota"
                 section = new Section
                 {
-                    ContentSId = sDto.ArticleId,
+                    ContentId = sDto.ArticleId,
                     Title = sDto.Title?.Trim() ?? "Senza Titolo",
-                    SectionText = sDto.Content ?? "", // Sarà probabilmente stringa vuota all'inizio
-                    OrderNum = sDto.Order
+                    HtmlText = sDto.Content ?? "", // Sarà probabilmente stringa vuota all'inizio
+                    Order = sDto.Order
                 };
                 _context.Sections.Add(section);
             }
@@ -184,13 +184,13 @@ namespace VanitasStudios_WebApp.Pages
 
                 // Aggiorniamo solo se i dati sono effettivamente diversi (ottimizzazione)
                 section.Title = sDto.Title?.Trim() ?? section.Title;
-                section.OrderNum = sDto.Order;
+                section.Order = sDto.Order;
 
                 // Se sDto.Content è null (magari non lo invii per risparmiare banda), 
                 // non sovrascrivere il testo esistente.
                 if (sDto.Content != null)
                 {
-                    section.SectionText = sDto.Content.Replace("\u200B", "").Trim();
+                    section.HtmlText = sDto.Content.Replace("\u200B", "").Trim();
                 }
             }
 
@@ -200,29 +200,29 @@ namespace VanitasStudios_WebApp.Pages
             var article = await _context.Contents.FindAsync(sDto.ArticleId);
             if (article != null)
             {
-                article.DataEdit = DateTime.UtcNow;
+                article.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
 
-            return new JsonResult(new { success = true, sectionId = section.IdS });
+            return new JsonResult(new { success = true, sectionId = section.Id });
         }
 
         public async Task<IActionResult> OnPostDeleteSectionAsync(DeleteSectionDto dto)
         {
             // 1. Recupera la sezione controllando la proprietà di navigazione (o FK) dell'articolo
             Section section = await _context.Sections
-                .FirstOrDefaultAsync(s => s.IdS == dto.SectionId && s.ContentSId == dto.ArticleId);
+                .FirstOrDefaultAsync(s => s.Id == dto.SectionId && s.ContentId == dto.ArticleId);
 
             // Se non esiste, rispondiamo comunque success: true (idempotenza: se era già cancellata, il risultato desiderato è ottenuto)
             if (section == null)
                 return new JsonResult(new { success = true, message = "Section already deleted or not found" });
 
-            int eliminatedOrder = section.OrderNum;
+            int eliminatedOrder = section.Order;
             _context.Sections.Remove(section);
 
             // 2. Recupera le sezioni successive per scalare l'ordine
             var nextSections = await _context.Sections
-                .Where(s => s.ContentSId == dto.ArticleId && s.OrderNum > eliminatedOrder)
+                .Where(s => s.ContentId == dto.ArticleId && s.Order > eliminatedOrder)
                 .ToListAsync();
 
             // Se ci sono sezioni successive, scala il loro indice di 1
@@ -230,7 +230,7 @@ namespace VanitasStudios_WebApp.Pages
             {
                 foreach (var s in nextSections)
                 {
-                    s.OrderNum--;
+                    s.Order--;
                 }
             }
 
@@ -238,7 +238,7 @@ namespace VanitasStudios_WebApp.Pages
             var article = await _context.Contents.FindAsync(dto.ArticleId);
             if (article != null)
             {
-                article.DataEdit = DateTime.UtcNow; // Usiamo sempre UtcNow come stabilito!
+                article.UpdatedAt = DateTime.UtcNow; // Usiamo sempre UtcNow come stabilito!
             }
 
             // 4. Unico salvataggio per ottimizzare le transazioni sul DB
@@ -251,7 +251,7 @@ namespace VanitasStudios_WebApp.Pages
         public async Task<IActionResult> OnPostUpdateOrderAsync([FromBody] NewOrder sectionOrder)
         {
             // 1. Usiamo l'await corretto per verificare se l'articolo esiste
-            var articleExists = await _context.Contents.AnyAsync(c => c.IdC == sectionOrder.ArticleId);
+            var articleExists = await _context.Contents.AnyAsync(c => c.Id == sectionOrder.ArticleId);
             if (!articleExists)
             {
                 return new JsonResult(new { success = false, message = "Articolo non trovato." });
@@ -259,7 +259,7 @@ namespace VanitasStudios_WebApp.Pages
 
             // 2. Recuperiamo TUTTE le sezioni di questo articolo con UNA SOLA query
             var articleSections = await _context.Sections
-                .Where(s => s.ContentSId == sectionOrder.ArticleId)
+                .Where(s => s.ContentId == sectionOrder.ArticleId)
                 .ToListAsync();
 
             // 3. Cicliamo l'array ricevuto dal frontend
@@ -268,10 +268,10 @@ namespace VanitasStudios_WebApp.Pages
                 string badgeId = sectionOrder.SortedIds[i];
 
                 // Cerchiamo la sezione nella lista in memoria (molto più veloce, non tocca il DB)
-                var section = articleSections.FirstOrDefault(s => s.IdS.ToString() == badgeId);
+                var section = articleSections.FirstOrDefault(s => s.Id.ToString() == badgeId);
                 if (section != null)
                 {
-                    section.OrderNum = i + 1; // Aggiorna l'ordine (1-based)
+                    section.Order = i + 1; // Aggiorna l'ordine (1-based)
                 }
             }
 
@@ -399,5 +399,35 @@ namespace VanitasStudios_WebApp.Pages
         //    }
         //    catch { return StatusCode(500); }
         //}
+        [BindProperty]
+        public List<Content> Suggested {  get; set; }
+        [BindProperty]
+        public Dictionary<string,int> OrderIndex { get; set; } // l'indice potrebbe semplicemente associare al titolo, l'ordine...?
+        [BindProperty]
+        public List<Section> SectionsList { get; set; }
+
+
+        public async Task<IActionResult> OnPostLoadPreviewAsync([FromBody] int articleId)
+        {
+            SectionsList = await _context.Sections
+                            .Where(c => c.ContentId == articleId)
+                            .ToListAsync();
+            if (SectionsList == null) return new JsonResult(new { success = true, message = "Article not found" });
+
+            Dictionary<string, int> unorderedDict = new Dictionary<string, int>();
+            foreach (var s in SectionsList)
+            {
+                string title = s.Title;
+                int order = s.Order;
+
+                unorderedDict.Add(title, order);
+              
+            }
+
+            OrderIndex = (Dictionary<string, int>)(from entry in unorderedDict orderby entry.Value ascending select entry);
+
+            return new JsonResult(new { success = true, message = "Complete loading the preview" });
+
+        }
     }
 }
