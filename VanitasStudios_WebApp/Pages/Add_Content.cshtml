@@ -56,38 +56,6 @@
                 </div>
                 <div class="modal-body" id="modalBody">
 
-                    @*Scrittura della pagina/preview del documento*@
-                    <section class="main-section container-fluid">
-                        <div class="row">
-                            <div class="col">
-                                <div class="suggested-article">
-                                    @*Preparare lato server una lista, dalla tabella che ha le statistiche*@
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="header-section">
-                                    <h1>TITLE</h1> @*Qui va messo il titolo tramite variabile*@
-                                    <img src="#" alt="Thumbnail of the current content" />
-                                    <p>Description of the article, (may be the text without the section element) lorem ipsum</p>
-                                </div>
-                                <div class="section-body" id="sectionsBodyContent">
-                                    @*lista delle sezioni (Iframe) *@
-                                    @foreach(var s in Model.SectionsList)
-                                    {
-                                        
-                                    }
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="content-index">
-                                    @*Lista dei titoli, con il relativo id univoco...generiamo un link puntatore per ciascuna sezione*@
-                                </div>
-                            </div>
-                        </div>
-
-                    </section>
-
-
                 </div>
                 @*  <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

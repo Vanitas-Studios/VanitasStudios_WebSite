@@ -919,41 +919,46 @@ function handlePasteEvent(e) {
 
 //Funzione del preview 
 async function contentPreview() {
-    /*contentHtml = editor.innerHTML;*/
-    // invece di prendere il contenuto tramite editor, forziamo un salvataggio globale del progetto, richiediamo al server il contenuto pulito
+    // 1. Forziamo il salvataggio globale dello stato attuale dell'editor
+    await saveFullContent();
 
-    saveFullContent();
-
-    // inizializziamo payload per la richiesta al server di tutti i dati che necessitiamo
+    // 2. Prepariamo il payload con la sintassi corretta (chiave: valore)
     const payload = {
-        ArticleId = articleId
-        // mandiamo solamente id...dovrebbe bastare come dato.
-    }
+        articleId: articleId
+    };
 
     try {
+        // Chiediamo al server il contenuto HTML già renderizzato ed elaborato
         const response = await commitToServer("LoadPreview", payload);
 
         if (response.success) {
-            // Abilitiamo lo stile? o il funzionamento di qualche evento importante...
+            // Supponiamo che il server restituisca l'HTML dentro response.htmlContent
+            const contentHtml = response.htmlContent;
+
+            // 3. Recuperiamo il container e creiamo l'iframe in modo dinamico
+            const iframeContainer = document.getElementById("sectionsBodyContent");
+            iframeContainer.innerHTML = ''; // Svuota vecchi iframe di preview precedenti
+
+            const iframe = document.createElement("iframe");
+            iframe.style.height = "100%";
+            iframe.style.width = "100%";
+            iframe.style.border = "none";
+            iframe.style.minHeight = "500px"; // Diamo un'altezza minima visibile
+
+            iframeContainer.append(iframe);
+
+            // 4. Iniettiamo l'HTML dentro l'iframe isolato
+            const docIframe = iframe.contentWindow.document;
+            docIframe.open();
+            docIframe.write(contentHtml);
+            docIframe.close();
+
+            // 5. Mostriamo la modale Bootstrap solo se il caricamento è riuscito
+            const previewModal = new bootstrap.Modal(document.getElementById('DocumentPreview'));
+            previewModal.show();
         }
     }
     catch (error) {
-        
+        console.error("Errore durante il caricamento della preview:", error);
     }
-
-    iframeContainer = document.getElementById("sectionsBodyContent");
-
-    iframeContainer.innerHTML = '';
-
-    iframe = document.createElement("iframe");
-    iframe.style.height = "100%";
-    iframe.style.width = "100%";
-    iframe.style.border = "none";
-
-    iframeContainer.append(iframe);
-
-    docIframe = iframe.contentWindow.document;
-    docIframe.open();
-    docIframe.write(contentHtml);
-    docIframe.close();
 }

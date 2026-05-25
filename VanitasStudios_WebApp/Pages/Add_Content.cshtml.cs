@@ -406,28 +406,97 @@ namespace VanitasStudios_WebApp.Pages
         [BindProperty]
         public List<Section> SectionsList { get; set; }
 
-
         public async Task<IActionResult> OnPostLoadPreviewAsync([FromBody] int articleId)
         {
-            SectionsList = await _context.Sections
-                            .Where(c => c.ContentId == articleId)
-                            .ToListAsync();
-            if (SectionsList == null) return new JsonResult(new { success = true, message = "Article not found" });
-
-            Dictionary<string, int> unorderedDict = new Dictionary<string, int>();
-            foreach (var s in SectionsList)
+            // Controllo preventivo sull'articolo per evitare NullReferenceException
+            var currentArticle = await _context.Contents.FirstOrDefaultAsync(i => i.Id == articleId);
+            if (currentArticle == null)
             {
-                string title = s.Title;
-                int order = s.Order;
-
-                unorderedDict.Add(title, order);
-              
+                return new JsonResult(new { success = false, message = "Articolo non trovato." });
             }
 
-            OrderIndex = (Dictionary<string, int>)(from entry in unorderedDict orderby entry.Value ascending select entry);
+            // 1. Recuperiamo le sezioni ORDINATE direttamente dal database
+            var sectionsList = await _context.Sections
+                                            .Where(s => s.ContentId == articleId)
+                                            .OrderBy(s => s.Order)
+                                            .ToListAsync();
 
-            return new JsonResult(new { success = true, message = "Complete loading the preview" });
+            if (sectionsList == null || !sectionsList.Any())
+            {
+                return new JsonResult(new { success = false, message = "Nessuna sezione trovata per questo articolo." });
+            }
 
+            var htmlBuilder = new StringBuilder();
+            var orderIndex = new List<object>();
+
+            // Costruzione Head e Body dell'Iframe
+            htmlBuilder.AppendLine("<html>");
+            htmlBuilder.AppendLine("<head>");
+            htmlBuilder.AppendLine("  <title>Page-Preview</title>");
+            // Quando sarai pronto, scommenta queste righe per applicare i tuoi stili reali!
+            // htmlBuilder.AppendLine("  <link rel='stylesheet' href='/css/bootstrap.min.css'>");
+            // htmlBuilder.AppendLine("  <link rel='stylesheet' href='/css/vanitas-theme.css'>");
+            htmlBuilder.AppendLine("</head>");
+            htmlBuilder.AppendLine("<body class='vanitas-preview-mode'>");
+            htmlBuilder.AppendLine("<div class='container-fluid main-section'>");
+            htmlBuilder.AppendLine("  <div class='row'>");
+
+            // COLONNA SINISTRA: Spazio IA (In futuro dinamico)
+            htmlBuilder.AppendLine("    <div class='col-md-3 suggested-article'><h5 class='text-muted'>Correlati IA</h5></div>");
+
+            // COLONNA CENTRALE: Corpo del documento
+            htmlBuilder.AppendLine("    <div class='col-md-6 article-body'>");
+            htmlBuilder.AppendLine($"       <h1 class='display-4'>{currentArticle.Title}</h1>");
+            htmlBuilder.AppendLine("        <hr />");
+
+            // Ciclo 1: Stampiamo il corpo dell'articolo e popoliamo la lista per il JSON
+            foreach (var s in sectionsList)
+            {
+                // Avvolgiamo la sezione in un div con un ID univoco per permettere l'ancoraggio dello scroll
+                htmlBuilder.AppendLine($"<div id='section-anchor-{s.Id}' class='mb-4'>");
+                htmlBuilder.AppendLine(s.HtmlText);
+                htmlBuilder.AppendLine("</div>");
+
+                orderIndex.Add(new
+                {
+                    title = s.Title ?? "Sezione senza titolo",
+                    order = s.Order,
+                    id = s.Id
+                });
+            }
+            htmlBuilder.AppendLine("    </div>");
+
+            // COLONNA DESTRA: Generazione dell'INDICE DINAMICO
+            htmlBuilder.AppendLine("    <div class='col-md-3 content-index'>");
+            htmlBuilder.AppendLine("      <div class='sticky-top' style='top: 20px;'>"); // Mantiene l'indice fermo durante lo scroll
+            htmlBuilder.AppendLine("        <h5>Indice Contenuti</h5>");
+            htmlBuilder.AppendLine("        <ul class='list-unstyled'>");
+
+            // Ciclo 2: Generiamo i link puntatori reali per l'indice dentro l'iframe
+            foreach (var s in sectionsList)
+            {
+                string displayTitle = s.Title ?? $"Sezione {s.Order}";
+                // Il link punta all'ID del div generato nel Ciclo 1
+                htmlBuilder.AppendLine($"<li class='mb-2'><a href='#section-anchor-{s.Id}' class='text-decoration-none'>{displayTitle}</a></li>");
+            }
+
+            htmlBuilder.AppendLine("        </ul>");
+            htmlBuilder.AppendLine("      </div>");
+            htmlBuilder.AppendLine("    </div>");
+
+            // Chiusura dei tag HTML
+            htmlBuilder.AppendLine("  </div>");
+            htmlBuilder.AppendLine("</div>");
+            htmlBuilder.AppendLine("</body>");
+            htmlBuilder.AppendLine("</html>");
+
+            return new JsonResult(new
+            {
+                success = true,
+                htmlContent = htmlBuilder.ToString(),
+                index = orderIndex
+            });
         }
+
     }
 }
