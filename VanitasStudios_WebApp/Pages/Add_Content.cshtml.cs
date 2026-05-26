@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using VanitasStudios_WebApp.Data;
-using VanitasStudios_WebApp.Models;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.IO;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
+using VanitasStudios_WebApp.Data;
+using VanitasStudios_WebApp.Models;
 
 namespace VanitasStudios_WebApp.Pages
 {
@@ -29,7 +30,7 @@ namespace VanitasStudios_WebApp.Pages
         public class EditorSavePayload
         {
             public int ArticleId { get; set; }
-            public List<SectionViewModel>? SectionList { get; set; }
+            public List<SectionViewModel>? Sections { get; set; }
         }
 
         public class SectionViewModel
@@ -72,11 +73,33 @@ namespace VanitasStudios_WebApp.Pages
             else
             {
                 // NUOVO CONTENUTO
+                // 1. Recuperiamo l'ID dell'utente loggato direttamente dai Claims (arriva come stringa, es: "1")
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userIdString))
+                {
+                    return RedirectToPage("/Account/Login");
+                }
+
+                // 2. Convertiamo la stringa in un intero nativo (visto che ApplicationUser usa <int>)
+                int currentUserId = int.Parse(userIdString);
+
+                // 3. Cerchiamo l'autore direttamente tramite la sua Chiave Primaria (Id)
+                var currentAuthor = await _context.Users.FindAsync(currentUserId);
+
+                if (currentAuthor == null)
+                {
+                    return NotFound("Autore non trovato nel sistema con questo ID.");
+                }
+
                 CurrentContent = new Content
                 {
                     Title = "Nuovo Articolo",
-                    // Inizializziamo la data al momento della creazione
-                    UpdatedAt = DateTime.UtcNow
+                    Slug = "nuovo-articolo-" + Guid.NewGuid().ToString().Substring(0, 5), // Evita slug duplicati all'inizio
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    PublishState = PublishState.Bozza,
+                    AuthorId = currentAuthor.Id
                 };
 
                 LastModified = DateTime.UtcNow;
@@ -91,120 +114,293 @@ namespace VanitasStudios_WebApp.Pages
             return Page();
         }
 
+        //public async Task<IActionResult> OnPostSaveContentAsync([FromBody] EditorSavePayload payload)
+        //{
+        //   // Controllo di base: Validazione 
+        //   if(payload == null || payload.ArticleId == 0)
+        //    {
+        //        return new JsonResult(new { success = false, message = "Invalid Data" });
+        //    }
+
+        //    // SICUREZZA: Se il JS manda la proprietà vuota o con un nome disallineato, 
+        //    // evitiamo il crash inizializzandola come lista vuota.
+        //    payload.Sections ??= new List<SectionViewModel>();
+
+        //    // Controlliamo che il contenuto esista e preleviamo le sezioni esistenti per aggiornarle.
+        //    var article = await _context.Contents
+        //                    .Include(c => c.Sections)
+        //                    .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
+
+        //    if (article == null) return new JsonResult(new { success = false, message = "Article not Found" });
+
+        //    var incomingIds = payload.Sections
+        //                        .Where(i => !i.Id.StartsWith("temp-"))
+        //                        .Select(s => int.Parse(s.Id))
+        //                        .ToList();
+
+        //    var sectionsToRemove = article.Sections
+        //                            .Where(i => !incomingIds.Contains(i.Id))
+        //                            .ToList();
+        //    if (sectionsToRemove.Any())
+        //    {
+        //        _context.Sections.RemoveRange(sectionsToRemove);
+        //    }
+
+        //    foreach( var sDto in payload.Sections)
+        //    {
+        //        if (sDto.Id.StartsWith("temp-")) continue;
+
+        //        if(int.TryParse(sDto.Id, out int realId))
+        //        {
+        //            var existingSections = article.Sections.FirstOrDefault(s => s.Id == realId);
+
+        //            if (existingSections != null)
+        //            {
+        //                // TODO: Implementare HtmlSanitizer per pulire sDto.Content
+        //                string cleanContent = sDto.Content
+        //                    .Replace("\u200B", "").Trim();
+
+        //                existingSections.HtmlText = cleanContent;
+        //                existingSections.Title = sDto.Title?.Trim();
+        //                existingSections.Order = sDto.Order;
+        //            }
+        //        }
+        //    }
+
+        //    article.UpdatedAt = DateTime.UtcNow;
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //        return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt });
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        // Logga l'errore per Vanitas Studios
+        //        return new JsonResult(new { success = false, message = "Errore durante il salvataggio nel database" });
+        //    }
+        //}
+
+
+
+
+        //public async Task<IActionResult> OnPostSaveSectionAsync([FromBody] SectionViewModel sDto)
+        //{
+        //    if (sDto == null) return new JsonResult(new { success = false });
+
+        //    Section section;
+        //    bool isNew = sDto.Id.StartsWith("temp-");
+
+        //    if (isNew)
+        //    {
+        //        // L'utente ha appena premuto invio: creiamo la sezione "vuota"
+        //        section = new Section
+        //        {
+        //            ContentId = sDto.ArticleId,
+        //            Title = sDto.Title?.Trim() ?? "Senza Titolo",
+        //            HtmlText = sDto.Content ?? "", // Sarà probabilmente stringa vuota all'inizio
+        //            Order = sDto.Order
+        //        };
+        //        _context.Sections.Add(section);
+        //    }
+        //    else
+        //    {
+        //        // Aggiornamento di una sezione esistente (già dotata di ID)
+        //        if (!int.TryParse(sDto.Id, out int realId)) return BadRequest();
+
+        //        section = await _context.Sections.FindAsync(realId);
+        //        if (section == null) return NotFound();
+
+        //        // Aggiorniamo solo se i dati sono effettivamente diversi (ottimizzazione)
+        //        section.Title = sDto.Title?.Trim() ?? section.Title;
+        //        section.Order = sDto.Order;
+
+        //        // Se sDto.Content è null (magari non lo invii per risparmiare banda), 
+        //        // non sovrascrivere il testo esistente.
+        //        if (sDto.Content != null)
+        //        {
+        //            section.HtmlText = sDto.Content.Replace("\u200B", "").Trim();
+        //        }
+        //    }
+
+        //    await _context.SaveChangesAsync();
+
+        //    // Aggiorniamo il timestamp dell'articolo per mostrare "Ultima modifica: poco fa"
+        //    var article = await _context.Contents.FindAsync(sDto.ArticleId);
+        //    if (article != null)
+        //    {
+        //        article.UpdatedAt = DateTime.UtcNow;
+        //        await _context.SaveChangesAsync();
+        //    }
+
+        //    return new JsonResult(new { success = true, sectionId = section.Id });
+        //}
+
         public async Task<IActionResult> OnPostSaveContentAsync([FromBody] EditorSavePayload payload)
         {
-           // Controllo di base: Validazione 
-           if(payload == null || payload.ArticleId == 0)
+            // LOG INIZIALE
+            System.Diagnostics.Debug.WriteLine("=== [DEBUG VANITAS] ENTRATO IN ONPOSTSAVECONTENTASYNC ===");
+
+            if (payload == null)
             {
-                return new JsonResult(new { success = false, message = "Invalid Data" });
+                System.Diagnostics.Debug.WriteLine("[ERR] Payload globale completamente NULLO");
+                return new JsonResult(new { success = false, message = "C# Errore: Payload globale nullo." });
             }
 
-           // Controlliamo che il contenuto esista e preleviamo le sezioni esistenti per aggiornarle.
-           var article = await _context.Contents
-                            .Include(c => c.Sections)
-                            .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
+            System.Diagnostics.Debug.WriteLine($"[INFO] ArticleId ricevuto: {payload.ArticleId}");
 
-            if (article == null) return new JsonResult(new { success = false, message = "Article not Found" });
-
-            var incomingIds = payload.SectionList
-                                .Where(i => !i.Id.StartsWith("temp-"))
-                                .Select(s => int.Parse(s.Id))
-                                .ToList();
-
-            var sectionsToRemove = article.Sections
-                                    .Where(i => !incomingIds.Contains(i.Id))
-                                    .ToList();
-            if (sectionsToRemove.Any())
+            // Inizializzazione difensiva per evitare il crash sulla riga 132
+            if (payload.Sections == null)
             {
-                _context.Sections.RemoveRange(sectionsToRemove);
-            }
-
-            foreach( var sDto in payload.SectionList)
-            {
-                if (sDto.Id.StartsWith("temp-")) continue;
-
-                if(int.TryParse(sDto.Id, out int realId))
-                {
-                    var existingSections = article.Sections.FirstOrDefault(s => s.Id == realId);
-
-                    if (existingSections != null)
-                    {
-                        // TODO: Implementare HtmlSanitizer per pulire sDto.Content
-                        string cleanContent = sDto.Content
-                            .Replace("\u200B", "").Trim();
-
-                        existingSections.HtmlText = cleanContent;
-                        existingSections.Title = sDto.Title?.Trim();
-                        existingSections.Order = sDto.Order;
-                    }
-                }
-            }
-
-            article.UpdatedAt = DateTime.UtcNow;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt });
-            }
-            catch (DbUpdateException ex)
-            {
-                // Logga l'errore per Vanitas Studios
-                return new JsonResult(new { success = false, message = "Errore durante il salvataggio nel database" });
-            }
-        }
-
-
-        public async Task<IActionResult> OnPostSaveSectionAsync([FromBody] SectionViewModel sDto)
-        {
-            if (sDto == null) return new JsonResult(new { success = false });
-
-            Section section;
-            bool isNew = sDto.Id.StartsWith("temp-");
-
-            if (isNew)
-            {
-                // L'utente ha appena premuto invio: creiamo la sezione "vuota"
-                section = new Section
-                {
-                    ContentId = sDto.ArticleId,
-                    Title = sDto.Title?.Trim() ?? "Senza Titolo",
-                    HtmlText = sDto.Content ?? "", // Sarà probabilmente stringa vuota all'inizio
-                    Order = sDto.Order
-                };
-                _context.Sections.Add(section);
+                System.Diagnostics.Debug.WriteLine("[WARN] payload.Sections era NULL, inizializzato a lista vuota.");
+                payload.Sections = new List<SectionViewModel>();
             }
             else
             {
-                // Aggiornamento di una sezione esistente (già dotata di ID)
-                if (!int.TryParse(sDto.Id, out int realId)) return BadRequest();
-
-                section = await _context.Sections.FindAsync(realId);
-                if (section == null) return NotFound();
-
-                // Aggiorniamo solo se i dati sono effettivamente diversi (ottimizzazione)
-                section.Title = sDto.Title?.Trim() ?? section.Title;
-                section.Order = sDto.Order;
-
-                // Se sDto.Content è null (magari non lo invii per risparmiare banda), 
-                // non sovrascrivere il testo esistente.
-                if (sDto.Content != null)
-                {
-                    section.HtmlText = sDto.Content.Replace("\u200B", "").Trim();
-                }
+                System.Diagnostics.Debug.WriteLine($"[INFO] Numero sezioni nella lista globale: {payload.Sections.Count}");
             }
 
-            await _context.SaveChangesAsync();
-
-            // Aggiorniamo il timestamp dell'articolo per mostrare "Ultima modifica: poco fa"
-            var article = await _context.Contents.FindAsync(sDto.ArticleId);
-            if (article != null)
+            try
             {
+                var article = await _context.Contents
+                                        .Include(c => c.Sections)
+                                        .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
+
+                if (article == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERR] Articolo {payload.ArticleId} non trovato nel DB");
+                    return new JsonResult(new { success = false, message = "Article not Found" });
+                }
+
+                // Se la lista è vuota (perché il JS ha mandato dati parziali), ci fermiamo qui senza rompere nulla
+                if (!payload.Sections.Any())
+                {
+                    System.Diagnostics.Debug.WriteLine("[INFO] Nessuna sezione passata nel payload globale. Salvo solo timestamp.");
+                    article.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                    return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt, message = "Solo timestamp aggiornato." });
+                }
+
+                var incomingIds = payload.Sections
+                                    .Where(i => i.Id != null && !i.Id.StartsWith("temp-"))
+                                    .Select(s => int.Parse(s.Id))
+                                    .ToList();
+
+                var sectionsToRemove = article.Sections
+                                            .Where(i => !incomingIds.Contains(i.Id))
+                                            .ToList();
+
+                if (sectionsToRemove.Any())
+                {
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Rimozione di {sectionsToRemove.Count} sezioni rimosse dal frontend.");
+                    _context.Sections.RemoveRange(sectionsToRemove);
+                }
+
+                foreach (var sDto in payload.Sections)
+                {
+                    if (sDto.Id == null || sDto.Id.StartsWith("temp-")) continue;
+
+                    if (int.TryParse(sDto.Id, out int realId))
+                    {
+                        var existingSection = article.Sections.FirstOrDefault(s => s.Id == realId);
+                        if (existingSection != null)
+                        {
+                            string cleanContent = sDto.Content?.Replace("\u200B", "").Trim() ?? "";
+                            existingSection.HtmlText = cleanContent;
+                            existingSection.Title = sDto.Title?.Trim() ?? "Senza Titolo";
+                            existingSection.Order = sDto.Order;
+                        }
+                    }
+                }
+
                 article.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+                System.Diagnostics.Debug.WriteLine("=== [DEBUG VANITAS] SALVATAGGIO GLOBALE COMPLETATO CON SUCCESSO ===");
+                return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CRASH GLOBAL SAVE]: {ex.Message}");
+                return new JsonResult(new { success = false, error = "Crash globale", details = ex.Message, inner = ex.InnerException?.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnPostSaveSectionAsync([FromBody] SectionViewModel sDto)
+        {
+            System.Diagnostics.Debug.WriteLine("=== [DEBUG VANITAS] ENTRATO IN ONPOSTSAVESECTIONASYNC (SINGOLO) ===");
+
+            if (sDto == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[ERR] DTO Sezione singola NULLO");
+                return new JsonResult(new { success = false, message = "C# Errore: DTO Singolo nullo." });
             }
 
-            return new JsonResult(new { success = true, sectionId = section.Id });
+            System.Diagnostics.Debug.WriteLine($"[INFO] Sezione Singola - Id: {sDto.Id}, ArticleId: {sDto.ArticleId}, Ordine: {sDto.Order}");
+
+            try
+            {
+                Section section;
+                bool isNew = string.IsNullOrEmpty(sDto.Id) || sDto.Id.StartsWith("temp-");
+
+                if (isNew)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Rilevata NUOVA sezione. Controllo esistenza articolo ID: {sDto.ArticleId}");
+                    var contentExists = await _context.Contents.AnyAsync(c => c.Id == sDto.ArticleId);
+                    if (!contentExists)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERR] Impossibile creare sezione: l'articolo {sDto.ArticleId} non esiste.");
+                        return new JsonResult(new { success = false, message = $"L'articolo con ID {sDto.ArticleId} non esiste!" });
+                    }
+
+                    section = new Section
+                    {
+                        ContentId = sDto.ArticleId,
+                        Title = sDto.Title?.Trim() ?? "Senza Titolo",
+                        HtmlText = sDto.Content ?? "",
+                        Order = sDto.Order
+                    };
+                    _context.Sections.Add(section);
+                }
+                else
+                {
+                    if (!int.TryParse(sDto.Id, out int realId))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERR] ID Sezione esistente non parsabile: {sDto.Id}");
+                        return new JsonResult(new { success = false, message = "ID non valido" });
+                    }
+
+                    section = await _context.Sections.FindAsync(realId);
+                    if (section == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERR] Sezione {realId} non trovata nel DB");
+                        return new JsonResult(new { success = false, message = "Sezione non trovata" });
+                    }
+
+                    section.Title = sDto.Title?.Trim() ?? section.Title;
+                    section.Order = sDto.Order;
+                    if (sDto.Content != null)
+                    {
+                        section.HtmlText = sDto.Content.Replace("\u200B", "").Trim();
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                var article = await _context.Contents.FindAsync(sDto.ArticleId);
+                if (article != null)
+                {
+                    article.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+
+                System.Diagnostics.Debug.WriteLine($"=== [DEBUG VANITAS] SEZIONE SINGOLA SALVATA CON ID REALE: {section.Id} ===");
+                return new JsonResult(new { success = true, sectionId = section.Id });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CRASH SINGLE SAVE]: {ex.Message}");
+                return new JsonResult(new { success = false, error = "Crash singolo", details = ex.Message, inner = ex.InnerException?.Message });
+            }
         }
 
         public async Task<IActionResult> OnPostDeleteSectionAsync(DeleteSectionDto dto)

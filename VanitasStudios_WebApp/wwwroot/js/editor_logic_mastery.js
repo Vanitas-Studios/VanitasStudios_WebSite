@@ -46,9 +46,12 @@ function setupEventListeners() {
         }
     });
 
+    // MODIFICATO: L'input imposta solo il flag "isDirty" istantaneamente,
+    // ma i calcoli pesanti e il salvataggio partono SOLO quando l'utente si ferma!
     editor.addEventListener("input", () => {
-        checkDeletedSections();    // Aggiorna sidebar ed eliminazioni istantaneamente
-        triggerAutosave(); // Prepara il salvataggio globale tra 5 secondi
+        isDirty = true;
+        updateSaveStatusIndicator("Modifiche non salvate...", "warning");
+        triggerAutosave(); // Chiama il debounce aggiornato qui sotto
     });
 
     // Funzioni per il drag and drop nella sidebar (riordinamento)
@@ -323,34 +326,37 @@ function updateCursorPos(element) {
 //}
 
 // Impacchetta i dati per spedire al server e gestisce la risposta 
+// ==========================================
+// FIX 1: syncSectionToServer (Risolto selettore CSS e rimosso bug)
+// ==========================================
 async function syncSectionToServer(wrapper) {
 
     if (isSavingFull || isSavingSection) {
-        console.warn("Posticipated section save: process loading")
+        console.warn("Posticipated section save: process loading; re-enqueuing...");
+        // Se c'è un salvataggio globale in corso, rimettiamo il wrapper in coda per non perderlo
+        sectionTaskQueue.push(wrapper);
         return;
     }
 
     isSavingSection = true;
     wrapper.classList.add("section-loading");
 
-    // Definiamo il nome Handler per la creazione
     const handlerName = "SaveSection";
-
-    // 1. Chiamiamo il metodo che determina l'ordine
     const order = calculateOrder(wrapper);
 
     try {
-
         const titleText = wrapper.querySelector(".section-title-badge")?.textContent.replace("##", "").trim() ?? "Sezione senza titolo";
 
-        const textContent = wrapper.querySelector(".editor-content").innerHTML
+        // CORRETTO: .section-content invece di .editor-content
+        const contentContainer = wrapper.querySelector(".section-content");
+        const textContent = contentContainer ? contentContainer.innerHTML : "";
+
+        const cleanContent = textContent
             .replace(/\u200B/g, '')
             .trim();
 
-        // Se è un invio rapido e il contenuto è solo un <br> vuoto, puliscilo
-        const finalContent = textContent === "<br>" ? "" : textContent;
+        const finalContent = cleanContent === "<br>" ? "" : cleanContent;
 
-        // 2. Prepariamo i dati
         const payload = {
             ArticleId: articleId,
             Id: wrapper.getAttribute("data-section-id"),
@@ -359,22 +365,16 @@ async function syncSectionToServer(wrapper) {
             Order: order,
         };
 
-        // 3. Mandiamo al server
         const result = await commitToServer(handlerName, payload);
 
         if (result.success) {
-
-            // Controlliamo che ci sia ancora effettivamente la sezione (l'utente potrebbe averla cancellata mentre aspettavamo la risposta)
             if (editor.contains(wrapper)) {
+                // Impostiamo l'ID reale restituito da OnPostSaveSectionAsync
                 wrapper.setAttribute("data-section-id", result.sectionId);
                 wrapper.classList.remove("section-loading");
 
-                // 4. Sincronizziamo gli ID esistenti, ora che abbiamo un nuovo ID reale
                 syncExistingIds();
-
-                console.log(`Sezione salvata! ID: ${result.sectionId}, Ordine: ${order}`);
-
-                // 5. Aggiorniamo la sidebar laterale
+                console.log(`Sezione salvata! ID REALE: ${result.sectionId}, Ordine: ${order}`);
                 updateSidebar();
             }
             else {
@@ -387,8 +387,9 @@ async function syncSectionToServer(wrapper) {
         }
     }
     catch (error) {
-        console.error("Errore nel salvataggio della sezione.");
-        wrapper.querySelector(".badge").classList.replace("bg-primary", "bg-danger");
+        console.error("Errore nel salvataggio della sezione:", error);
+        const badge = wrapper.querySelector(".badge");
+        if (badge) badge.className = "badge bg-danger me-1";
     }
     finally {
         isSavingSection = false;
@@ -435,31 +436,20 @@ async function commitToServer(handlerName, payload) {
 
 // Controlla le sezioni cancellate 
 async function checkDeletedSections() {
-
-    // Definiamo handlerName per la cancellazione
     const handlerName = "DeleteSection";
-
-    // Prendiamo tutte le sezioni
     const allWrappers = Array.from(editor.querySelectorAll(".editor-section"));
-    // Prendiamo i loro ID, escludendo quelli temporanei
     const allIds = allWrappers.map(wrapper => wrapper.getAttribute("data-section-id")).filter(id => id !== null && !id.startsWith("temp-"));
 
-    // Confrontiamo con gli ID esistenti (quelli che abbiamo sincronizzato)
     const deletedIds = existingIds.filter(id => !allIds.includes(id));
 
     if (deletedIds.length > 0) {
         for (const id of deletedIds) {
-            // Rimuoviamo l'ID dalla memoria locale PRIMA della chiamata
-            // per evitare che altri eventi 'input' chiamino di nuovo la cancellazione
             existingIds = existingIds.filter(oldId => oldId !== id);
-
             const payload = { SectionId: id, ArticleId: articleId };
-
             console.log(`Rilevata eliminazione ID: ${id}`);
             await commitToServer(handlerName, payload);
         }
-
-        // Dopo la cancellazione , aggiorniamo la sidebar per riflettere i cambiamenti
+        // Spostato fuori dal ciclo for: aggiorna la sidebar una volta sola alla fine!
         updateSidebar();
     }
 }
@@ -717,33 +707,37 @@ function debounce(func, timeout) {
     };
 }
 
-// Funzione per il salvataggio prima su Client e poi Server
+// Funzione per il salvataggio globale (chiamata dal debounce dopo 5 secondi di inattività)
 async function saveFullContent() {
 
-    if (isSavingFull || isSavingSection) {
-        console.warn("Posticipated Save: process loading");
+    // Se stiamo attivamente salvando una sezione singola (badge), 
+    // aspettiamo che abbia finito prima di fare il dump globale
+    if (isSavingSection || isProcessingQueue || sectionTaskQueue.length > 0) {
+        console.log("Salvataggio globale posticipato: coda sezioni in corso.");
+        triggerAutosave();
         return;
     }
 
+    if (isSavingFull) return;
+
     isSavingFull = true;
-    updateSaveStatusIndicator("Salvataggio in corso...");
+    updateSaveStatusIndicator("Salvataggio in corso...", "saving");
 
-    // Serializziamo contenuto editor
-    const articleData = serializedEditorContent();
-
-    //Salvataggio prima nella sessione del browser
-    localStorage.setItem(`article_backup_${articleId}`, JSON.stringify(articleData));
-
-    //Chiamata per il salvataggio sul server
     try {
-        const response = await commitToServer("SaveContent", articleData)
+        // 1. Controlliamo le sezioni cancellate SOLO ORA, non a ogni tasto premuto!
+        await checkDeletedSections();
+
+        // 2. Serializziamo il contenuto dell'editor
+        const articleData = serializedEditorContent();
+        localStorage.setItem(`article_backup_${articleId}`, JSON.stringify(articleData));
+
+        // 3. Spediamo al server
+        const response = await commitToServer("SaveContent", articleData);
 
         if (response.success) {
             isDirty = false;
-            localStorage.removeItem(`article_backup_${articleId}`); // Pulizia del localStorage
-            updateSaveStatusIndicator("Tutte le modifiche salvate");
-            // Puliamo il backup locale se vogliamo essere pignoli, 
-            // o lo teniamo finché non chiude la pagina.
+            localStorage.removeItem(`article_backup_${articleId}`);
+            updateSaveStatusIndicator("Tutte le modifiche salvate", "success");
         }
         else {
             updateSaveStatusIndicator("Errore nel salvataggio server", "error");
@@ -766,16 +760,14 @@ function serializedEditorContent() {
         return {
             id: wrapper.getAttribute("data-section-id"),
             title: wrapper.querySelector(".section-title-badge")?.textContent || "",
-            // Verificare se salvare solo testo oppure tutto contenuto HTML 
-            //P.S. Meglio salvare direttamente HTML, evitiamo di ricreare tutta la struttura
-            content: wrapper.querySelector(".section-content").innerHTML.replace(/\u200B/g, '').replace(/<div><br><\/div>/g, '<br>'), // .replace(/\u200B/g, '') --> puliamo eventuali punti critici per la formattazione del documento
+            content: wrapper.querySelector(".section-content").innerHTML.replace(/\u200B/g, '').replace(/<div><br><\/div>/g, '<br>'),
             order: calculateOrder(wrapper)
         };
     });
 
     return {
         articleId: articleId,
-        sections: sections
+        Sections: sections // CORRETTO: 'Sections' con la S maiuscola per il DTO C#
     };
 }
 
