@@ -490,3 +490,10 @@ section.hero-blog {
         box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
     }
 }
+#editor {
+    max-height: 65vh; /* Imposta un'altezza massima (es. 65% della vista dello schermo) */
+    overflow-y: auto; /* CRUCIALE: Forza la comparsa della barra di scorrimento verticale */
+    position: relative;
+    padding: 15px;
+    /* ... il resto dei tuoi stili per il bordo, background, ecc. ... */
+}

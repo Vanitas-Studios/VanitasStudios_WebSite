@@ -879,33 +879,61 @@ function handlePasteEvent(e) {
     if (!selection.rangeCount) return;
     let range = selection.getRangeAt(0);
 
-    // 3. CONTROLLO: Il cursore è dentro una .section-content?
-    let contentArea = range.startContainer.parentElement.closest(".section-content");
+    // 3. CONTROLLO SICURO: Il cursore è dentro una .section-content?
+    // Usiamo una logica più robusta per evitare eccezioni se startContainer è un nodo di testo (Type 3)
+    let contentArea = range.startContainer.nodeType === 3 ?
+        range.startContainer.parentElement.closest(".section-content") :
+        range.startContainer.closest(".section-content");
 
     // 4. SCENARIO: Editor vuoto o incolla fuori dalle sezioni
     if (!contentArea) {
-        // Se l'editor è vuoto o siamo fuori, creiamo una sezione di emergenza
-        const newSection = createSectionBlock(`temp-${Date.now()}`, "Nuova Sezione");
-        editor.appendChild(newSection);
+        console.log("Incolla rilevato fuori da una sezione. Creazione blocco di emergenza.");
 
-        // Puntiamo il range dentro la nuova area di contenuto
-        contentArea = newSection.querySelector(".section-content");
+        // CORREZIONE CRUCIALE: Spacchettiamo l'oggetto usando le chiavi corrette { wrapper, contentArea }
+        const { wrapper, contentArea: newArea } = createSectionBlock(`temp-${Date.now()}`, "Nuova Sezione");
+
+        // Adesso appendiamo il WIDGET HTML REALE (wrapper) e non l'oggetto JS!
+        editor.appendChild(wrapper);
+
+        // FIX SCROLL: Forza l'editor a scorrere visivamente fino al nuovo blocco appena creato
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // Aggiorniamo il puntatore alla contentArea della nuova sezione appena creata
+        contentArea = newArea;
+
+        // Aggiorniamo il range per posizionarci dentro la nuova area
         range = document.createRange();
         range.selectNodeContents(contentArea);
         range.collapse(false); // Va alla fine
         selection.removeAllRanges();
         selection.addRange(range);
+
+        // Avvisiamo la coda che questa nuova sezione va salvata sul DB
+        enqueueSectionSave(wrapper);
     }
 
-    // 5. ESECUZIONE: Inserimento del testo pulito
-    const textNode = document.createTextNode(text);
+    // 5. ESECUZIONE: Inserimento del testo pulito convertendo i ritorni a capo in <br>
+    // Se usi createTextNode con testi lunghi multi-linea rischi di perdere i ritorni a capo.
+    // Usando un fragment e innerHTML pulito, i ritorni a capo (\n) diventano <br> reali.
+    const cleanHtmlText = text.replace(/\n/g, "<br>");
+    const template = document.createElement('template');
+    template.innerHTML = cleanHtmlText;
+    const fragment = template.content;
+    const lastNode = fragment.lastChild;
+
     range.deleteContents();
-    range.insertNode(textNode);
+    range.insertNode(fragment);
 
-    // 6. Spostiamo il cursore dopo il testo incollato
-    updateCursorPos(textNode);
+    // 6. Spostiamo il cursore subito dopo il testo inserito
+    if (lastNode) {
+        range.setStartAfter(lastNode);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
 
-    // 7. Sincronizzazione
+    // 7. Sincronizzazione e attivazione Autosave
+    isDirty = true;
     triggerAutosave();
 }
 
@@ -914,7 +942,7 @@ async function contentPreview() {
     // 1. Forziamo il salvataggio globale dello stato attuale dell'editor
     await saveFullContent();
 
-    // 2. Prepariamo il payload con la sintassi corretta (chiave: valore)
+    // 2. Prepariamo il payload per C#
     const payload = {
         articleId: articleId
     };
@@ -924,18 +952,17 @@ async function contentPreview() {
         const response = await commitToServer("LoadPreview", payload);
 
         if (response.success) {
-            // Supponiamo che il server restituisca l'HTML dentro response.htmlContent
             const contentHtml = response.htmlContent;
 
-            // 3. Recuperiamo il container e creiamo l'iframe in modo dinamico
+            // 3. Recuperiamo il container (Ora l'ID esiste nell'HTML!)
             const iframeContainer = document.getElementById("sectionsBodyContent");
-            iframeContainer.innerHTML = ''; // Svuota vecchi iframe di preview precedenti
+            iframeContainer.innerHTML = ''; // Svuota anteprime precedenti
 
+            // Creiamo l'iframe
             const iframe = document.createElement("iframe");
             iframe.style.height = "100%";
             iframe.style.width = "100%";
             iframe.style.border = "none";
-            iframe.style.minHeight = "500px"; // Diamo un'altezza minima visibile
 
             iframeContainer.append(iframe);
 
@@ -945,9 +972,17 @@ async function contentPreview() {
             docIframe.write(contentHtml);
             docIframe.close();
 
-            // 5. Mostriamo la modale Bootstrap solo se il caricamento è riuscito
-            const previewModal = new bootstrap.Modal(document.getElementById('DocumentPreview'));
+            // 5. Mostriamo la modale Bootstrap in modo sicuro
+            const modalElement = document.getElementById('DocumentPreview');
+            // Recupera l'istanza della modale se già creata in precedenza, altrimenti ne crea una nuova
+            let previewModal = bootstrap.Modal.getInstance(modalElement);
+            if (!previewModal) {
+                previewModal = new bootstrap.Modal(modalElement);
+            }
+
             previewModal.show();
+        } else {
+            alert("Errore nel caricamento della preview dal server.");
         }
     }
     catch (error) {

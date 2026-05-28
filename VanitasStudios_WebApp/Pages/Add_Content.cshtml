@@ -7,7 +7,7 @@
 
 
 <input type="hidden" id="ArticleId" value="@Model.ArticleId" />
-<section id="editor-page" class="container vh-100 d-flex flex-column">
+<section id="editor-page" class="container-xl p-3 px-4 d-flex flex-column" style="min-height: calc(100vh - 60px);">
 
     <div class="row py-2">
         <div class="col">
@@ -24,6 +24,29 @@
 
         <div class="col-10 d-flex flex-column">
             <div id="editor" contenteditable="true" class="form-control h-100 overflow-auto">
+
+                @if (Model.CurrentContent?.Sections != null && Model.CurrentContent.Sections.Any())
+                {
+                    @foreach (var sezione in Model.CurrentContent.Sections.OrderBy(s => s.Order))
+                    {
+                        <div class="editor-section mb-3" data-section-id="@sezione.Id">
+
+                            <span class="badge bg-primary me-1 section-title-badge" contenteditable="false">
+                                @(sezione.Title ?? "Sezione senza titolo")
+                            </span>
+
+                            <div class="section-content" contenteditable="true">
+                                @Html.Raw(sezione.HtmlText ?? "<br>")
+                            </div>
+
+                        </div>
+                    }
+                }
+                else
+                {
+                    <br>
+                }
+
             </div>
         </div>
 
@@ -46,21 +69,19 @@
         </div>
     </div> *@
 
-    <!-- Modal -->
+    <button type="button" class="btn btn-primary" onclick="contentPreview()">
+        Preview
+    </button>
+
     <div class="modal fade" id="DocumentPreview" tabindex="-1" aria-labelledby="Article" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="Article">Modal title</h5>
+                    <h5 class="modal-title" id="Article">Anteprima Articolo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="modalBody">
-
+                <div class="modal-body" id="sectionsBodyContent" style="height: 75vh; padding: 0;">
                 </div>
-                @*  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div> *@
             </div>
         </div>
     </div>

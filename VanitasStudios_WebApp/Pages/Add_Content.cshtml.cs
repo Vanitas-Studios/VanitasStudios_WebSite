@@ -53,6 +53,11 @@ namespace VanitasStudios_WebApp.Pages
             public List<string>? SortedIds { get; set; }
         }
 
+        public class PreviewRequest
+        {
+            public int ArticleId { get; set; }
+        }
+
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
@@ -63,7 +68,9 @@ namespace VanitasStudios_WebApp.Pages
             if (id.HasValue)
             {
                 // CARICAMENTO ESISTENTE
-                CurrentContent = await _context.Contents.FindAsync(id.Value);
+                CurrentContent = await _context.Contents
+                                    .Include(c => c.Sections)
+                                    .FirstOrDefaultAsync(m => m.Id == id);
                 if (CurrentContent == null) return NotFound();
 
                 // La data è quella che leggiamo dal DB
@@ -602,8 +609,15 @@ namespace VanitasStudios_WebApp.Pages
         [BindProperty]
         public List<Section> SectionsList { get; set; }
 
-        public async Task<IActionResult> OnPostLoadPreviewAsync([FromBody] int articleId)
+        public async Task<IActionResult> OnPostLoadPreviewAsync([FromBody] PreviewRequest request)
         {
+            if (request == null || request.ArticleId == 0)
+            {
+                return new JsonResult(new { success = false, message = "Payload non valido." });
+            }
+
+            int articleId = request.ArticleId;
+
             // Controllo preventivo sull'articolo per evitare NullReferenceException
             var currentArticle = await _context.Contents.FirstOrDefaultAsync(i => i.Id == articleId);
             if (currentArticle == null)
