@@ -585,17 +585,91 @@ function refreshSidebarNumbers() {
         }
     });
 }
+//handle File Drop
+//async function handleFileDrop(e) {
+
+//    // Prendiamo i file dal drop
+//    const fileList = [...e.dataTransfer.files];
+//    if (fileList.length === 0) return; // Se non ci sono file, usciamo
+
+//    // 1. Identifichiamo il punto esatto del rilascio
+//    let range;
+
+//    // A. Prova lo standard ufficiale (Firefox e futuri)
+//    if (document.caretPositionFromPoint) {
+//        const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+//        if (pos) {
+//            range = document.createRange();
+//            range.setStart(pos.offsetNode, pos.offset);
+//            range.collapse(true);
+//        }
+//    }
+//    // B. Prova l'API Webkit (Chrome, Safari, Edge)
+//    else if (document.caretRangeFromPoint) {
+//        range = document.caretRangeFromPoint(e.clientX, e.clientY);
+//    }
+
+//    // C. Fallback di emergenza
+//    if (!range) {
+//        // Se proprio non riusciamo a trovare il punto,
+//        // creiamo un range che punta alla fine dell'editor
+//        range = document.createRange();
+//        range.selectNodeContents(editor);
+//        range.collapse(false);
+//    }
+
+//    // 2. Usiamo for...of per gestire correttamente gli await
+//    for (const file of fileList) {
+//        const fileType = file.type.split('/')[0];
+//        if (fileType !== "image" && fileType !== "video") continue;
+
+//        // 3. Creiamo un wrapper per il media (come fatto per le sezioni)
+//        const mediaWrapper = createMediaBlock(fileType, file.name, `temp-${Date.now()}`);
+
+//        // Inseriamo il wrapper nella posizione del mouse
+//        if (range) {
+//            //Risoluzione bug? Ho aggiunto un br per evitare che il puntatore rimanga incastrato all'interno del blocco media
+//            const br = document.createElement("br");
+//            range.insertNode(br);
+//            range.insertNode(mediaWrapper);
+//            // Sposta il punto di inserimento dopo il blocco appena creato
+//            range.setStartAfter(br);
+//            range.collapse(true); // Da capire la differenza reale true/false
+//        } else {
+//            editor.appendChild(mediaWrapper);
+//        }
+
+//        // 4. Preparazione Upload
+//        const formData = new FormData();
+//        formData.append("ArticleId", articleId);
+//        formData.append("file", file);
+
+//        try {
+//            const result = await commitToServer("UploadMedia", formData);
+
+//            if (result.success) {
+
+//                const labelText = `[img alt="${result.Alt || 'immagine'}" url="${result.Url}"]`;
+//                createMediaBlock(fileType, labelText, result.ID, mediaWrapper, result.url); // Ricreiamo il blocco media con l'URL restituito dal server)
+
+//            } else {
+//                createMediaBlock(fileType, file.name, `temp-${Date.now()}`, mediaWrapper, null, true); // Passiamo error=true per mostrare l'errore
+//            }
+//        } catch (err) {
+//            console.error("Errore critico upload:", err);
+//        }
+//    }
+//}
 
 async function handleFileDrop(e) {
+    e.preventDefault();
 
     // Prendiamo i file dal drop
     const fileList = [...e.dataTransfer.files];
-    if (fileList.length === 0) return; // Se non ci sono file, usciamo
+    if (fileList.length === 0) return;
 
-    // 1. Identifichiamo il punto esatto del rilascio
+    // 1. Identifichiamo il punto esatto del rilascio del mouse nel testo
     let range;
-
-    // A. Prova lo standard ufficiale (Firefox e futuri)
     if (document.caretPositionFromPoint) {
         const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
         if (pos) {
@@ -603,62 +677,122 @@ async function handleFileDrop(e) {
             range.setStart(pos.offsetNode, pos.offset);
             range.collapse(true);
         }
-    }
-    // B. Prova l'API Webkit (Chrome, Safari, Edge)
-    else if (document.caretRangeFromPoint) {
+    } else if (document.caretRangeFromPoint) {
         range = document.caretRangeFromPoint(e.clientX, e.clientY);
     }
 
-    // C. Fallback di emergenza
+    // Fallback di emergenza
     if (!range) {
-        // Se proprio non riusciamo a trovare il punto, 
-        // creiamo un range che punta alla fine dell'editor
         range = document.createRange();
         range.selectNodeContents(editor);
         range.collapse(false);
     }
 
-    // 2. Usiamo for...of per gestire correttamente gli await
+    // 2. RISALITA AL PADRE (.editor-section) E ACCESSO AL CONTENUTO (.section-content)
+    let targetNode = range.startContainer;
+    let currentWrapper = targetNode.nodeType === 3 ?
+        targetNode.parentElement.closest(".editor-section") :
+        targetNode.closest(".editor-section");
+
+    let contentArea = null;
+
+    if (currentWrapper) {
+        // Se siamo dentro una sezione esistente, recuperiamo la sua area di testo
+        contentArea = currentWrapper.querySelector(".section-content");
+    } else {
+        // SCENARIO DI EMERGENZA: Il file è stato rilasciato fuori da una sezione
+        console.log("Media rilasciato fuori da una sezione. Creo blocco di emergenza.");
+
+        // Spacchettiamo il nuovo blocco
+        const { wrapper, contentArea: newArea } = createSectionBlock(`temp-${Date.now()}`, "Nuova Sezione Media");
+
+        editor.appendChild(wrapper);
+        currentWrapper = wrapper;
+        contentArea = newArea;
+
+        range = document.createRange();
+        range.selectNodeContents(contentArea);
+        range.collapse(false);
+
+        // Salviamo subito la nuova sezione per farle ottenere un ID reale dal DB
+        enqueueSectionSave(currentWrapper);
+    }
+
+    // EXTRAZIONE ID SEZIONE: Recuperiamo l'attributo data-section-id dal wrapper padre
+    const sectionId = currentWrapper.getAttribute("data-section-id");
+
+    // 3. Iterazione sui file rilasciati
     for (const file of fileList) {
         const fileType = file.type.split('/')[0];
         if (fileType !== "image" && fileType !== "video") continue;
 
-        // 3. Creiamo un wrapper per il media (come fatto per le sezioni)
+        // Creiamo il widget visivo temporaneo di "In caricamento..."
         const mediaWrapper = createMediaBlock(fileType, file.name, `temp-${Date.now()}`);
 
-        // Inseriamo il wrapper nella posizione del mouse
-        if (range) {
-            //Risoluzione bug? Ho aggiunto un br per evitare che il puntatore rimanga incastrato all'interno del blocco media
-            const br = document.createElement("br");
-            range.insertNode(br);
-            range.insertNode(mediaWrapper);
-            // Sposta il punto di inserimento dopo il blocco appena creato
-            range.setStartAfter(br);
-            range.collapse(true); // Da capire la differenza reale true/false 
-        } else {
-            editor.appendChild(mediaWrapper);
-        }
+        // Inseriamo il widget visivo nel punto del rilascio
+        const br = document.createElement("br");
+        range.insertNode(br);
+        range.insertNode(mediaWrapper);
 
-        // 4. Preparazione Upload
+        range.setStartAfter(br);
+        range.collapse(true);
+
+        // 4. Preparazione della richiesta FormData (Incluso l'ID della Sezione)
         const formData = new FormData();
-        formData.append("ArticleId", articleId);
         formData.append("file", file);
+        formData.append("articleId", articleId);
+        formData.append("uploadType", "section");
+        formData.append("sectionId", sectionId); // <-- CORREZIONE CRUCIALE: Inviamo l'ID della sezione al C#
 
         try {
-            const result = await commitToServer("UploadMedia", formData);
+            updateSaveStatusIndicator("Caricamento media...", "saving");
+
+            const response = await fetch(`?handler=UploadMedia`, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            });
+
+            if (!response.ok) throw new Error("Errore nel caricamento del file");
+
+            const result = await response.json();
 
             if (result.success) {
+                // 5. TRASFORMAZIONE: Sostituiamo il widget temporaneo con il vero tag HTML definitivo
+                let finalMediaElement;
+                if (result.extension === ".mp4") {
+                    finalMediaElement = document.createElement("video");
+                    finalMediaElement.src = result.url;
+                    finalMediaElement.controls = true;
+                    finalMediaElement.className = "img-fluid rounded my-2";
+                    finalMediaElement.style.maxWidth = "100%";
+                } else {
+                    finalMediaElement = document.createElement("img");
+                    finalMediaElement.src = result.url;
+                    finalMediaElement.alt = result.alt || "immagine articolo";
+                    finalMediaElement.className = "img-fluid rounded my-2";
+                    finalMediaElement.style.maxWidth = "100%";
+                }
 
-                const labelText = `[img alt="${result.Alt || 'immagine'}" url="${result.Url}"]`;
-                createMediaBlock(fileType, labelText, result.ID, mediaWrapper, result.url); // Ricreiamo il blocco media con l'URL restituito dal server)
-
+                // Sostituzione nel DOM
+                mediaWrapper.replaceWith(finalMediaElement);
+                updateSaveStatusIndicator("Media caricato!", "success");
             } else {
-                createMediaBlock(fileType, file.name, `temp-${Date.now()}`, mediaWrapper, null, true); // Passiamo error=true per mostrare l'errore
+                createMediaBlock(fileType, file.name, `temp-${Date.now()}`, mediaWrapper, null, true);
+                updateSaveStatusIndicator("Errore caricamento", "error");
             }
         } catch (err) {
-            console.error("Errore critico upload:", err);
+            console.error("Errore critico upload drag&drop:", err);
+            createMediaBlock(fileType, file.name, `temp-${Date.now()}`, mediaWrapper, null, true);
+            updateSaveStatusIndicator("Errore caricamento", "error");
         }
     }
+
+    // 6. Svegliamo l'autosave globale
+    isDirty = true;
+    triggerAutosave();
 }
 
 function createMediaBlock(fileType, labelText, ID, existingMediaBlock = null, url = null, error = false) {

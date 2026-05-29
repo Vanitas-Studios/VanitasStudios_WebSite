@@ -484,72 +484,160 @@ namespace VanitasStudios_WebApp.Pages
             return new JsonResult(new { success = true });
         }
 
-        public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int ArticleId)
+        public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int articleId, [FromForm] string uploadType, [FromForm] int sectionId)
         {
-
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest(new { messaggio = "File vuoto" });
-            }
+            // 1. Validazioni Generiche (Tuo codice nativo ottimizzato)
+            if (file == null || file.Length == 0) return BadRequest(new { messaggio = "File vuoto" });
 
             string[] fileExtensions = [".png", ".jpg", ".jpeg", ".webp", ".mp4"];
-            string currentExtension = Path.GetExtension(file.FileName).ToLower(); //Fix --> controllare mime type o magic bytes
+            string currentExtension = Path.GetExtension(file.FileName).ToLower();
+            if (!fileExtensions.Contains(currentExtension)) return BadRequest(new { messaggio = "Formato non supportato" });
 
-            if(!fileExtensions.Contains(currentExtension))
-            {
-                return BadRequest(new {messaggio = "Formato non supportato"});
-            }
+            if (file.Length > 5 * 1024 * 1024) return BadRequest(new { messaggio = "File troppo pesante" });
 
-            string contentType = currentExtension switch
-            {
-                ".mp4" => "video",
-                _ => "image"
-            };
+            // Verifichiamo l'articolo
+            var article = await _context.Contents.FirstOrDefaultAsync(c => c.Id == articleId);
+            if (article == null) return NotFound(new { messaggio = "Articolo non trovato" });
 
-            if (file.Length > 5 * 1024 * 1024)
-            {
-                return BadRequest(new { messaggio = "File troppo pesante" });
-            }
+            string contentType = currentExtension == ".mp4" ? "video" : "image";
+
+            // 2. Gestione Dinamica della Cartella in base all'uploadType
+            // Se è "cover" va in image/covers, altrimenti segue il percorso standard per data
+            string subPath = uploadType.ToLower() == "cover"
+                ? Path.Combine(contentType, "covers")
+                : GenerateFolderPath(contentType, file.FileName);
 
             string? baseroot = _config["ExternalAssetsPath"];
-            string subPath = GenerateFolderPath(contentType, file.FileName);
             string fullPath = Path.Combine(baseroot, subPath);
 
-            if (!Directory.Exists(fullPath))
-            {
-                Directory.CreateDirectory(fullPath);
-            }
+            if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
 
+            // 3. Hash e Nome File
             string hashName = GenerateImageHashName(file.FileName + file.Length.ToString());
             string finalName = $"{hashName}{currentExtension}";
             string physicalSavePath = Path.Combine(fullPath, finalName);
 
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName); 
+            string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
+
+            // Generazione Alt Text
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName);
             string[] values = fileNameWithoutExt.Split(new[] { '/', '-', '_', '|', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string imageAlt = string.Join(" ", values);
 
-            string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
-
-            if (System.IO.File.Exists(physicalSavePath))
+            // 4. Salvataggio Fisico (se non esiste già)
+            if (!System.IO.File.Exists(physicalSavePath))
             {
-                // Se esiste già, non serve salvarlo di nuovo, restituiamo direttamente l'URL
-                return new JsonResult(new { url = publicUrl, alt = imageAlt, extension = currentExtension, success = true });
+                using (var stream = new FileStream(physicalSavePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
             }
 
-            using (var stream = new FileStream(physicalSavePath, FileMode.Create))
+            // 5. AGGIORNAMENTO LOGICA DB (Il cuore del cambio)
+            if (uploadType.ToLower() == "cover")
             {
-                await file.CopyToAsync(stream);
+                // Caso A: È la copertina dell'articolo
+                article.CoverImageUrl = publicUrl;
+                _context.Contents.Update(article);
             }
+            else
+            {
+                // Caso B: È un'immagine di sezione. La tracciamo nella tabella Media.
+                // Calcoliamo l'ordine di visualizzazione all'interno di QUELLA specifica sezione
+                int currentCountInSection = await _context.Media
+                    .Where(m => m.SectionId == sectionId)
+                    .CountAsync();
+
+                var nuovoMedia = new Media
+                {
+                    Url = publicUrl,
+                    Caption = imageAlt,
+                    Type = MediaType.Image,
+                    SectionId = sectionId, // ID della sezione reale passato dal JS
+                    Order = currentCountInSection + 1 // Contatore progressivo interno
+                };
+
+                await _context.Media.AddAsync(nuovoMedia);
+            }
+
+            await _context.SaveChangesAsync();
 
             return new JsonResult(new
             {
+                success = true,
                 url = publicUrl,
                 alt = imageAlt,
                 extension = currentExtension,
-                success = true
+                uploadType = uploadType
             });
-
         }
+
+        //public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int ArticleId)
+        //{
+
+        //    if (file == null || file.Length == 0)
+        //    {
+        //        return BadRequest(new { messaggio = "File vuoto" });
+        //    }
+
+        //    string[] fileExtensions = [".png", ".jpg", ".jpeg", ".webp", ".mp4"];
+        //    string currentExtension = Path.GetExtension(file.FileName).ToLower(); //Fix --> controllare mime type o magic bytes
+
+        //    if(!fileExtensions.Contains(currentExtension))
+        //    {
+        //        return BadRequest(new {messaggio = "Formato non supportato"});
+        //    }
+
+        //    string contentType = currentExtension switch
+        //    {
+        //        ".mp4" => "video",
+        //        _ => "image"
+        //    };
+
+        //    if (file.Length > 5 * 1024 * 1024)
+        //    {
+        //        return BadRequest(new { messaggio = "File troppo pesante" });
+        //    }
+
+        //    string? baseroot = _config["ExternalAssetsPath"];
+        //    string subPath = GenerateFolderPath(contentType, file.FileName);
+        //    string fullPath = Path.Combine(baseroot, subPath);
+
+        //    if (!Directory.Exists(fullPath))
+        //    {
+        //        Directory.CreateDirectory(fullPath);
+        //    }
+
+        //    string hashName = GenerateImageHashName(file.FileName + file.Length.ToString());
+        //    string finalName = $"{hashName}{currentExtension}";
+        //    string physicalSavePath = Path.Combine(fullPath, finalName);
+
+        //    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName); 
+        //    string[] values = fileNameWithoutExt.Split(new[] { '/', '-', '_', '|', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        //    string imageAlt = string.Join(" ", values);
+
+        //    string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
+
+        //    if (System.IO.File.Exists(physicalSavePath))
+        //    {
+        //        // Se esiste già, non serve salvarlo di nuovo, restituiamo direttamente l'URL
+        //        return new JsonResult(new { url = publicUrl, alt = imageAlt, extension = currentExtension, success = true });
+        //    }
+
+        //    using (var stream = new FileStream(physicalSavePath, FileMode.Create))
+        //    {
+        //        await file.CopyToAsync(stream);
+        //    }
+
+        //    return new JsonResult(new
+        //    {
+        //        url = publicUrl,
+        //        alt = imageAlt,
+        //        extension = currentExtension,
+        //        success = true
+        //    });
+
+        //}
 
         public string GenerateFolderPath(string category, string fileName)
         {
