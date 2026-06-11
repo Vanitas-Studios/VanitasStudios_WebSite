@@ -15,6 +15,10 @@ let sectionTaskQueue = [];
 let isProcessingQueue = false;
 
 
+// Variabili globali per Tag
+let debouncedSearch;
+let tagInput, suggestionsMenu, tagsContainer;
+
 // Funzione per ottenere il token antiforgery
 const getAntiforgeryToken = () => {
     return document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -25,6 +29,9 @@ function initMyEditor(config) {
     sidebarList = document.getElementById(config.sidebarId);
     articleId = config.articleId;
     articleLastModifiedFromServer = config.lastModified;
+    tagInput = document.getElementById(config.tagInput);
+    suggestionsMenu = document.getElementById(config.suggestionsMenu);
+    tagsContainer = document.getElementById(config.tagsContainer);
 
     // Ora attacchiamo gli eventi perché siamo sicuri che il DOM c'è
     setupEventListeners();
@@ -103,6 +110,25 @@ function setupEventListeners() {
             e.returnValue = "Ci sono modifiche non salvate sul server. Vuoi uscire comunque?";
         }
     });
+
+    debouncedSearch = debounce((query) => {
+        fetchTagSuggestions(query);
+    }, 300);
+
+    if (tagInput) {
+        //Evento input per tag search
+        tagInput.addEventListener("input", function () {
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                suggestionsMenu.style.display = "none";
+                return;
+            }
+
+            // Chiamata alla funzione debouncata
+            debouncedSearch(query);
+        });
+    }
 }
 
 function syncExistingIds() {
@@ -747,42 +773,21 @@ async function handleFileDrop(e) {
         try {
             updateSaveStatusIndicator("Caricamento media...", "saving");
 
-            const response = await fetch(`?handler=UploadMedia`, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
-            });
+            const result = await commitToServer("UploadMedia", formData);
 
-            if (!response.ok) throw new Error("Errore nel caricamento del file");
-
-            const result = await response.json();
-
-            if (result.success) {
-                // 5. TRASFORMAZIONE: Sostituiamo il widget temporaneo con il vero tag HTML definitivo
-                let finalMediaElement;
-                if (result.extension === ".mp4") {
-                    finalMediaElement = document.createElement("video");
-                    finalMediaElement.src = result.url;
-                    finalMediaElement.controls = true;
-                    finalMediaElement.className = "img-fluid rounded my-2";
-                    finalMediaElement.style.maxWidth = "100%";
-                } else {
-                    finalMediaElement = document.createElement("img");
-                    finalMediaElement.src = result.url;
-                    finalMediaElement.alt = result.alt || "immagine articolo";
-                    finalMediaElement.className = "img-fluid rounded my-2";
-                    finalMediaElement.style.maxWidth = "100%";
-                }
-
-                // Sostituzione nel DOM
-                mediaWrapper.replaceWith(finalMediaElement);
-                updateSaveStatusIndicator("Media caricato!", "success");
+            // Controlli la proprietà booleana definita nel tuo backend C#
+            if (result && result.success) {
+                // L'upload è andato a buon fine sul server!
+                const labelText = `[img alt="${result.alt || 'immagine'}" url="${result.url}"]`;
+                createMediaBlock(fileType, labelText, result.id, mediaWrapper, result.url);
+                updateSaveStatusIndicator("Media aggiunto!", "success");
             } else {
+                // Il server ha risposto, ma ha riscontrato un errore di validazione o un fallimento controllato
                 createMediaBlock(fileType, file.name, `temp-${Date.now()}`, mediaWrapper, null, true);
                 updateSaveStatusIndicator("Errore caricamento", "error");
             }
+
+
         } catch (err) {
             console.error("Errore critico upload drag&drop:", err);
             createMediaBlock(fileType, file.name, `temp-${Date.now()}`, mediaWrapper, null, true);
@@ -793,6 +798,51 @@ async function handleFileDrop(e) {
     // 6. Svegliamo l'autosave globale
     isDirty = true;
     triggerAutosave();
+}
+
+async function uploadArticleCover() {
+    const fileInput = document.getElementById("coverFileInput");
+    // Se non c'è l'input o l'utente ha annullato la selezione, usciamo subito
+    if (!fileInput || fileInput.files.length === 0) return;
+
+    const file = fileInput.files[0];
+
+    // Prepariamo il FormData con i parametri esatti richiesti dal C# unificato
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("articleId", articleId); // Variabile globale del tuo editor (es. ID dell'articolo corrente)
+    formData.append("uploadType", "cover");  // Diciamo al C# che questa è la copertina dell'articolo
+    // Nota: sectionId non serve qui, passerà automaticamente come null al server
+
+    updateSaveStatusIndicator("Caricamento copertina...", "saving");
+
+    try {
+        // Usiamo la tua commitToServer passando l'handler unificato "UploadMedia"
+        const result = await commitToServer("UploadMedia", formData);
+
+        if (result && result.success) {
+            const imgPreview = document.getElementById("coverPreview");
+            const placeholder = document.getElementById("coverPlaceholder");
+
+            // Aggiorniamo l'interfaccia con l'URL definitivo restituito dal server
+            imgPreview.src = result.url;
+
+            // Sistemiamo i display per mostrare l'immagine e nascondere il placeholder
+            placeholder.style.display = "none";
+            imgPreview.style.display = "block";
+
+            updateSaveStatusIndicator("Copertina salvata!", "success");
+        } else {
+            alert("Impossibile salvare la copertina. Controlla il file.");
+            updateSaveStatusIndicator("Errore copertina", "error");
+        }
+    } catch (error) {
+        console.error("Errore durante l'upload della copertina:", error);
+        updateSaveStatusIndicator("Errore critico", "error");
+    } finally {
+        // Resettiamo l'input del file così l'utente può ricaricare lo stesso file in caso di modifiche
+        fileInput.value = "";
+    }
 }
 
 function createMediaBlock(fileType, labelText, ID, existingMediaBlock = null, url = null, error = false) {
@@ -1121,5 +1171,123 @@ async function contentPreview() {
     }
     catch (error) {
         console.error("Errore durante il caricamento della preview:", error);
+    }
+}
+
+//Function for the tags search
+async function fetchTagSuggestions(query) {
+    try {
+        updateSaveStatusIndicator("Ricerca tag...", "saving");
+
+        const response = await fetch(`?handler=SearchTags&query=${encodeURIComponent(query)}&articleId=${articleId}`);
+        if (!response.ok) throw new Error("Errore di rete");
+
+        const tags = await response.json();
+        renderTagSuggestions(tags);
+    } catch (err) {
+        console.error("Errore ricerca tag:", err);
+    }
+}
+
+function renderTagSuggestions(tags) {
+    if (!suggestionsMenu) return; // Sicurezza extra per evitare il primo errore!
+    suggestionsMenu.innerHTML = "";
+
+    if (tags.length === 0) {
+        suggestionsMenu.style.display = "none";
+        return;
+    }
+
+    tags.forEach(tag => {
+        const li = document.createElement("li");
+        li.className = "dropdown-item cursor-pointer py-1";
+        li.textContent = tag.name;
+        li.setAttribute("data-id", tag.id);
+
+        li.addEventListener("click", () => addTagAssociation(tag.id, tag.name));
+        suggestionsMenu.appendChild(li);
+    });
+
+    suggestionsMenu.style.display = "block";
+}
+
+async function addTagAssociation(tagId, tagName) {
+    // Sicurezza: controlliamo se questo tag è già stato inserito visivamente nel DOM
+    // per evitare duplicati se l'utente clicca due volte di fila
+    const exists = tagsContainer.querySelector(`[data-tag-id="${tagId}"]`);
+    if (exists) {
+        if (suggestionsMenu) suggestionsMenu.style.display = "none";
+        if (tagInput) tagInput.value = "";
+        return;
+    }
+
+    // Prepariamo i dati per il server
+    const payload = {
+        articleId: articleId,
+        tagId: tagId
+    };
+
+    try {
+        updateSaveStatusIndicator("Associazione tag...", "saving");
+
+        // Mandiamo i dati all'handler C# (es. OnPostAddTag) usando il tuo commitToServer
+        // Se commitToServer si aspetta un oggetto JSON, lo gestirà autonomamente con stringify
+        const result = await commitToServer("AddTag", payload);
+
+        if (result && result.success) {
+            // 1. Creiamo l'elemento badge (la pillola)
+            const badge = document.createElement("span");
+            badge.className = "badge bg-secondary d-flex align-items-center gap-1 p-2";
+            badge.setAttribute("data-tag-id", tagId);
+            badge.innerHTML = `
+                ${tagName}
+                <span class="ms-1 fw-bold text-white-50" style="cursor: pointer; font-size: 1.1rem; line-height: 1;" onclick="removeTagBlock(this, ${tagId})">&times;</span>
+            `;
+
+            // 2. Appendiamo la pillola nel contenitore esterno all'editor
+            tagsContainer.appendChild(badge);
+
+            // 3. Puliamo l'interfaccia
+            if (tagInput) tagInput.value = "";
+            if (suggestionsMenu) suggestionsMenu.style.display = "none";
+
+            updateSaveStatusIndicator("Tag aggiunto!", "success");
+        } else {
+            alert(result.message || "Impossibile associare il tag.");
+            updateSaveStatusIndicator("Errore salvataggio tag", "error");
+        }
+    } catch (err) {
+        console.error("Errore durante l'associazione del tag:", err);
+        updateSaveStatusIndicator("Errore critico tag", "error");
+    }
+}
+
+async function removeTagBlock(buttonElement, tagId) {
+    // Identifichiamo il badge padre (lo <span>) partendo dall'icona cliccata
+    const badgeElement = buttonElement.closest(".badge");
+    if (!badgeElement) return;
+
+    const payload = {
+        articleId: articleId,
+        tagId: tagId
+    };
+
+    try {
+        updateSaveStatusIndicator("Rimozione tag...", "saving");
+
+        // Mandiamo la richiesta di cancellazione al server (es. OnPostRemoveTag)
+        const result = await commitToServer("RemoveTag", payload);
+
+        if (result && result.success) {
+            // Rimuoviamo fisicamente la pillola dal div dei tag selezionati
+            badgeElement.remove();
+            updateSaveStatusIndicator("Tag rimosso!", "success");
+        } else {
+            alert("Impossibile rimuovere il tag.");
+            updateSaveStatusIndicator("Errore rimozione tag", "error");
+        }
+    } catch (err) {
+        console.error("Errore durante la rimozione del tag:", err);
+        updateSaveStatusIndicator("Errore critico rimozione", "error");
     }
 }

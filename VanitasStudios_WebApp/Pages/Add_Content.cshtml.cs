@@ -58,6 +58,12 @@ namespace VanitasStudios_WebApp.Pages
             public int ArticleId { get; set; }
         }
 
+        public class TagActionDto
+        {
+            public int ArticleId { get; set; }
+            public int TagId { get; set; }
+        }
+
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
@@ -116,6 +122,25 @@ namespace VanitasStudios_WebApp.Pages
                 // Ora reindirizziamo alla stessa pagina ma con l'ID appena creato
                 // Questo evita che l'utente crei mille articoli vuoti premendo F5
                 return RedirectToPage(new { id = CurrentContent.Id });
+            }
+
+            // Inserisci questo pezzetto di codice temporaneo dentro l'OnGet o OnGetAsync della pagina
+            if (!_context.Tags.Any())
+            {
+                var tagDiTest = new List<Tag>
+                    {
+                        new Tag { Name = "Calisthenics", CategoryGroup = "Allenamento" },
+                        new Tag { Name = "Programmazione", CategoryGroup = "Tech" },
+                        new Tag { Name = "C#", CategoryGroup = "Tech" },
+                        new Tag { Name = "Game Development", CategoryGroup = "Design" },
+                        new Tag { Name = "Unity", CategoryGroup = "Design" },
+                        new Tag { Name = "Minimalism", CategoryGroup = "Art" },
+                        new Tag { Name = "Dark Fantasy", CategoryGroup = "Scrittura" },
+                        new Tag { Name = "Web Design", CategoryGroup = "Tech" }
+                    };
+
+                _context.Tags.AddRange(tagDiTest);
+                await _context.SaveChangesAsync();
             }
 
             return Page();
@@ -794,6 +819,104 @@ namespace VanitasStudios_WebApp.Pages
                 htmlContent = htmlBuilder.ToString(),
                 index = orderIndex
             });
+        }
+
+        public async Task<IActionResult> OnGetSearchTagsAsync(string query, int articleId)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new JsonResult(new List<object>());
+            }
+
+            string cleanQuery = query.Trim().ToLower();
+
+            // 1. Prendiamo gli ID dei tag già associati a questo articolo per escluderli
+            var excludedTagIds = await _context.ContentTags
+                .Where(ct => ct.ContentId == articleId)
+                .Select(ct => ct.TagId)
+                .ToListAsync();
+
+            // 2. Cerchiamo i tag corrispondenti escludendo i duplicati
+            var tags = await _context.Tags
+                .Where(t => t.Name.ToLower().Contains(cleanQuery) && !excludedTagIds.Contains(t.Id))
+                .OrderBy(t => t.Name)
+                .Take(10) // Limite massimo di efficienza
+                .Select(t => new { id = t.Id, name = t.Name }) // Payload leggerissimo
+                .ToListAsync();
+
+            return new JsonResult(tags);
+        }
+
+        // 2. HANDLER: Aggiunta associazione Tag
+        [HttpPost]
+        public async Task<IActionResult> OnPostAddTagAsync([FromBody] TagActionDto data)
+        {
+            if (data == null || data.ArticleId <= 0 || data.TagId <= 0)
+            {
+                return new JsonResult(new { success = false, message = "Dati della richiesta non validi." });
+            }
+
+            try
+            {
+                // 1. Verifichiamo se l'associazione esiste già
+                bool alreadyExists = await _context.ContentTags
+                    .AnyAsync(ct => ct.ContentId == data.ArticleId && ct.TagId == data.TagId);
+
+                if (alreadyExists)
+                {
+                    return new JsonResult(new { success = true, message = "Tag già associato." });
+                }
+
+                // 2. Creiamo l'oggetto valorizzando TUTTI i campi richiesti, incluso il Weight
+                var newContentTag = new ContentTag
+                {
+                    ContentId = data.ArticleId,
+                    TagId = data.TagId,
+                    Weight = 1.0f // Impostiamo il peso iniziale (fondamentale per l'albero di decisione dell'IA)
+                };
+
+                // 3. Passiamo la variabile corretta al metodo Add
+                _context.ContentTags.Add(newContentTag);
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                // Se si pianta ancora, puoi mettere un breakpoint qui per leggere ex.InnerException
+                return new JsonResult(new { success = false, message = "Errore durante il salvataggio sul database." });
+            }
+        }
+
+        // 3. HANDLER: Rimozione associazione Tag
+        public async Task<IActionResult> OnPostRemoveTagAsync([FromBody] TagActionDto data)
+        {
+            if (data == null || data.ArticleId <= 0 || data.TagId <= 0)
+            {
+                return new JsonResult(new { success = false, message = "Dati della richiesta non validi." });
+            }
+
+            try
+            {
+                // Cerchiamo la riga specifica nella tabella di giunzione
+                var contentTagToRemove = await _context.ContentTags
+                    .FirstOrDefaultAsync(ct => ct.ContentId == data.ArticleId && ct.TagId == data.TagId);
+
+                if (contentTagToRemove == null)
+                {
+                    // Se non c'è già, per il client è comunque un successo (idempotenza)
+                    return new JsonResult(new { success = true });
+                }
+
+                _context.ContentTags.Remove(contentTagToRemove);
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = "Errore durante la rimozione dal database." });
+            }
         }
 
     }
