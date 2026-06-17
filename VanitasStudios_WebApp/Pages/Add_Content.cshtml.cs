@@ -63,6 +63,11 @@ namespace VanitasStudios_WebApp.Pages
             public int ArticleId { get; set; }
             public int TagId { get; set; }
         }
+        public class StatusActionDto
+        {
+            public int ArticleId { get; set; }
+            public string Action { get; set; } = null!;
+        }
 
         public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
         {
@@ -916,6 +921,73 @@ namespace VanitasStudios_WebApp.Pages
             catch (Exception ex)
             {
                 return new JsonResult(new { success = false, message = "Errore durante la rimozione dal database." });
+            }
+        }
+
+        public async Task<IActionResult> OnPostChangeStatusAsync([FromBody] StatusActionDto data)
+        {
+            if (data == null || data.ArticleId <= 0 || string.IsNullOrEmpty(data.Action))
+            {
+                return new JsonResult(new { success = false, message = "Dati della richiesta non validi." });
+            }
+
+            try
+            {
+                // CONTROLLO DI SICUREZZA 1: Esistenza dell'articolo
+                var article = await _context.Contents
+                    .FirstOrDefaultAsync(c => c.Id == data.ArticleId);
+
+                if (article == null)
+                {
+                    return new JsonResult(new { success = false, message = "Articolo non trovato." });
+                }
+
+                // CONTROLLO DI SICUREZZA 2: Integrità del contenuto prima della pubblicazione
+                // Evitiamo che venga messo online un articolo senza titolo o palesemente incompleto
+                if ((data.Action == "Publish" || data.Action == "Update") && string.IsNullOrWhiteSpace(article.Title))
+                {
+                    return new JsonResult(new { success = false, message = "Impossibile pubblicare un articolo senza titolo." });
+                }
+
+                // 3. GESTIONE DELLE AZIONI LOGICHE
+                switch (data.Action)
+                {
+                    case "Publish":
+                        // Passa da Bozza a Pubblicato
+                        article.PublishState = PublishState.Pubblico;
+
+                        // Impostiamo la data di pubblicazione solo se non è mai stato pubblicato prima
+                        if (article.UpdatedAt == null)
+                        {
+                            article.UpdatedAt = DateTime.UtcNow; // O DateTime.Now a seconda di come gestisci i fusi orari
+                        }
+                        break;
+
+                    case "Update":
+                        // Se è già pubblicato, l'azione di aggiornamento conferma lo stato
+                        // e aggiorna la data di ultima modifica (se hai quel campo)
+                        article.PublishState = PublishState.Pubblico;
+                        article.UpdatedAt = DateTime.UtcNow;
+                        break;
+
+                    case "ToDraft":
+                        // Riporta l'articolo in bozza (oscurandolo dal frontend pubblico)
+                        article.PublishState = PublishState.Bozza;
+                        break;
+
+                    default:
+                        return new JsonResult(new { success = false, message = "Azione non riconosciuta." });
+                }
+
+                // 4. SALVATAGGIO FINALE
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                // Qui puoi loggare l'errore specifico (es. ex.Message)
+                return new JsonResult(new { success = false, message = "Errore critico durante l'aggiornamento dello stato." });
             }
         }
 

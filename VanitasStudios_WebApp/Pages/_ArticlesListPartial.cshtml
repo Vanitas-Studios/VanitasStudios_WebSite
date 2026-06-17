@@ -1,0 +1,101 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="animate-fade-in">
+    <!-- Intestazione Sezione -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0">Gestione Contenuti</h2>
+            <p class="text-muted small m-0">Modifica, pubblica o rimuovi gli articoli di Vanitas Studios.</p>
+        </div>
+        <!-- Bottone che punta alla pagina dell'editor che abbiamo creato -->
+        <a href="/Admin/Content/Add_Content" class="btn btn-dark d-flex align-items-center gap-2">
+            <i class="bi bi-plus-lg"></i> Scrivi Nuovo
+        </a>
+    </div>
+
+    <!-- Filtri Rapidi (Opzionali, molto utili per la UX) -->
+    <div class="card border-0 bg-light p-3 mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <input type="text" class="form-control form-control-sm" placeholder="Cerca articolo per titolo...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select form-select-sm">
+                    <option value="">Tutti gli stati</option>
+                    <option value="Published">Pubblicati</option>
+                    <option value="Draft">Bozze</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABELLA DEI CONTENUTI -->
+    <div class="card border-0 bg-light p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-3" style="width: 45%;">Titolo Articolo</th>
+                        <th style="width: 15%;">Stato</th>
+                        <th style="width: 20%;">Data</th>
+                        <th class="text-end pe-3" style="width: 20%;">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Riga Esempio 1: Articolo Pubblicato -->
+                    <tr>
+                        <td class="ps-3">
+                            <div class="fw-bold text-dark">Il canone del Grimdark moderno</div>
+                            <span class="text-muted x-small d-block" style="font-size: 0.75rem;">Tag: Narrative, Cosmic Horror</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Pubblicato</span>
+                        </td>
+                        <td>
+                            <div class="small">12/05/2026</div>
+                            <span class="text-muted x-small" style="font-size: 0.75rem;">Ultima modifica: Oggi</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="/Admin/Content/Add_Content?id=1" class="btn btn-outline-secondary" title="Modifica">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" title="Elimina" onclick="deleteArticleConfirm(1)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Riga Esempio 2: Articolo in Bozza -->
+                    <tr>
+                        <td class="ps-3">
+                            <div class="fw-bold text-dark">Calisthenics: programmazione delle zavorre nel Planche training</div>
+                            <span class="text-muted x-small d-block" style="font-size: 0.75rem;">Tag: Allenamento, Strength</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Bozza</span>
+                        </td>
+                        <td>
+                            <div class="small">01/06/2026</div>
+                            <span class="text-muted x-small" style="font-size: 0.75rem;">Non ancora online</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="/Admin/Content/Add_Content?id=2" class="btn btn-outline-secondary" title="Modifica">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" title="Elimina" onclick="deleteArticleConfirm(2)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

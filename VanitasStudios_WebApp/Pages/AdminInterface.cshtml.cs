@@ -15,14 +15,25 @@ namespace VanitasStudios_WebApp.Pages
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        public List<UserVM> Users { get; set; }
 
-        public class UserVM
+        public class DashboardViewModel
+        {
+            public int TotalArticlesOnline { get; set; }
+            public int TotalArticlesDraft { get; set; }
+            public int TotalViews28Days { get; set; }
+            public string AverageReadingTime { get; set; } = "0m 0s";
+
+            // Lista dei 3 articoli più visti
+            public List<TopArticleDto> TopArticles { get; set; } = new();
+        }
+
+        public class TopArticleDto
         {
             public int Id { get; set; }
-            public string UserName { get; set; } = null!;
-            public string Email { get; set; } = null!;
-            public string Role { get; set; } = null!;
+            public string Title { get; set; } = null!;
+            public int Views { get; set; }
+            public DateTime? PublishedAt { get; set; }
+            public string TagsInline { get; set; } = "";
         }
 
         public AdminInterfaceModel(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
@@ -30,43 +41,70 @@ namespace VanitasStudios_WebApp.Pages
             _context = dbContext;
             _userManager = userManager;
         }
-        public async Task OnGetAsync()
+        // Al primo caricamento restituisce la struttura fissa
+        public void OnGet()
         {
-            var users = await _userManager.Users
-                .Take(20)
-                .ToListAsync();
-
-            foreach(var user in users)
-            {
-                var roles = await _userManager.GetRolesAsync(user);
-                Users.Add(new UserVM
-                {
-                    Id = user.Id,
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    Role = roles.FirstOrDefault() ?? "No Role"
-                });
-            }
         }
 
-        public async Task<IActionResult> OnPostPromoteAsync(int userId)
+        // Handler per la vista "Dashboard Generale"
+        public async Task<PartialViewResult> OnGetGeneralDashboardAsync()
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user != null)
+            var viewModel = new DashboardViewModel();
+
+            try
             {
-                var roles = await _userManager.GetRolesAsync(user);
-                if (roles.Contains("User"))
-                {
-                    await _userManager.RemoveFromRoleAsync(user, "User");
-                    await _userManager.AddToRoleAsync(user, "Editor");
-                }
-                else if (roles.Contains("Editor"))
-                {
-                    await _userManager.RemoveFromRoleAsync(user, "Editor");
-                    await _userManager.AddToRoleAsync(user, "Admin");
-                }
+                // 1. Conteggio articoli divisi per Stato
+                viewModel.TotalArticlesOnline = await _context.Contents
+                    .CountAsync(c => c.PublishState == PublishState.Pubblico);
+
+                viewModel.TotalArticlesDraft = await _context.Contents
+                    .CountAsync(c => c.PublishState == PublishState.Bozza);
+
+                // 2. Calcolo metriche fittizie o reali (es. se hai una colonna Views)
+                viewModel.TotalViews28Days = await _context.Contents
+                    .Where(c => c.PublishState == PublishState.Pubblico)
+                    .SumAsync(c => c.Views); // Assumendo che tu abbia un campo Views
+
+                viewModel.AverageReadingTime = "3m 45s"; // Gestibile in futuro con logiche di analytics
+
+                // 3. Query per i 3 articoli più performanti con i loro Tag
+                viewModel.TopArticles = await _context.Contents
+                    .Where(c => c.PublishState == PublishState.Pubblico)
+                    .OrderByDescending(c => c.Views)
+                    .Take(3)
+                    .Select(c => new TopArticleDto
+                    {
+                        Id = c.Id,
+                        Title = c.Title,
+                        Views = c.Views,
+                        PublishedAt = c.PublishedAt,
+                        // Uniamo i tag in una stringa singola per la visualizzazione rapida
+                        TagsInline = string.Join(", ", c.ContentTags.Select(ct => ct.Tag.Name))
+                    })
+                    .ToListAsync();
             }
-            return RedirectToPage();
+            catch (Exception ex)
+            {
+                // Logga l'errore se necessario
+                // Il viewModel vuoto eviterà comunque il crash della pagina
+            }
+
+            // Passiamo il modello popolato alla vista parziale
+            return Partial("_GeneralDashboardPartial", viewModel);
         }
+
+        // Handler per la vista "Lista Articoli"
+        public PartialViewResult OnGetArticlesList()
+        {
+            return Partial("_ArticlesListPartial");
+        }
+
+        // Handler per la vista "Gestione Tag"
+        public PartialViewResult OnGetTagsManagement()
+        {
+            return Partial("_TagsManagementPartial");
+        }
+
+
     }
 }

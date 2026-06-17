@@ -1,4 +1,5 @@
 ﻿@page
+@using VanitasStudios_WebApp.Models
 @model VanitasStudios_WebApp.Pages.Add_ContentModel
 @{
     ViewData["Title"] = "Home page";
@@ -119,6 +120,38 @@
                 </ul>
             </div>
         </div>
+    </div>
+
+    <div class="publish-zone p-3 border rounded bg-light mb-3">
+        <h6 class="fw-bold">Stato Contenuto</h6>
+        <div class="d-flex align-items-center gap-2 mb-3">
+            @if (Model.CurrentContent.PublishState == PublishState.Pubblico)
+            {
+                <span class="badge bg-success">Pubblicato il @Model.CurrentContent.UpdatedAt?.ToString("dd/MM/yyyy")</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark">Bozza (Autosalvato)</span>
+            }
+        </div>
+
+        @if (Model.CurrentContent.PublishState == PublishState.Bozza)
+        {
+            <button type="button" class="btn btn-primary w-100" onclick="changeContentStatus('Publish')">
+                Metti Online
+            </button>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-2">
+                <button type="button" class="btn btn-success w-100" onclick="changeContentStatus('Update')">
+                    Aggiorna Articolo
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="changeContentStatus('ToDraft')">
+                    Riporta a Bozza (Nascondi)
+                </button>
+            </div>
+        }
     </div>
 
 

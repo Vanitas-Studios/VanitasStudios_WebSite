@@ -1291,3 +1291,25 @@ async function removeTagBlock(buttonElement, tagId) {
         updateSaveStatusIndicator("Errore critico rimozione", "error");
     }
 }
+
+async function changeContentStatus(action) {
+    try {
+        updateSaveStatusIndicator("Cambio stato in corso...", "saving");
+
+        // Sfruttiamo il tuo helper commitToServer
+        const result = await commitToServer("ChangeStatus", {
+            articleId: articleId,
+            action: action
+        });
+
+        if (result && result.success) {
+            updateSaveStatusIndicator("Stato aggiornato!", "success");
+            // Ricarichiamo la pagina per aggiornare i bottoni e i badge Razor
+            window.location.reload();
+        } else {
+            alert("Errore durante il cambio di stato.");
+        }
+    } catch (err) {
+        console.error("Errore pubblicazione:", err);
+    }
+}

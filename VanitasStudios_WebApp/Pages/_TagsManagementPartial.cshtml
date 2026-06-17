@@ -1,0 +1,90 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="animate-fade-in">
+    <div class="mb-4">
+        <h2 class="fw-bold m-0">Tassonomia & Tag</h2>
+        <p class="text-muted small m-0">Organizza le categorie e le etichette per l'indicizzazione dei contenuti e l'algoritmo dell'IA.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 bg-light p-3 sticky-md-top" style="top: 20px;">
+                <h5 class="fw-bold mb-3 small text-uppercase text-muted">Nuovo Tag</h5>
+                <form id="create-tag-form" onsubmit="event.preventDefault();">
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nome Tag</label>
+                        <input type="text" class="form-control form-control-sm" placeholder="es. C#, Dark Fantasy...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Gruppo Categoria</label>
+                        <select class="form-select form-select-sm">
+                            <option value="">Seleziona gruppo...</option>
+                            <option value="Tech">Tech (Programmazione/DB)</option>
+                            <option value="Design">Design (Game Dev/Web)</option>
+                            <option value="Scrittura">Scrittura (Narrativa/Grimdark)</option>
+                            <option value="Allenamento">Allenamento (Calisthenics)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark btn-sm w-100">
+                        Crea Etichetta
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 bg-light p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 bg-white">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-3" style="width: 40%;">Nome Tag</th>
+                                <th style="width: 30%;">Gruppo</th>
+                                <th class="text-center" style="width: 15%;">Uso</th>
+                                <th class="text-end pe-3" style="width: 15%;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-3 fw-bold text-dark">Calisthenics</td>
+                                <td><span class="badge bg-info-subtle text-info border border-info-subtle">Allenamento</span></td>
+                                <td class="text-center small fw-bold">12 articoli</td>
+                                <td class="text-end pe-3">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTagConfirm(1)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-3 fw-bold text-dark">Dark Fantasy</td>
+                                <td><span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="color: #6f42c1; border-color: #e5dbff; background-color: #f3f0ff;">Scrittura</span></td>
+                                <td class="text-center small fw-bold">8 articoli</td>
+                                <td class="text-end pe-3">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTagConfirm(2)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-3 fw-bold text-dark">C#</td>
+                                <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">Tech</span></td>
+                                <td class="text-center small fw-bold">5 articoli</td>
+                                <td class="text-end pe-3">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTagConfirm(3)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

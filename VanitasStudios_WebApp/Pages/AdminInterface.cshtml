@@ -2,37 +2,52 @@
 @model VanitasStudios_WebApp.Pages.AdminInterfaceModel
 @{
 }
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th scope="col">Id</th>
-            <th scope="col">Username</th>
-            <th scope="col">Email</th>
-            <th scope="col">Role</th>
-            <th scope="col">#</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model.Users)
-        {
-            <tr>
-                <td>@user.Id</td>
-                <td>@user.UserName</td>
-                <td>@user.Email</td>
-                <td>
-                    <span class="badge @(user.Role == "admin" ? "bg-danger" : "bg-info")">
-                        @user.Role
-                    </span>
-                </td>
-                <td>
-                    @if(user.Role != "admin")
-                    {
-                        <form method="post" asp-page-handler="Promote" asp-route-id="@user.Id" onsubmit="return confirm('Are you sure you want to promote this user?');">
-                            <button type="submit" class="btn btn-sm btn-info">Promote</button>
-                        </form>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-3 col-lg-2 bg-dark min-vh-100 text-white p-3">
+            <h5 class="fw-bold mb-4 text-uppercase tracking-wider">Vanitas Admin</h5>
+            <ul class="nav flex-column gap-2" id="admin-menu">
+                <li class="nav-item">
+                    <a class="nav-link text-white active cursor-pointer" data-target-handler="GeneralDashboard">
+                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 cursor-pointer" data-target-handler="ArticlesList">
+                        <i class="bi bi-file-earmark-richtext me-2"></i> Articoli
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 cursor-pointer" data-target-handler="TagsManagement">
+                        <i class="bi bi-tags me-2"></i> Gestione Tag
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <div id="main-content-container">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Caricamento...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/js/admin_router.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inizializziamo il router con lo stesso approccio dell'editor
+            VanitasAdminRouter.init({
+                menuContainerId: "admin-menu",
+                contentContainerId: "main-content-container",
+                defaultHandler: "GeneralDashboard"
+            });
+        });
+    </script>
+}
