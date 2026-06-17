@@ -49,48 +49,48 @@ namespace VanitasStudios_WebApp.Pages
         // Handler per la vista "Dashboard Generale"
         public async Task<PartialViewResult> OnGetGeneralDashboardAsync()
         {
-            var viewModel = new DashboardViewModel();
+            //var viewModel = new DashboardViewModel();
 
-            try
-            {
-                // 1. Conteggio articoli divisi per Stato
-                viewModel.TotalArticlesOnline = await _context.Contents
-                    .CountAsync(c => c.PublishState == PublishState.Pubblico);
+            //try
+            //{
+            //    // 1. Conteggio articoli divisi per Stato
+            //    viewModel.TotalArticlesOnline = await _context.Contents
+            //        .CountAsync(c => c.PublishState == PublishState.Pubblico);
 
-                viewModel.TotalArticlesDraft = await _context.Contents
-                    .CountAsync(c => c.PublishState == PublishState.Bozza);
+            //    viewModel.TotalArticlesDraft = await _context.Contents
+            //        .CountAsync(c => c.PublishState == PublishState.Bozza);
 
-                // 2. Calcolo metriche fittizie o reali (es. se hai una colonna Views)
-                viewModel.TotalViews28Days = await _context.Contents
-                    .Where(c => c.PublishState == PublishState.Pubblico)
-                    .SumAsync(c => c.Views); // Assumendo che tu abbia un campo Views
+            //    // 2. Calcolo metriche fittizie o reali (es. se hai una colonna Views)
+            //    viewModel.TotalViews28Days = await _context.Contents
+            //        .Where(c => c.PublishState == PublishState.Pubblico)
+            //        .SumAsync(c => c.Views); // Assumendo che tu abbia un campo Views
 
-                viewModel.AverageReadingTime = "3m 45s"; // Gestibile in futuro con logiche di analytics
+            //    viewModel.AverageReadingTime = "3m 45s"; // Gestibile in futuro con logiche di analytics
 
-                // 3. Query per i 3 articoli più performanti con i loro Tag
-                viewModel.TopArticles = await _context.Contents
-                    .Where(c => c.PublishState == PublishState.Pubblico)
-                    .OrderByDescending(c => c.Views)
-                    .Take(3)
-                    .Select(c => new TopArticleDto
-                    {
-                        Id = c.Id,
-                        Title = c.Title,
-                        Views = c.Views,
-                        PublishedAt = c.PublishedAt,
-                        // Uniamo i tag in una stringa singola per la visualizzazione rapida
-                        TagsInline = string.Join(", ", c.ContentTags.Select(ct => ct.Tag.Name))
-                    })
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                // Logga l'errore se necessario
-                // Il viewModel vuoto eviterà comunque il crash della pagina
-            }
+            //    // 3. Query per i 3 articoli più performanti con i loro Tag
+            //    viewModel.TopArticles = await _context.Contents
+            //        .Where(c => c.PublishState == PublishState.Pubblico)
+            //        .OrderByDescending(c => c.Views)
+            //        .Take(3)
+            //        .Select(c => new TopArticleDto
+            //        {
+            //            Id = c.Id,
+            //            Title = c.Title,
+            //            Views = c.Views,
+            //            PublishedAt = c.PublishedAt,
+            //            // Uniamo i tag in una stringa singola per la visualizzazione rapida
+            //            TagsInline = string.Join(", ", c.ContentTags.Select(ct => ct.Tag.Name))
+            //        })
+            //        .ToListAsync();
+            //}
+            //catch (Exception ex)
+            //{
+            //    // Logga l'errore se necessario
+            //    // Il viewModel vuoto eviterà comunque il crash della pagina
+            //}
 
-            // Passiamo il modello popolato alla vista parziale
-            return Partial("_GeneralDashboardPartial", viewModel);
+            //// Passiamo il modello popolato alla vista parziale
+            return Partial("_GeneralDashboardPartial");
         }
 
         // Handler per la vista "Lista Articoli"

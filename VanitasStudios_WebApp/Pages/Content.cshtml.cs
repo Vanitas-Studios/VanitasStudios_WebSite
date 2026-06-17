@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using VanitasStudios_WebApp.Data;
 using VanitasStudios_WebApp.Models;
+using VanitasStudios_WebApp.Service;
 
 namespace VanitasStudios_WebApp.Pages
 {
@@ -48,5 +49,6 @@ namespace VanitasStudios_WebApp.Pages
 
             return Page();
         }
+
     }
 }

@@ -1,8 +1,8 @@
 ﻿@page
 @model VanitasStudios_WebApp.Pages.BlogModel
 @{
+    ViewData["Title"] = "Critical Essay - Archive";
 }
-
 
 <section class="hero-blog">
     <div class="blog-container">
@@ -18,38 +18,85 @@
 
 <section class="blog-archive">
     <div class="archive-container">
+        
         <div class="header-archive">
             <h3>Last Fragments</h3>
-            <form class="archive-search" method="get">
+            
+            <div class="archive-search position-relative">
                 <div class="input-group">
-                    <input type="search" class="form-control bg-transparent text-white" asp-for="SearchQuery" />
-                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    <input type="search" id="main-search-input" class="form-control bg-transparent text-white" placeholder="Cerca un frammento o un tag..." autocomplete="off" />
+                    <button class="btn btn-outline-secondary" type="button" id="btn-execute-search">Search</button>
                 </div>
-                <div class="tag-area">
-                    <button class="btn btn-outline-secondary" type="submit">Filter</button>
-                    @foreach (var tag in Model.Tags)
+                
+                <div id="search-autocomplete-box" class="dropdown-menu w-100 shadow mt-1 p-2 bg-dark border-secondary d-none">
+                    <h6 class="dropdown-header text-uppercase text-muted p-1" style="font-size: 0.75rem;">Tag Suggeriti</h6>
+                    <div id="autocomplete-suggestions-list">
+                        </div>
+                </div>
+
+                <div id="akinator-suggestion-box" class="mt-2 px-1 d-none">
+                    <span class="text-muted small">Forse cercavi contenuti legati a:</span>
+                    <a href="#" id="akinator-next-tag-link" class="text-decoration-none ms-1 fw-bold" data-tag-id="" style="color: #bc9cff;">
+                        #NomeTag
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-secondary my-4" />
+
+        <div id="netflix-explorer-section">
+            
+            <div class="category-row mb-5">
+                <h4 class="category-title mb-3 text-white">#Chronicles_Latest</h4>
+                <div class="d-flex flex-nowrap overflow-auto g-3 pb-2 hidden-scrollbar" style="gap: 1.5rem;">
+                    @foreach (var content in Model.LatestContents)
                     {
-                        <input type="checkbox" name="SelectedTagIds" value="@tag.Id" id="tag-@tag.Id"
-                               @(Model.SelectedTagIds.Contains(tag.Id) ? "checked" : "") />
-                        <label for="tag-@tag.Id">@tag.Name</label>
+                        <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
+                            <a asp-page="/Content" asp-route-id="@content.Id" class="text-decoration-none text-white">
+                                <img src="..." class="card-img-top" alt="...">
+                                <div class="card-body">
+                                    <h3 class="card-title h5">@content.Title</h3>
+                                    <p class="card-text text-muted small">@content.Description</p>
+                                    <span class="text-secondary" style="font-size: 0.8rem;">@content.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </a>
+                        </div>
                     }
                 </div>
-            </form>
-        </div>
-        <div class="archive-list">
-            @foreach (var content in Model.Contents)
+            </div>
+
+            @foreach (var categoryGroup in Model.CategorizedContents)
             {
-                <div class="card" style="width: 18rem;">
-                    <a asp-page="/Content" asp-route-id="@content.Id">
-                        <img src="..." class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h3 class="card-title">@content.Title</h3>
-                            <p class="card-text">@content.Description</p>
-                            <span>@content.CreatedAt</span>
-                        </div>
-                    </a>
+                <div class="category-row mb-5">
+                    <h4 class="category-title mb-3 text-white">#Category_@categoryGroup.Key</h4>
+                    <div class="d-flex flex-nowrap overflow-auto g-3 pb-2 hidden-scrollbar" style="gap: 1.5rem;">
+                        @foreach (var content in categoryGroup.Value)
+                        {
+                            <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
+                                <a asp-page="/Content" asp-route-id="@content.Id" class="text-decoration-none text-white">
+                                    <img src="..." class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <h3 class="card-title h5">@content.Title</h3>
+                                        <p class="card-text text-muted small">@content.Description</p>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
                 </div>
             }
         </div>
+
+        <div id="algo-results-section" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="text-white m-0">Dissected Results</h4>
+                <button id="btn-clear-search" class="btn btn-sm btn-outline-danger">Reset Filters</button>
+            </div>
+            
+            <div id="results-grid" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+                </div>
+        </div>
+
     </div>
 </section>

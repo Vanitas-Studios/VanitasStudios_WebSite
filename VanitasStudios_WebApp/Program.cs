@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using VanitasStudios_WebApp.Data;
 using VanitasStudios_WebApp.Models;
+using VanitasStudios_WebApp.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options => {
 .AddDefaultUI()
 .AddDefaultTokenProviders();
 builder.Services.AddRazorPages();
+// Registriamo il servizio di ricerca (Scoped significa che vive per la durata della richiesta HTTP)
+builder.Services.AddScoped<IAkinatorSearchService, AkinatorSearchService>();
 
 var app = builder.Build();
 
