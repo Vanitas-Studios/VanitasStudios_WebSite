@@ -497,3 +497,9 @@ section.hero-blog {
     padding: 15px;
     /* ... il resto dei tuoi stili per il bordo, background, ecc. ... */
 }
+#search-autocomplete-box.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 9999 !important; /* Lo porta sopra qualsiasi carosello o sfondo */
+}

@@ -100,3 +100,26 @@
 
     </div>
 </section>
+
+@section Scripts {
+    <script src="~/js/search-engine.js" asp-append-version="true"></script>
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function() {
+            initMyEditor({
+                searchInput : "main-search-input",
+                autocompleteBox : "search-autocomplete-box",
+                suggestionsList : "autocomplete-suggestions-list",
+                akinatorBox : "akinator-suggestion-box",
+                akinatorLink : "akinator-next-tag-link",
+                btnSearch : "btn-execute-search",
+                btnReset : "btn-clear-search",
+
+                netflixSection : "netflix-explorer-section",
+                algoSection : "algo-results-section",
+                resultsGrid : "results-grid"
+            });
+        });
+    </script>
+}

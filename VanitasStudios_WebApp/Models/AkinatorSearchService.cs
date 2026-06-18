@@ -15,20 +15,28 @@ namespace VanitasStudios_WebApp.Models
 
         public async Task<List<AutocompleteTagDto>> GetTagSuggestionsAsync(string term, int maxSuggestions = 5)
         {
-            if (string.IsNullOrEmpty(term) || term.Length < 1)
+            if (string.IsNullOrEmpty(term))
                 return new List<AutocompleteTagDto>();
 
-            return await _context.StatisticalWeights
-                .Where(sw => sw.Tag.Name.StartsWith(term) ||
-                             sw.Tag.Synonyms.Any(s => s.SynonymName.StartsWith(term)))
-                .GroupBy(sw => new { sw.TagId, sw.Tag.Name, sw.Tag.CategoryGroup })
-                .Select(g => new AutocompleteTagDto
+            var lowerTerm = term.ToLower();
+
+            return await _context.Tags
+                // 1. Cerchiamo direttamente nella tabella dei Tag (e opzionalmente nei sinonimi se inclusi)
+                .Where(t => t.Name.ToLower().Contains(lowerTerm) ||
+                            t.Synonyms.Any(s => s.SynonymName.ToLower().Contains(lowerTerm)))
+                .Select(t => new AutocompleteTagDto
                 {
-                    TagId = g.Key.TagId,
-                    TagName = g.Key.Name,
-                    Category = g.Key.CategoryGroup,
-                    MaxArticleWeight = g.Max(sw => sw.PopularityWeight)
+                    TagId = t.Id,
+                    TagName = t.Name,
+                    Category = t.CategoryGroup,
+
+                    // 2. Se ci sono pesi statistici prendiamo il Max, altrimenti se la tabella è vuota ritorniamo 0
+                    MaxArticleWeight = _context.StatisticalWeights
+                                        .Where(sw => sw.TagId == t.Id)
+                                        .Select(sw => (int?)sw.PopularityWeight)
+                                        .Max() ?? 0
                 })
+                // 3. Ordiniamo per popolarità (i tag più usati scalano la classifica dell'autocomplete)
                 .OrderByDescending(t => t.MaxArticleWeight)
                 .Take(maxSuggestions)
                 .ToListAsync();
