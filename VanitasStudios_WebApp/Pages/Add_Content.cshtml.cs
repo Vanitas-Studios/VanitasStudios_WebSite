@@ -30,6 +30,7 @@ namespace VanitasStudios_WebApp.Pages
         public class EditorSavePayload
         {
             public int ArticleId { get; set; }
+            public string Title { get; set; }
             public List<SectionViewModel>? Sections { get; set; }
         }
 
@@ -309,6 +310,15 @@ namespace VanitasStudios_WebApp.Pages
                     return new JsonResult(new { success = false, message = "Article not Found" });
                 }
 
+                if (!string.IsNullOrWhiteSpace(payload.Title))
+                {
+                    article.Title = payload.Title.Trim();
+                }
+                else if (string.IsNullOrWhiteSpace(article.Title))
+                {
+                    article.Title = "Nuovo articolo"; // Fallback iniziale se è proprio vuoto
+                }
+
                 // Se la lista è vuota (perché il JS ha mandato dati parziali), ci fermiamo qui senza rompere nulla
                 if (!payload.Sections.Any())
                 {
@@ -534,7 +544,7 @@ namespace VanitasStudios_WebApp.Pages
             // 2. Gestione Dinamica della Cartella in base all'uploadType
             // Se è "cover" va in image/covers, altrimenti segue il percorso standard per data
             string subPath = uploadType.ToLower() == "cover"
-                ? Path.Combine(contentType, "covers")
+                ? Path.Combine("image", "covers")//? Path.Combine(contentType, "covers")
                 : GenerateFolderPath(contentType, file.FileName);
 
             string? baseroot = _config["ExternalAssetsPath"];
@@ -547,7 +557,9 @@ namespace VanitasStudios_WebApp.Pages
             string finalName = $"{hashName}{currentExtension}";
             string physicalSavePath = Path.Combine(fullPath, finalName);
 
-            string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
+            //string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
+            string webSubPath = subPath.Replace("\\", "/");
+            string publicUrl = $"/media/{webSubPath}/{finalName}";
 
             // Generazione Alt Text
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName);
@@ -568,6 +580,7 @@ namespace VanitasStudios_WebApp.Pages
             {
                 // Caso A: È la copertina dell'articolo
                 article.CoverImageUrl = publicUrl;
+                article.UpdatedAt = DateTime.UtcNow;
                 _context.Contents.Update(article);
             }
             else

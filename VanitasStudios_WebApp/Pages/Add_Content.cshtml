@@ -12,7 +12,7 @@
 
     <div class="row py-2">
         <div class="col">
-            <input type="text" class="form-control form-control-lg" placeholder="Title" />
+            <input type="text" id="main-title" class="form-control form-control-lg" placeholder="Title" />
         </div>
     </div>
 
@@ -170,7 +170,8 @@
                 lastModified: '@Model.LastModified.ToString("yyyy-MM-ddTHH:mm:ss")',
                 tagInput: 'tagSearchInput',
                 suggestionsMenu: 'tagSuggestionsMenu',
-                tagsContainer: 'selected-tags-container'
+                tagsContainer: 'selected-tags-container',
+                mainTitle: 'main-title'
             });
         });
     </script>

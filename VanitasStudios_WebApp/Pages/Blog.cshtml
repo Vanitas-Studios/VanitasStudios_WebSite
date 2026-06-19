@@ -54,7 +54,16 @@
                     {
                         <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
                             <a asp-page="/Content" asp-route-id="@content.Id" class="text-decoration-none text-white">
-                                <img src="..." class="card-img-top" alt="...">
+
+                                @if (!string.IsNullOrEmpty(content.CoverImageUrl))
+                                {
+                                    <img src="@content.CoverImageUrl" class="card-img-top" alt="Copertina di @content.Title" style="height: 12rem; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <img src="/media/placeholder-default.png" class="card-img-top" alt="Nessuna copertina disponibile" style="height: 12rem; object-fit: cover;">
+                                }
+
                                 <div class="card-body">
                                     <h3 class="card-title h5">@content.Title</h3>
                                     <p class="card-text text-muted small">@content.Description</p>
@@ -75,7 +84,16 @@
                         {
                             <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
                                 <a asp-page="/Content" asp-route-id="@content.Id" class="text-decoration-none text-white">
-                                    <img src="..." class="card-img-top" alt="...">
+
+                                    @if (!string.IsNullOrEmpty(content.CoverImageUrl))
+                                    {
+                                        <img src="@content.CoverImageUrl" class="card-img-top" alt="Copertina di @content.Title" style="height: 12rem; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <img src="/media/placeholder-default.png" class="card-img-top" alt="Nessuna copertina disponibile" style="height: 12rem; object-fit: cover;">
+                                    }
+
                                     <div class="card-body">
                                         <h3 class="card-title h5">@content.Title</h3>
                                         <p class="card-text text-muted small">@content.Description</p>

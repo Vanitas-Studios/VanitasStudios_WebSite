@@ -1,4 +1,4 @@
-﻿let editor, sidebarList, articleId, articleLastModifiedFromServer;
+﻿let editor, sidebarList, articleId, articleLastModifiedFromServer, mainTitle;
 let existingIds = [];
 
 //Variabili per salvataggio debounce
@@ -32,6 +32,7 @@ function initMyEditor(config) {
     tagInput = document.getElementById(config.tagInput);
     suggestionsMenu = document.getElementById(config.suggestionsMenu);
     tagsContainer = document.getElementById(config.tagsContainer);
+    mainTitle = document.getElementById(config.mainTitle)
 
     // Ora attacchiamo gli eventi perché siamo sicuri che il DOM c'è
     setupEventListeners();
@@ -51,6 +52,10 @@ function setupEventListeners() {
         if (e.key === "Enter") {
             handleEnterKey(e);
         }
+    });
+
+    mainTitle.addEventListener("input", () => {
+        triggerAutosave();
     });
 
     // MODIFICATO: L'input imposta solo il flag "isDirty" istantaneamente,
@@ -949,8 +954,11 @@ function serializedEditorContent() {
         };
     });
 
+    const mainTitleInput = mainTitle.value ? mainTitle.value.trim() : "";
+
     return {
         articleId: articleId,
+        Title: mainTitleInput,
         Sections: sections // CORRETTO: 'Sections' con la S maiuscola per il DTO C#
     };
 }
