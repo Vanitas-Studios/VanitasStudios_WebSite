@@ -16,26 +16,6 @@ namespace VanitasStudios_WebApp.Pages
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public class DashboardViewModel
-        {
-            public int TotalArticlesOnline { get; set; }
-            public int TotalArticlesDraft { get; set; }
-            public int TotalViews28Days { get; set; }
-            public string AverageReadingTime { get; set; } = "0m 0s";
-
-            // Lista dei 3 articoli più visti
-            public List<TopArticleDto> TopArticles { get; set; } = new();
-        }
-
-        public class TopArticleDto
-        {
-            public int Id { get; set; }
-            public string Title { get; set; } = null!;
-            public int Views { get; set; }
-            public DateTime? PublishedAt { get; set; }
-            public string TagsInline { get; set; } = "";
-        }
-
         public AdminInterfaceModel(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
         {
             _context = dbContext;
@@ -49,53 +29,100 @@ namespace VanitasStudios_WebApp.Pages
         // Handler per la vista "Dashboard Generale"
         public async Task<PartialViewResult> OnGetGeneralDashboardAsync()
         {
-            //var viewModel = new DashboardViewModel();
+            var viewModel = new DashboardViewModel();
 
-            //try
-            //{
-            //    // 1. Conteggio articoli divisi per Stato
-            //    viewModel.TotalArticlesOnline = await _context.Contents
-            //        .CountAsync(c => c.PublishState == PublishState.Pubblico);
+            try
+            {
+                // 1. Conteggio articoli divisi per Stato
+                viewModel.TotalArticlesOnline = await _context.Contents
+                    .CountAsync(c => c.PublishState == PublishState.Pubblico);
 
-            //    viewModel.TotalArticlesDraft = await _context.Contents
-            //        .CountAsync(c => c.PublishState == PublishState.Bozza);
+                viewModel.TotalArticlesDraft = await _context.Contents
+                    .CountAsync(c => c.PublishState == PublishState.Bozza);
 
-            //    // 2. Calcolo metriche fittizie o reali (es. se hai una colonna Views)
-            //    viewModel.TotalViews28Days = await _context.Contents
-            //        .Where(c => c.PublishState == PublishState.Pubblico)
-            //        .SumAsync(c => c.Views); // Assumendo che tu abbia un campo Views
+                // 2. Metriche dell'algoritmo Akinator dalla cronologia delle ricerche
+                viewModel.TotalSearchesExecuted = await _context.SearchHistories.CountAsync();
 
-            //    viewModel.AverageReadingTime = "3m 45s"; // Gestibile in futuro con logiche di analytics
+                if (viewModel.TotalSearchesExecuted > 0)
+                {
+                    int successfulSearches = await _context.SearchHistories.CountAsync(sh => sh.IsSuccessful);
+                    // Calcolo la percentuale di successo dell'algoritmo
+                    viewModel.AlgorithmSuccessRate = Math.Round(((double)successfulSearches / viewModel.TotalSearchesExecuted) * 100, 1);
+                }
+                else
+                {
+                    viewModel.AlgorithmSuccessRate = 0.0;
+                }
 
-            //    // 3. Query per i 3 articoli più performanti con i loro Tag
-            //    viewModel.TopArticles = await _context.Contents
-            //        .Where(c => c.PublishState == PublishState.Pubblico)
-            //        .OrderByDescending(c => c.Views)
-            //        .Take(3)
-            //        .Select(c => new TopArticleDto
-            //        {
-            //            Id = c.Id,
-            //            Title = c.Title,
-            //            Views = c.Views,
-            //            PublishedAt = c.PublishedAt,
-            //            // Uniamo i tag in una stringa singola per la visualizzazione rapida
-            //            TagsInline = string.Join(", ", c.ContentTags.Select(ct => ct.Tag.Name))
-            //        })
-            //        .ToListAsync();
-            //}
-            //catch (Exception ex)
-            //{
-            //    // Logga l'errore se necessario
-            //    // Il viewModel vuoto eviterà comunque il crash della pagina
-            //}
+                // 3. Gli articoli PIÙ APPREZZATI / DI TENDENZA
+                // Calcolati sommando i pesi cumulativi dei click (PopularityWeight) nella tabella pivot
+                viewModel.TopArticles = await _context.StatisticalWeights
+                    .Where(sw => sw.Content.PublishState == PublishState.Pubblico)
+                    .GroupBy(sw => new { sw.ContentId, sw.Content.Title, sw.Content.UpdatedAt })
+                    .Select(g => new TopTrendingArticleDto
+                    {
+                        Id = g.Key.ContentId,
+                        Title = g.Key.Title,
+                        CumulativeWeight = g.Sum(sw => sw.PopularityWeight), // Il feedback reale di apprezzamento
+                        UpdatedAt = g.Key.UpdatedAt
+                    })
+                    .OrderByDescending(a => a.CumulativeWeight)
+                    .Take(3)
+                    .ToListAsync();
 
-            //// Passiamo il modello popolato alla vista parziale
-            return Partial("_GeneralDashboardPartial");
+                // 4. Gli Argomenti (Tag) che vanno maggiormente sul sito
+                viewModel.TopTags = await _context.StatisticalWeights
+                    .GroupBy(sw => new { sw.TagId, sw.Tag.Name, sw.Tag.CategoryGroup })
+                    .Select(g => new TopTagDto
+                    {
+                        TagId = g.Key.TagId,
+                        TagName = g.Key.Name,
+                        Category = g.Key.CategoryGroup,
+                        TotalGlobalWeight = g.Sum(sw => sw.PopularityWeight)
+                    })
+                    .OrderByDescending(t => t.TotalGlobalWeight)
+                    .Take(5)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Logga l'errore se necessario
+            }
+
+            // Passiamo il modello popolato alla vista parziale
+            return Partial("_GeneralDashboardPartial", viewModel);
         }
 
         // Handler per la vista "Lista Articoli"
-        public PartialViewResult OnGetArticlesList()
+        public async Task<PartialViewResult> OnGetArticlesListAsync()
         {
+            var viewModel = new ArticlesManagementViewModel();
+
+            try
+            {
+                viewModel.Articles = await _context.Contents
+                    .Include(c => c.Author) // <--- Forza il caricamento dell'utente!
+                    .Include(c => c.ContentTags)
+                    .ThenInclude(ct => ct.Tag)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Select(c => new ArticleRowDto
+                    {
+                        Id = c.Id,
+                        Title = c.Title,
+                        PublishState = c.PublishState,
+                        CreatedAt = c.CreatedAt,
+                        UpdatedAt = c.UpdatedAt,
+                        AuthorName = c.Author != null ? c.Author.UserName : "Vanitas Staff",
+                        Category = c.ContentTags
+                            .Select(ct => ct.Tag != null ? ct.Tag.CategoryGroup : "Senza Tag")
+                            .FirstOrDefault() ?? "Senza Tag"
+                    })
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Logga l'errore se necessario
+            }
             return Partial("_ArticlesListPartial");
         }
 

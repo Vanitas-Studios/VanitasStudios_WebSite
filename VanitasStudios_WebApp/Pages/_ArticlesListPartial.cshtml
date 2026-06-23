@@ -3,97 +3,94 @@
 *@
 @{
 }
+
+@model VanitasStudios_WebApp.Models.ArticlesManagementViewModel;
+@using VanitasStudios_WebApp.Models
+@using System.Text.Encodings.Web
+
 <div class="animate-fade-in">
-    <!-- Intestazione Sezione -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold m-0">Gestione Contenuti</h2>
-            <p class="text-muted small m-0">Modifica, pubblica o rimuovi gli articoli di Vanitas Studios.</p>
+            <p class="text-muted small m-0">Modifica, pubblica o rimuovi gli articoli all'interno del database.</p>
         </div>
-        <!-- Bottone che punta alla pagina dell'editor che abbiamo creato -->
-        <a href="/Admin/Content/Add_Content" class="btn btn-dark d-flex align-items-center gap-2">
-            <i class="bi bi-plus-lg"></i> Scrivi Nuovo
+        <!-- Pulsante rapido per creare un nuovo articolo da zero -->
+        <a asp-page="/Admin/Editor" class="btn btn-dark btn-sm px-3">
+            <i class="bi bi-plus-lg me-1"></i> Nuovo Articolo
         </a>
     </div>
 
-    <!-- Filtri Rapidi (Opzionali, molto utili per la UX) -->
-    <div class="card border-0 bg-light p-3 mb-4">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-6">
-                <input type="text" class="form-control form-control-sm" placeholder="Cerca articolo per titolo...">
-            </div>
-            <div class="col-md-3">
-                <select class="form-select form-select-sm">
-                    <option value="">Tutti gli stati</option>
-                    <option value="Published">Pubblicati</option>
-                    <option value="Draft">Bozze</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- TABELLA DEI CONTENUTI -->
-    <div class="card border-0 bg-light p-0 overflow-hidden">
+    <div class="card border-0 bg-light p-3">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 bg-white">
-                <thead class="table-light text-muted small text-uppercase">
-                    <tr>
-                        <th class="ps-3" style="width: 45%;">Titolo Articolo</th>
+            <table class="table table-hover align-middle m-0">
+                <thead>
+                    <tr class="text-muted small text-uppercase font-monospace border-bottom">
+                        <th style="width: 40%;">Titolo</th>
+                        <th style="width: 15%;">Categoria</th>
                         <th style="width: 15%;">Stato</th>
-                        <th style="width: 20%;">Data</th>
-                        <th class="text-end pe-3" style="width: 20%;">Azioni</th>
+                        <th style="width: 15%;">Ultima Modifica</th>
+                        <th style="width: 15%;" class="text-end">Azioni</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Riga Esempio 1: Articolo Pubblicato -->
-                    <tr>
-                        <td class="ps-3">
-                            <div class="fw-bold text-dark">Il canone del Grimdark moderno</div>
-                            <span class="text-muted x-small d-block" style="font-size: 0.75rem;">Tag: Narrative, Cosmic Horror</span>
-                        </td>
-                        <td>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Pubblicato</span>
-                        </td>
-                        <td>
-                            <div class="small">12/05/2026</div>
-                            <span class="text-muted x-small" style="font-size: 0.75rem;">Ultima modifica: Oggi</span>
-                        </td>
-                        <td class="text-end pe-3">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="/Admin/Content/Add_Content?id=1" class="btn btn-outline-secondary" title="Modifica">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-danger" title="Elimina" onclick="deleteArticleConfirm(1)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <!-- Riga Esempio 2: Articolo in Bozza -->
-                    <tr>
-                        <td class="ps-3">
-                            <div class="fw-bold text-dark">Calisthenics: programmazione delle zavorre nel Planche training</div>
-                            <span class="text-muted x-small d-block" style="font-size: 0.75rem;">Tag: Allenamento, Strength</span>
-                        </td>
-                        <td>
-                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Bozza</span>
-                        </td>
-                        <td>
-                            <div class="small">01/06/2026</div>
-                            <span class="text-muted x-small" style="font-size: 0.75rem;">Non ancora online</span>
-                        </td>
-                        <td class="text-end pe-3">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="/Admin/Content/Add_Content?id=2" class="btn btn-outline-secondary" title="Modifica">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-danger" title="Elimina" onclick="deleteArticleConfirm(2)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
+                    @if (Model.Articles.Any())
+                    {
+                        foreach (var article in Model.Articles)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 350px;">
+                                        @article.Title
+                                    </div>
+                                    <span class="text-muted x-small" style="font-size: 0.75rem;">ID: #@article.Id</span>
+                                </td>
+                                <td>
+                                    @if (article.Category == "Senza Tag")
+                                    {
+                                        <span class="badge bg-light text-muted border font-monospace">@article.Category</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary opacity-75 font-monospace">@article.Category</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (article.PublishState == PublishState.Pubblico)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1">Online</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1">Bozza</span>
+                                    }
+                                </td>
+                                <td class="text-muted small">
+                                    @(article.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? article.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/D")
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <!-- CTA Modifica: Rimanda alla pagina dell'editor passando l'ID dell'articolo -->
+                                        <a asp-page="/Admin/Editor" asp-route-id="@article.Id" class="btn btn-sm btn-outline-dark" title="Modifica articolo">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <!-- CTA Elimina: Innesca una funzione JS passando l'ID per gestire la modale di conferma o la chiamata AJAX -->
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')" title="Elimina articolo">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="bi bi-journal-text fs-2 d-block mb-2"></i>
+                                <p class="m-0">Nessun articolo trovato nel database. Comincia creandone uno nuovo!</p>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
