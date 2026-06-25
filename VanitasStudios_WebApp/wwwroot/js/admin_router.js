@@ -1,79 +1,126 @@
-﻿// Definiamo il modulo router in un raggio d'azione isolato
-const VanitasAdminRouter = (function () {
-    // 1. STATO INTERNO (Variabili private del modulo)
-    let menuContainer = null;
-    let contentContainer = null;
-    let menuLinks = [];
-    let defaultHandler = "GeneralDashboard";
+﻿let menuContainer = null;
+let contentContainer = null;
+let menuLinks = [];
+let defaultHandler = "GeneralDashboard";
 
-    // 2. LOGICA FUNZIONALE (Metodi interni)
-    async function loadAdminView(handlerName) {
-        if (!contentContainer) return;
+// Estrattore dinamico del Token
+const getAntiforgeryToken = () => {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+};
 
-        // Visualizziamo il loader asincrono nella spalla destra
-        contentContainer.innerHTML = `
-            <div class="text-center py-5">
-                <div class="spinner-border text-secondary" role="status"></div>
-            </div>`;
+// 🚀 Funzione Inizializzatrice (Sostituisce il vecchio .init)
+function VanitasAdminRouter(config) {
+    menuContainer = document.getElementById(config.menuContainerId);
+    contentContainer = document.getElementById(config.contentContainerId);
 
-        try {
-            const response = await fetch(`?handler=${handlerName}`);
-            if (!response.ok) throw new Error("Impossibile caricare la vista.");
-
-            const html = await response.text();
-            contentContainer.innerHTML = html;
-        } catch (err) {
-            console.error("Errore router admin:", err);
-            contentContainer.innerHTML = `
-                <div class="alert alert-danger" role="alert">
-                    Errore nel caricamento della sezione. Riprova.
-                </div>`;
-        }
+    if (menuContainer) {
+        menuLinks = menuContainer.querySelectorAll(".nav-link");
     }
 
-    // 3. ASSOCIAZIONE EVENTI (Metodo dedicato ai listener)
-    function setupEventListeners() {
-        menuLinks.forEach(link => {
-            link.addEventListener("click", function (e) {
-                e.preventDefault();
+    if (config.defaultHandler) {
+        defaultHandler = config.defaultHandler;
+    }
 
-                // Feedback visivo dei menu (Attivo / Inattivo)
-                menuLinks.forEach(l => {
-                    l.classList.remove("active", "text-white");
-                    l.classList.add("text-white-50");
-                });
-                this.classList.add("active", "text-white");
-                this.classList.remove("text-white-50");
+    setupEventListeners();
+    loadAdminView(defaultHandler);
+}
 
-                // Eseguiamo lo switch della vista recuperando il nome dell'handler C#
-                const handler = this.getAttribute("data-target-handler");
-                if (handler) {
-                    loadAdminView(handler);
-                }
+// 🔄 AGGANCIO DINAMICO: Permette di fare VanitasAdminRouter.refreshCurrentView(...)
+VanitasAdminRouter.refreshCurrentView = function (handlerName) {
+    loadAdminView(handlerName);
+};
+
+function setupEventListeners() {
+    menuLinks.forEach(link => {
+        link.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            // Feedback visivo dei menu (Attivo / Inattivo)
+            menuLinks.forEach(l => {
+                l.classList.remove("active", "text-white");
+                l.classList.add("text-white-50");
             });
+            this.classList.add("active", "text-white");
+            this.classList.remove("text-white-50");
+
+            // Eseguiamo lo switch della vista recuperando il nome dell'handler C#
+            const handler = this.getAttribute("data-target-handler");
+            if (handler) {
+                loadAdminView(handler);
+            }
         });
+    });
+}
+
+async function loadAdminView(handlerName) {
+    if (!contentContainer) return;
+
+    contentContainer.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-secondary"></div></div>`;
+
+    // Richiediamo l'HTML usando il metodo unificato
+    const html = await commitToServer(handlerName, null, 'GET');
+
+    // Controllo corretto sulla natura del dato (stringa HTML)
+    if (html && typeof html === "string") {
+        contentContainer.innerHTML = html;
+    } else {
+        contentContainer.innerHTML = `<div class="alert alert-danger">Errore nel caricamento della sezione.</div>`;
     }
+}
 
-    // 4. L'UNICO METODO ESPORTO (L'inizializzatore)
-    return {
-        init: function (config) {
-            // Mappiamo gli elementi del DOM passati dalla configurazione
-            menuContainer = document.getElementById(config.menuContainerId);
-            contentContainer = document.getElementById(config.contentContainerId);
+// 🔄 Funzione di comunicazione flessibile (Supporta sia GET che POST, sia HTML che JSON)
+async function commitToServer(handlerName, payload = null, method = 'GET') {
+    try {
+        let url = `?handler=${handlerName}`;
+        const options = { method: method, headers: {} };
 
-            if (menuContainer) {
-                menuLinks = menuContainer.querySelectorAll(".nav-link");
+        if (method === 'GET' && payload) {
+            // Se è una GET, appendiamo il payload all'URL
+            url += payload;
+        } else if (method === 'POST') {
+            // Se è una POST, gestiamo il body (se presente)
+            if (payload) {
+                const isFormData = payload instanceof FormData;
+                options.body = isFormData ? payload : JSON.stringify(payload);
+                if (!isFormData) {
+                    options.headers['Content-Type'] = 'application/json';
+                }
             }
 
-            if (config.defaultHandler) {
-                defaultHandler = config.defaultHandler;
+            // Inseriamo il Token di sicurezza recuperato dinamicamente
+            const token = getAntiforgeryToken();
+            if (token) {
+                options.headers['RequestVerificationToken'] = token;
             }
-
-            // Attiviamo i listener
-            setupEventListeners();
-
-            // Carichiamo la prima vista di default all'avvio (es. la Dashboard Generale)
-            loadAdminView(defaultHandler);
         }
-    };
-})();
+
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        // 💡 CONTROLLO DINAMICO SUL TIPO DI RISPOSTA
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            return await response.json(); // Restituisce l'oggetto JSON per i POST
+        } else {
+            return await response.text(); // Restituisce la stringa HTML per i GET
+        }
+    }
+    catch (error) {
+        console.error('Error communicating with server:', error);
+        return null;
+    }
+}
+
+async function deleteArticle(articleId, articleTitle) {
+    if (!confirm(`Vuoi spostare nel cestino "${articleTitle}"?`)) return;
+
+    // 💡 Passiamo l'ID come oggetto strutturato nel payload (il secondo parametro)
+    const result = await commitToServer('DeleteArticle', { id: articleId }, 'POST');
+
+    if (result && result.success) {
+        alert(result.message);
+        VanitasAdminRouter.refreshCurrentView('ArticlesList');
+    } else {
+        alert(result ? result.message : "Errore di connessione.");
+    }
+}

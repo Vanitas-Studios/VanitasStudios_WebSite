@@ -21,5 +21,9 @@ namespace VanitasStudios_WebApp.Models
         // Le promozioni che questo utente ha CONCESSO ad altri (se è un Admin)
         [InverseProperty("Promoter")]
         public virtual ICollection<Promotion> GrantedPromotions { get; set; } = new List<Promotion>();
+
+        // I log delle azioni che questo specifico utente ha compiuto nel pannello Admin
+        [InverseProperty("User")]
+        public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
     }
 }

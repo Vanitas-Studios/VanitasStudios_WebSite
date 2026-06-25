@@ -23,6 +23,16 @@
                         <i class="bi bi-tags me-2"></i> Gestione Tag
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 cursor-pointer" data-target-handler="StaffManagement">
+                        <i class="bi bi-tags me-2"></i> Gestione Staff
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 cursor-pointer" data-target-handler="AkinatorAnalytics">
+                        <i class="bi bi-tags me-2"></i> Akinator Analysis
+                    </a>
+                </li>
             </ul>
         </nav>
 
@@ -43,7 +53,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // Inizializziamo il router con lo stesso approccio dell'editor
-            VanitasAdminRouter.init({
+            VanitasAdminRouter({
                 menuContainerId: "admin-menu",
                 contentContainerId: "main-content-container",
                 defaultHandler: "GeneralDashboard"

@@ -1,0 +1,96 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model VanitasStudios_WebApp.Models.StaffManagementViewModel
+
+<div class="animate-fade-in">
+    <div class="mb-4">
+        <h2 class="fw-bold m-0">Controllo Staff & Tracciabilità</h2>
+        <p class="text-muted small m-0">Monitora i componenti del team, gestisci i permessi operativi e verifica l'Audit Log di sistema.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 bg-light p-3 h-100">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Membri dello Staff / Utenti</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0 bg-white rounded shadow-sm">
+                        <thead>
+                            <tr class="text-muted small text-uppercase font-monospace border-bottom">
+                                <th>Username</th>
+                                <th>Ruolo</th>
+                                <th class="text-center">Articoli</th>
+                                <th class="text-end">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.StaffMembers)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold text-dark">&#64;@user.Username</span>
+                                        <span class="d-block text-muted x-small">User ID: #@user.Id</span>
+                                    </td>
+                                    <td>
+                                        @if (user.Role.Contains("Admin") || user.Role.Contains("Editor"))
+                                        {
+                                            <span class="badge bg-dark text-white font-monospace">@user.Role</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-muted border font-monospace">@user.Role</span>
+                                        }
+                                    </td>
+                                    <td class="text-center font-monospace small">@user.ArticlesWritten</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-dark" onclick="openPromotionModal(@user.Id, '@user.Username')" title="Modifica Permessi">
+                                            <i class="bi bi-shield-lock"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 bg-light p-3 h-100">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Registro Attività Admin (Audit Log)</h6>
+                <div class="bg-white rounded shadow-sm p-2 style-scrollbar" style="max-height: 450px; overflow-y: auto;">
+                    @if (Model.RecentLogs.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var log in Model.RecentLogs)
+                            {
+                                <div class="list-group-item px-2 py-2 border-0 border-bottom border-light">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <span class="badge bg-secondary-subtle text-secondary font-monospace x-small mb-1">
+                                            @log.ActionType
+                                        </span>
+                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                            @log.ExecutedAt.ToString("dd/MM HH:mm")
+                                        </small>
+                                    </div>
+                                    <p class="m-0 small text-dark">
+                                        <strong class="text-secondary">&#64;@log.OperatorUsername</strong>: @log.Description
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-terminal fs-2 d-block mb-2"></i>
+                            <p class="m-0 small">Nessuna azione registrata nell'archivio log.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

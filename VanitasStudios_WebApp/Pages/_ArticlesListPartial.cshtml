@@ -42,7 +42,12 @@
                                     <div class="fw-bold text-dark text-truncate" style="max-width: 350px;">
                                         @article.Title
                                     </div>
-                                    <span class="text-muted x-small" style="font-size: 0.75rem;">ID: #@article.Id</span>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <span class="badge bg-dark-subtle text-dark x-small px-1.5 py-0.5" style="font-size: 0.7rem;">
+                                            <i class="bi bi-person-fill me-1"></i>@article.AuthorName
+                                        </span>
+                                        <span class="text-muted font-monospace" style="font-size: 0.7rem;">ID: #@article.Id</span>
+                                    </div>
                                 </td>
                                 <td>
                                     @if (article.Category == "Senza Tag")
@@ -55,7 +60,11 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (article.PublishState == PublishState.Pubblico)
+                                    @if (article.EliminatedAt != null)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1">Cestinato</span>
+                                    }
+                                    else if (article.PublishState == PublishState.Pubblico)
                                     {
                                         <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1">Online</span>
                                     }
@@ -69,14 +78,21 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <!-- CTA Modifica: Rimanda alla pagina dell'editor passando l'ID dell'articolo -->
-                                        <a asp-page="/Admin/Editor" asp-route-id="@article.Id" class="btn btn-sm btn-outline-dark" title="Modifica articolo">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <!-- CTA Elimina: Innesca una funzione JS passando l'ID per gestire la modale di conferma o la chiamata AJAX -->
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')" title="Elimina articolo">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        @if (article.EliminatedAt != null)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Ripristina articolo" onclick="restoreArticle(@article.Id)">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="/Admin/Editor" asp-route-id="@article.Id" class="btn btn-sm btn-outline-dark" title="Modifica articolo">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')" title="Elimina articolo">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>

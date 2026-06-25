@@ -34,6 +34,7 @@ namespace VanitasStudios_WebApp.Data
         public virtual DbSet<TagSynonym> TagSynonyms { get; set; }
 
         public virtual DbSet<ContentTag> ContentTags { get; set; }
+        public virtual DbSet<AdminLog> AdminLogs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -434,6 +435,48 @@ namespace VanitasStudios_WebApp.Data
                     .WithMany()
                     .HasForeignKey(d => d.ContentId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 3. Configurazione della tabella dei Log Amministrativi (Audit Log)
+            modelBuilder.Entity<AdminLog>(entity =>
+            {
+                // Mappatura sulla tabella fisica al plurale
+                entity.ToTable("AdminLogs");
+
+                // Chiave primaria con indice pulito
+                entity.HasKey(e => e.Id).HasName("PK_AdminLogs");
+
+                // Allineamento colonne ed esplicitazione vincoli
+                entity.Property(e => e.Id).HasColumnName("Id");
+                entity.Property(e => e.UserId).HasColumnName("UserId");
+
+                entity.Property(e => e.ActionType)
+                    .HasMaxLength(100)
+                    .HasColumnName("ActionType")
+                    .IsRequired();
+
+                entity.Property(e => e.Description)
+                    .HasColumnName("Description")
+                    .IsRequired();
+
+                // Recupero automatico del timestamp su SQL Server con alta precisione
+                entity.Property(e => e.ExecutedAt)
+                    .HasPrecision(0)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnName("ExecutedAt");
+
+                entity.Property(e => e.IpAddress)
+                    .HasMaxLength(45) // 45 caratteri supportano perfettamente gli indirizzi IPv6 completi
+                    .HasColumnName("IpAddress")
+                    .IsRequired(false);
+
+                // Relazione verso l'utente che ha compiuto l'azione.
+                // Usiamo Restrict o ClientSetNull per non generare percorsi di eliminazione multipli a cascata su SQL Server.
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.AdminLogs)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_AdminLogs_Users");
             });
         }
     }

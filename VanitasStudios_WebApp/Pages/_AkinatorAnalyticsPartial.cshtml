@@ -1,0 +1,123 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model VanitasStudios_WebApp.Models.AkinatorAnalyticsViewModel
+
+<div class="animate-fade-in">
+    <div class="mb-4">
+        <h2 class="fw-bold m-0">Mente dell'IA & Analytics</h2>
+        <p class="text-muted small m-0">Analizza il comportamento degli utenti con l'Akinator, monitora i tassi di successo e correggi i punti ciechi dell'algoritmo.</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white">
+                <small class="text-uppercase fw-bold text-muted font-monospace">Ricerche Totali</small>
+                <h3 class="fw-bold m-0 mt-1 text-dark">@Model.TotalSearches</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white border-start border-success border-4">
+                <small class="text-uppercase fw-bold text-muted font-monospace">Tasso di Successo</small>
+                <h3 class="fw-bold m-0 mt-1 text-success">@Model.SuccessRate%</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white border-start border-danger border-4">
+                <small class="text-uppercase fw-bold text-muted font-monospace">Ricerche Fallite (Rimbalzi)</small>
+                <h3 class="fw-bold m-0 mt-1 text-danger">@Model.TotalBounces</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 bg-light p-3 h-100">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Registro Sessioni Recenti</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0 bg-white rounded shadow-sm">
+                        <thead>
+                            <tr class="text-muted small text-uppercase font-monospace border-bottom">
+                                <th>Utente</th>
+                                <th>Tag Percorsi / Input</th>
+                                <th>Esito</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var query in Model.RecentQueries)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="small fw-bold text-dark">&#64;@query.Username</span>
+                                        <span class="d-block text-muted x-small">@query.Timestamp.ToString("dd/MM HH:mm")</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate d-inline-block font-monospace small text-secondary" style="max-width: 280px;" title="@query.QueryTags">
+                                            @query.QueryTags
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (query.IsSuccessful)
+                                        {
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2" title="@query.MatchedContentTitle">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Trovato
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">
+                                                <i class="bi bi-x-circle-fill me-1"></i>Vuoto
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 bg-light p-3 h-100">
+                <div class="mb-3">
+                    <h6 class="fw-bold text-uppercase small text-muted m-0">Termini Fantasma Rilevati</h6>
+                    <small class="text-muted x-small">Parole cercate che non corrispondono a nessun Tag esistente.</small>
+                </div>
+
+                <div class="bg-white rounded shadow-sm p-2 style-scrollbar" style="max-height: 400px; overflow-y: auto;">
+                    @if (Model.TopGhostTerms.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var ghost in Model.TopGhostTerms)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 border-bottom border-light px-2 py-2">
+                                    <div>
+                                        <strong class="text-danger font-monospace">"@ghost.Term"</strong>
+                                        <span class="d-block text-muted x-small">Ultima volta: @ghost.LastSearched.ToString("dd/MM HH:mm")</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-dark rounded-pill font-monospace mb-1">@ghost.SearchCount ricerche</span>
+                                        <button type="button" class="btn btn-x-small btn-outline-secondary d-block ms-auto" style="font-size: 0.7rem;" onclick="quickCreateTag('@ghost.Term')">
+                                            Risolvi <i class="bi bi-arrow-right-short"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-emoji-smile fs-2 d-block mb-2 text-success"></i>
+                            <p class="m-0 small">L'algoritmo copre tutte le richieste. Nessun termine fantasma isolato.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
