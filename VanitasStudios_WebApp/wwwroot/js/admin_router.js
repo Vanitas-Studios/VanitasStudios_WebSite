@@ -217,3 +217,40 @@ async function submitRoleForm(event) {
         alert(result ? result.message : "Errore durante la modifica del ruolo.");
     }
 }
+// Attiva il modal di risoluzione pre-compilando il termine fantasma rilevato
+function quickCreateTag(ghostTerm) {
+    document.getElementById('modalGhostTerm').value = ghostTerm;
+    document.getElementById('modalGhostDisplay').value = `"${ghostTerm}"`;
+    // Suggerisce lo stesso termine come nome tag di partenza pulendolo da apici
+    document.getElementById('modalTargetTagName').value = ghostTerm;
+
+    const modalElement = document.getElementById('ghostModal');
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modalInstance.show();
+}
+
+// Invia i dati strutturati al server via POST JSON
+async function submitGhostResolution(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    // Spediamo all'handler OnPostResolveGhostTerm
+    const result = await commitToServer('ResolveGhostTerm', payload, 'POST');
+
+    if (result && result.success) {
+        alert(result.message);
+
+        // Chiudiamo il modal
+        const modalElement = document.getElementById('ghostModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) modalInstance.hide();
+
+        // Rinfreschiamo l'intera vista Analytics per aggiornare metriche e lista fantasmi!
+        VanitasAdminRouter.refreshCurrentView('AkinatorAnalytics');
+    } else {
+        alert(result ? result.message : "Errore durante la risoluzione del termine.");
+    }
+}

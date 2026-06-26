@@ -233,59 +233,65 @@ namespace VanitasStudios_WebApp.Pages
             return Partial("_StaffManagementPartial", viewModel);
         }
 
-        public async Task<PartialViewResult> OnGetAkinatorAnalyticsAsync()
+        public async Task<IActionResult> OnGetAkinatorAnalyticsAsync()
         {
-            var viewModel = new AkinatorAnalyticsViewModel();
+            // 1. Calcolo delle metriche generali dalle cronologie di ricerca
+            var totalSearches = await _context.SearchHistories.CountAsync();
+            var totalBounces = await _context.SearchHistories.CountAsync(s => !s.IsSuccessful);
 
-            try
+            double successRate = totalSearches > 0
+                ? Math.Round((double)(totalSearches - totalBounces) / totalSearches * 100, 1)
+                : 0;
+
+            // 2. Query per la colonna di SINISTRA: Registro Sessioni Recenti
+            var recentQueries = await _context.SearchHistories
+                .Include(s => s.User)
+                .Include(s => s.ResultContent)
+                .OrderByDescending(s => s.Timestamp)
+                .Take(15)
+                .Select(s => new SearchHistoryRowDto // Sostituisci con il nome del tuo DTO/Classe interna
+                {
+                    Username = s.User != null ? s.User.UserName : "Ospite Anonimo",
+                    Timestamp = s.Timestamp,
+                    QueryTags = s.QueryTags.Replace("[", "").Replace("]", "").Replace("\"", ""),
+                    IsSuccessful = s.IsSuccessful,
+                    MatchedContentTitle = s.ResultContent != null ? s.ResultContent.Title : null
+                })
+                .ToListAsync();
+
+            // 3. Query per la colonna di DESTRA: Calcolo "al volo" dei Termini Fantasma
+            var ghostTermsData = await _context.SearchHistories
+                .Where(s => !s.IsSuccessful && !string.IsNullOrEmpty(s.QueryTags))
+                .GroupBy(s => s.QueryTags)
+                .Select(g => new
+                {
+                    RawTerm = g.Key,
+                    Count = g.Count(),
+                    LastTime = g.Max(s => s.Timestamp)
+                })
+                .OrderByDescending(x => x.Count)
+                .Take(10)
+                .ToListAsync();
+
+            // Mappatura dei fantasmi pulendo la stringa JSON per la UI
+            var topGhostTerms = ghostTermsData.Select(g => new GhostTermDto // Sostituisci con il tuo DTO
             {
-                // 1. Calcolo delle metriche aggregate
-                viewModel.TotalSearches = await _context.SearchHistories.CountAsync();
+                Term = g.RawTerm.Replace("[", "").Replace("]", "").Replace("\"", "").Trim(),
+                SearchCount = g.Count,
+                LastSearched = g.LastTime
+            }).ToList();
 
-                int successfulCount = await _context.SearchHistories.CountAsync(s => s.IsSuccessful);
-                viewModel.SuccessRate = viewModel.TotalSearches > 0
-                    ? Math.Round((double)successfulCount / viewModel.TotalSearches * 100, 1)
-                    : 0;
-
-                viewModel.TotalBounces = viewModel.TotalSearches - successfulCount;
-
-                // 2. Ultime 15 sessioni dell'Akinator
-                viewModel.RecentQueries = await _context.SearchHistories
-                    .Include(s => s.User)
-                    .Include(s => s.ResultContent)
-                    .OrderByDescending(s => s.Timestamp)
-                    .Take(15)
-                    .Select(s => new SearchHistoryRowDto
-                    {
-                        Id = s.Id,
-                        Username = s.User.UserName ?? "Ospite",
-                        QueryTags = s.QueryTags,
-                        MatchedContentTitle = s.ResultContent != null ? s.ResultContent.Title : null,
-                        IsSuccessful = s.IsSuccessful,
-                        Timestamp = s.Timestamp
-                    })
-                    .ToListAsync();
-
-                // 3. Classifica dei "Termini Fantasma" più cercati (Ricerche fallite raggruppate)
-                // Ipotizziamo che QueryTags contenga la stringa digitata in caso di fallimento
-                viewModel.TopGhostTerms = await _context.SearchHistories
-                    .Where(s => !s.IsSuccessful)
-                    .GroupBy(s => s.QueryTags)
-                    .Select(g => new GhostTermDto
-                    {
-                        Term = g.Key,
-                        SearchCount = g.Count(),
-                        LastSearched = g.Max(s => s.Timestamp)
-                    })
-                    .OrderByDescending(g => g.SearchCount)
-                    .Take(10)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
+            // 4. Impacchettiamo tutto nel ViewModel che la tua parziale si aspetta
+            var viewModel = new AkinatorAnalyticsViewModel
             {
-                Console.WriteLine($"[AkinatorAnalytics Error]: {ex.Message}");
-            }
+                TotalSearches = totalSearches,
+                SuccessRate = successRate,
+                TotalBounces = totalBounces,
+                RecentQueries = recentQueries,
+                TopGhostTerms = topGhostTerms
+            };
 
+            // 5. Sputiamo fuori la parziale HTML iniettandoci dentro il modello fresco di calcoli
             return Partial("_AkinatorAnalyticsPartial", viewModel);
         }
 
@@ -542,7 +548,66 @@ namespace VanitasStudios_WebApp.Pages
         }
         //  DTO per la risoluzione rapida di un termine fantasma
         public record ResolveGhostTermRequest(string GhostTerm, string TargetTagName, string? CategoryGroup);
+        public async Task<IActionResult> OnPostResolveGhostTermAsync([FromBody] ResolveGhostTermRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.GhostTerm) || string.IsNullOrWhiteSpace(request.TargetTagName))
+            {
+                return new JsonResult(new { success = false, message = "Dati parziali o non validi." });
+            }
 
+            var normalizedTagName = request.TargetTagName.Trim();
+            var normalizedGhost = request.GhostTerm.Trim();
+
+            // 1. Verifichiamo se il tag di destinazione esiste già nel sistema
+            var existingTag = await _context.Tags
+                .FirstOrDefaultAsync(t => t.Name.ToLower() == normalizedTagName.ToLower());
+
+            if (existingTag == null)
+            {
+                // Se non esiste, creiamo il nuovo Tag ufficiale usando il nome scelto
+                existingTag = new Tag
+                {
+                    Name = normalizedTagName,
+                    CategoryGroup = request.CategoryGroup?.Trim() ?? "Generale"
+                };
+                _context.Tags.Add(existingTag);
+                await _context.SaveChangesAsync(); // Genera l'ID del tag
+            }
+
+            // 2.  PULIZIA CRONOLOGIA: Sania lo storico in SearchHistory
+            // Cerchiamo tutte le ricerche fallite che contenevano la parola fantasma all'interno del campo JSON QueryTags
+            var historicalQueries = await _context.SearchHistories
+                .Where(s => !s.IsSuccessful && s.QueryTags.ToLower().Contains(normalizedGhost.ToLower()))
+                .ToListAsync();
+
+            foreach (var historyRecord in historicalQueries)
+            {
+                // Convertiamo il fallimento in successo perché ora il sistema ha imparato a riconoscerlo
+                historyRecord.IsSuccessful = true;
+
+                // Opzionale: se in futuro vorrai associare al volo anche il contenuto correlato 
+                // historyRecord.ResultContentId = ...
+            }
+
+            //  3. SCRITTURA NELL'AUDIT LOG (Usando la tua relazione reale)
+            var operatorIdString = _userManager.GetUserId(User);
+            if (int.TryParse(operatorIdString, out int operatorId))
+            {
+                _context.AdminLogs.Add(new AdminLog
+                {
+                    UserId = operatorId,
+                    ActionType = "RESOLVE_GHOST_TERM",
+                    Description = $"Ha risolto il termine fantasma \"{normalizedGhost}\" convertendolo nel tag ufficiale #{normalizedTagName} e sanando {historicalQueries.Count} ricerche storiche.",
+                    ExecutedAt = DateTime.UtcNow,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+                });
+            }
+
+            // Un unico SaveChangesAsync finale per salvare sia le modifiche alla cronologia che il Log
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = $"Termine \"{normalizedGhost}\" risolto! {historicalQueries.Count} vecchie ricerche aggregate con successo." });
+        }
     }
 }
 

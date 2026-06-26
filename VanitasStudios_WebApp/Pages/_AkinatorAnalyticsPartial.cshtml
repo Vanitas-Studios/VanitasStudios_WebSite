@@ -121,3 +121,37 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="ghostModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title fw-bold"><i class="bi bi-snapchat me-2"></i>Risolvi Fantasma</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form onsubmit="submitGhostResolution(event)">
+                <div class="modal-body py-3">
+                    <input type="hidden" id="modalGhostTerm" name="GhostTerm" />
+
+                    <div class="mb-2">
+                        <label class="form-label small text-muted mb-1">Input digitato dall'utente</label>
+                        <input type="text" id="modalGhostDisplay" class="form-control form-control-sm bg-light font-monospace fw-bold text-danger" readonly />
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary mb-1">Nome Tag Ufficiale</label>
+                        <input type="text" id="modalTargetTagName" name="TargetTagName" class="form-control form-control-sm" placeholder="es. Bloodborne" required />
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-bold text-secondary mb-1">Categoria Gruppo</label>
+                        <input type="text" name="CategoryGroup" class="form-control form-control-sm" placeholder="es. Gaming (Opzionale)" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-light btn-sm border" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Crea ed Elimina Fantasma</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
