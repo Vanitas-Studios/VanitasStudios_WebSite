@@ -340,5 +340,209 @@ namespace VanitasStudios_WebApp.Pages
                 return new JsonResult(new { success = false, message = $"Errore server: {ex.Message}" });
             }
         }
+
+        // POST: Ripristina un articolo dal Cestino impostandolo come Bozza
+        public async Task<JsonResult> OnPostRestoreArticleAsync([FromBody] DeleteArticleRequest request)
+        {
+            try
+            {
+                if (request == null || request.Id <= 0)
+                {
+                    return new JsonResult(new { success = false, message = "Errore di mapping: ID non ricevuto correttamente." });
+                }
+
+                int id = request.Id;
+                var article = await _context.Contents.FindAsync(id);
+
+                if (article == null)
+                {
+                    return new JsonResult(new { success = false, message = $"Articolo con ID #{id} non trovato." });
+                }
+
+                //  PULIZIA E RESET
+                article.EliminatedAt = null;
+                article.UpdatedAt = DateTime.UtcNow;
+
+                //  SICUREZZA: Forziamo lo stato a Bozza. 
+                // (Sostituisci 'Bozza' con il nome esatto del valore del tuo enum PublishState)
+                article.PublishState = PublishState.Bozza;
+
+                // Logga l'azione di ripristino
+                var currentUserId = _userManager.GetUserId(User);
+                if (!string.IsNullOrEmpty(currentUserId))
+                {
+                    _context.AdminLogs.Add(new AdminLog
+                    {
+                        UserId = int.Parse(currentUserId),
+                        ActionType = "Ripristino",
+                        Description = $"Ripristinato in 'Bozza' l'articolo ID #{article.Id}: '{article.Title}'",
+                        ExecutedAt = DateTime.UtcNow
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    success = true,
+                    message = $"L'articolo '{article.Title}' è stato ripristinato come Bozza e portato in cima alla lista."
+                });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = $"Errore server durante il ripristino: {ex.Message}" });
+            }
+        }
+
+        // --- DTO di richiesta per i Form dei Tag ---
+        public record CreateTagRequest(string TagName, string CategoryGroup);
+        public record CreateSynonymRequest(int TargetTagId, string SynonymWord);
+        public record DeleteTagRequest(int Id);
+
+        // --- HANDLERS DENTRO IL PAGEMODEL ---
+
+        // 1. POST: Crea un nuovo Tag
+        public async Task<JsonResult> OnPostCreateTagAsync([FromBody] CreateTagRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.TagName))
+                return new JsonResult(new { success = false, message = "Il nome del tag è obbligatorio." });
+
+            try
+            {
+                // Controlliamo se esiste già per evitare duplicati
+                var exists = await _context.Tags.AnyAsync(t => t.Name.ToLower() == request.TagName.Trim().ToLower());
+                if (exists) return new JsonResult(new { success = false, message = "Questo tag esiste già." });
+
+                var newTag = new Tag
+                {
+                    Name = request.TagName.Trim(),
+                    CategoryGroup = request.CategoryGroup?.Trim()
+                };
+
+                _context.Tags.Add(newTag);
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true, message = $"Tag #{newTag.Name} creato con successo." });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = $"Errore: {ex.Message}" });
+            }
+        }
+
+        // 2. POST: Collega un Sinonimo
+        public async Task<JsonResult> OnPostCreateSynonymAsync([FromBody] CreateSynonymRequest request)
+        {
+            if (request == null || request.TargetTagId <= 0 || string.IsNullOrWhiteSpace(request.SynonymWord))
+                return new JsonResult(new { success = false, message = "Dati sinonimo non validi." });
+
+            try
+            {
+                // Qui dipende da come hai strutturato la tabella Sinonimi. 
+                // Esempio ipotizzando un'entità 'TagSynonym' legata al Tag principale:
+                var tag = await _context.Tags.FindAsync(request.TargetTagId);
+                if (tag == null) return new JsonResult(new { success = false, message = "Tag principale non trovato." });
+
+                var newSynonym = new TagSynonym
+                {
+                    TagId = request.TargetTagId,
+                    SynonymName = request.SynonymWord.Trim()
+                };
+
+                _context.TagSynonyms.Add(newSynonym);
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true, message = $"Sinonimo '{newSynonym.SynonymName}' collegato a #{tag.Name}." });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = $"Errore: {ex.Message}" });
+            }
+        }
+
+        // 3. POST: Elimina un Tag
+        public async Task<JsonResult> OnPostDeleteTagAsync([FromBody] DeleteTagRequest request)
+        {
+            if (request == null || request.Id <= 0)
+                return new JsonResult(new { success = false, message = "ID Tag non valido." });
+
+            try
+            {
+                var tag = await _context.Tags.FindAsync(request.Id);
+                if (tag == null) return new JsonResult(new { success = false, message = "Tag non trovato." });
+
+                _context.Tags.Remove(tag);
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true, message = "Tag eliminato correttamente dal dizionario." });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = $"Errore durante l'eliminazione: {ex.Message}" });
+            }
+        }
+
+        //  DTO per la richiesta di cambio ruolo (inviato dal Modal Staff)
+        public record UpdateRoleRequest(int UserId, string NewRole);
+
+        //  DTO di supporto interno se vuoi mappare la scrittura del log (opzionale, ma comodo)
+        public record CreateAuditLogDto(string ActionType, string OperatorUsername, string Description);
+
+        public async Task<IActionResult> OnPostUpdateRoleAsync([FromBody] UpdateRoleRequest request)
+        {
+            if (request == null || string.IsNullOrEmpty(request.NewRole))
+            {
+                return new JsonResult(new { success = false, message = "Dati non validi." });
+            }
+
+            // Cerchiamo l'utente tramite UserManager
+            var fullUser = await _userManager.FindByIdAsync(request.UserId.ToString());
+            if (fullUser == null)
+            {
+                return new JsonResult(new { success = false, message = "Utente non trovato." });
+            }
+
+            // Verifichiamo se l'utente ha già lo specifico livello/strato richiesto
+            var hasRole = await _userManager.IsInRoleAsync(fullUser, request.NewRole);
+
+            if (hasRole)
+            {
+                return new JsonResult(new { success = false, message = $"L'utente possiede già lo strato di sicurezza: {request.NewRole}." });
+            }
+
+            //  AGGIUNGIAMO IL NUOVO STRATO (Senza toccare gli altri)
+            var addResult = await _userManager.AddToRoleAsync(fullUser, request.NewRole);
+            if (!addResult.Succeeded)
+            {
+                return new JsonResult(new { success = false, message = "Errore durante l'assegnazione del nuovo livello di sicurezza." });
+            }
+
+            //  SCRITTURA NELL'AUDIT LOG
+            // Recupera l'ID dell'utente attualmente loggato che sta usando il pannello Admin
+            var operatorIdString = _userManager.GetUserId(User);
+
+            if (string.IsNullOrEmpty(operatorIdString) || !int.TryParse(operatorIdString, out int operatorId))
+            {
+                return new JsonResult(new { success = false, message = "Sessione operatore non valida." });
+            }
+
+            var auditLog = new AdminLog
+            {
+                UserId = operatorId, //  L'ID numerico di chi ha compiuto l'azione (Foreign Key)
+                ActionType = "ADD_ROLE_LAYER",
+                Description = $"Ha aggiunto lo strato di sicurezza {request.NewRole} ad @{fullUser.UserName}.",
+                ExecutedAt = DateTime.UtcNow,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() //  Opzionale: cattura l'IP visto che hai il campo!
+            };
+
+            _context.AdminLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = $"Livello {request.NewRole} assegnato con successo a @{fullUser.UserName}!" });
+        }
+        //  DTO per la risoluzione rapida di un termine fantasma
+        public record ResolveGhostTermRequest(string GhostTerm, string TargetTagName, string? CategoryGroup);
+
     }
 }
+

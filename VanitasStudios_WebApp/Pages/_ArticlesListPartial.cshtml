@@ -80,8 +80,10 @@
                                     <div class="d-flex justify-content-end gap-2">
                                         @if (article.EliminatedAt != null)
                                         {
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Ripristina articolo" onclick="restoreArticle(@article.Id)">
-                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                    title="Ripristina e aggiorna articolo"
+                                                    onclick="restoreArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Ripristina
                                             </button>
                                         }
                                         else
@@ -89,7 +91,9 @@
                                             <a asp-page="/Admin/Editor" asp-route-id="@article.Id" class="btn btn-sm btn-outline-dark" title="Modifica articolo">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')" title="Elimina articolo">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')"
+                                                    title="Sposta nel Cestino">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         }

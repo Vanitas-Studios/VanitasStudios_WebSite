@@ -124,3 +124,96 @@ async function deleteArticle(articleId, articleTitle) {
         alert(result ? result.message : "Errore di connessione.");
     }
 }
+
+async function restoreArticle(articleId, articleTitle) {
+    if (!confirm(`Vuoi ripristinare e aggiornare la data di "${articleTitle}"?`)) return;
+
+    // Inviamo l'ID come oggetto JSON nel Body (stesso identico approccio dell'eliminazione)
+    const result = await commitToServer('RestoreArticle', { id: articleId }, 'POST');
+
+    if (result && result.success) {
+        alert(result.message);
+        // Rinfreschiamo la parziale degli articoli per vedere il cambio di stato istantaneo
+        VanitasAdminRouter.refreshCurrentView('ArticlesList');
+    } else {
+        alert(result ? result.message : "Errore di connessione durante il ripristino.");
+    }
+}
+
+// Funzione per intercettare l'invio asincrono del modulo Tag
+async function submitTagForm(event, handlerName) {
+    event.preventDefault(); // Sganciamo il comportamento nativo del browser
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    // Convertiamo i dati del form in un oggetto JSON piatto
+    const payload = Object.fromEntries(formData.entries());
+
+    // Se l'ID del tag selezionato è una stringa numerica, la convertiamo in Int per C#
+    if (payload.TargetTagId) {
+        payload.TargetTagId = parseInt(payload.TargetTagId);
+    }
+
+    const result = await commitToServer(handlerName, payload, 'POST');
+
+    if (result && result.success) {
+        alert(result.message);
+        form.reset(); // Svuota i campi del form in caso di successo
+        VanitasAdminRouter.refreshCurrentView('TagsManagement'); // Rinfresca la parziale corrente
+    } else {
+        alert(result ? result.message : "Errore di connessione durante l'operazione.");
+    }
+}
+
+// Funzione per eliminare un Tag
+async function deleteTag(tagId) {
+    if (!confirm("Sei sicuro di voler eliminare questo tag? I sinonimi e le associazioni correlate potrebbero rompersi.")) return;
+
+    const result = await commitToServer('DeleteTag', { id: tagId }, 'POST');
+
+    if (result && result.success) {
+        alert(result.message);
+        VanitasAdminRouter.refreshCurrentView('TagsManagement');
+    } else {
+        alert(result ? result.message : "Errore durante l'eliminazione del tag.");
+    }
+}
+// 1. Questa si attiva quando clicchi l'icona del lucchetto sulla tabella
+function openPromotionModal(userId, username) {
+    document.getElementById('modalUserId').value = userId;
+    document.getElementById('modalUsername').value = `@${username}`;
+
+    // Accende il modal di Bootstrap
+    const modalElement = document.getElementById('promotionModal');
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modalInstance.show();
+}
+
+// 2. Questa si attiva quando premi "Assegna Strato" dentro il modal
+async function submitRoleForm(event) {
+    event.preventDefault(); // Blocca il refresh nativo
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    payload.UserId = parseInt(payload.UserId); // Converte l'ID per il C#
+
+    // Spedisce la POST asincrona all'handler OnPostUpdateRole
+    const result = await commitToServer('UpdateRole', payload, 'POST');
+
+    if (result && result.success) {
+        alert(result.message);
+
+        // Chiude il modal automaticamente
+        const modalElement = document.getElementById('promotionModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) modalInstance.hide();
+
+        // Rinfresca la vista usando il tuo router statico
+        VanitasAdminRouter.refreshCurrentView('StaffManagement');
+    } else {
+        alert(result ? result.message : "Errore durante la modifica del ruolo.");
+    }
+}

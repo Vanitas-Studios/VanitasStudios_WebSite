@@ -15,7 +15,7 @@
         <div class="col-lg-4">
             <div class="card border-0 bg-light p-3 mb-3">
                 <h6 class="fw-bold text-uppercase small text-muted mb-3">Crea Nuovo Tag</h6>
-                <form method="post" asp-page-handler="CreateTag">
+                <form method="post" onsubmit="submitTagForm(event, 'CreateTag')">
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-secondary mb-1">Nome Tag</label>
                         <input type="text" name="TagName" class="form-control form-control-sm" placeholder="es. Grimdark, C#, Calisthenics" required />
@@ -32,7 +32,7 @@
 
             <div class="card border-0 bg-light p-3">
                 <h6 class="fw-bold text-uppercase small text-muted mb-3">Aggiungi Sinonimo</h6>
-                <form method="post" asp-page-handler="CreateSynonym">
+                <form onsubmit="submitTagForm(event, 'CreateSynonym')">
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-secondary mb-1">Seleziona Tag Principale</label>
                         <select name="TargetTagId" class="form-select form-select-sm" required>
