@@ -1,51 +1,173 @@
 ﻿@page "{id:int}"
 @model VanitasStudios_WebApp.Pages.ContentModel
 @{
+    ViewData["Title"] = Model.Content.Title;
 }
-<section class="content">
-    <div class="header-content">
-        <h1>@Model.Content.Title</h1>
-        <p>@Model.Content.Description</p>
-    </div>
-    @foreach(var s in Model.Sections)
-    {
-        <div class="content-section">
-            <div class="container">
-                <div class="row">
-                    @* @foreach(var i in s.Images)
+
+<div class="zen-article-wrapper">
+    
+    <aside class="zen-sidebar sidebar-left" id="aside-index">
+        <button class="sidebar-toggle" onclick="toggleSidebar('aside-index')" aria-label="Apri Indice">
+            <i class="bi bi-list-nested"></i>
+        </button>
+        <div class="sidebar-content">
+            <h5 class="sidebar-heading">Indice</h5>
+            <nav id="article-index" class="nav flex-column gap-2">
+                @foreach (var s in Model.Content.Sections)
+                {
+                    <a href="#section-@s.Id" class="nav-index-link">
+                        <span class="index-marker">//</span> @s.Title
+                    </a>
+                }
+            </nav>
+        </div>
+    </aside>
+
+    <main class="zen-content-core">
+        
+        <header class="article-header">
+            <div class="article-meta">
+                <span class="meta-date">@Model.Content.CreatedAt.ToString("dd MMM yyyy")</span>
+                <span class="meta-divider">•</span>
+                <span class="article-main-tag">
+                    @(Model.Content.ContentTags.FirstOrDefault()?.Tag?.Name ?? "Analisi")
+                </span>
+            </div>
+            
+            <h1 class="article-title">@Model.Content.Title</h1>
+            
+            @if (!string.IsNullOrEmpty(Model.Content.Description))
+            {
+                <p class="article-excerpt">@Model.Content.Description</p>
+            }
+            <div class="header-line"></div>
+        </header>
+
+        <article class="article-body-text">
+            
+            @foreach (var s in Model.Content.Sections)
+            {
+                <section class="content-block" id="section-@s.Id">
+                    
+                    <h2 class="section-title">@s.Title</h2>
+
+                    @if (s.MediaElements.Any())
                     {
-                        <div class="col-md-4">
-                            <img class="img-fluid" src="@i.ImageUrl" alt="" />
+                        <div class="section-media-grid">
+                            @foreach (var media in s.MediaElements)
+                            {
+                                <div class="media-item">
+                                    <div class="media-frame">
+                                        @if (media.Type == Models.MediaType.Image)
+                                        {
+                                            <img src="@media.Url" alt="@media.Caption" class="img-fluid article-img" loading="lazy" />
+                                        }
+                                        else if (media.Type == Models.MediaType.YouTubeVideo)
+                                        {
+                                            <div class="ratio ratio-16x9">
+                                                <iframe src="@media.Url" allowfullscreen></iframe>
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(media.Caption))
+                                        {
+                                            <div class="media-caption">
+                                                @media.Caption
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
                         </div>
-                    } *@
+                    }
+
+                    <div class="section-text-render">
+                        @Html.Raw(s.HtmlText)
+                    </div>
+                    
+                </section>
+            }
+
+        </article>
+
+        <footer class="article-footer">
+            <div class="author-box">
+                <div class="author-avatar">
+                    @Model.Content.Author?.UserName?[0].ToString().ToUpper()
+                </div>
+                <div class="author-info">
+                    <span class="author-label">Scritto da</span>
+                    <h4 class="author-name">@@@Model.Content.Author?.UserName</h4>
+                    <p class="author-bio">Contributor presso Vanitas Studios. Esplora le connessioni semantiche, il game design e le strutture narrative dei mondi digitali.</p>
                 </div>
             </div>
-            <div class="content-body">
-                <h2 id="@s.Id">@s.Title</h2>
-                <p>@s.HtmlText</p>
+
+            <div class="tags-cloud">
+                <span class="cloud-label">Tag della sessione:</span>
+                @foreach (var ct in Model.Content.ContentTags)
+                {
+                    <span class="tag-pill">#@ct.Tag?.Name</span>
+                }
+            </div>
+        </footer>
+        
+        <div id="end-of-article-trigger"></div>
+    </main>
+
+    <aside class="zen-sidebar sidebar-right" id="aside-related">
+        <button class="sidebar-toggle" onclick="toggleSidebar('aside-related')" aria-label="Apri Suggeriti">
+            <i class="bi bi-journal-text"></i>
+        </button>
+        <div class="sidebar-content">
+            <h5 class="sidebar-heading">Correlati</h5>
+            <div class="related-list">
+                @foreach (var rc in Model.RelatedContents)
+                {
+                    <a asp-page="/Content" asp-route-id="@rc.Id" class="related-card-link">
+                        <div class="related-mini-card">
+                            <h6 class="related-card-title">@rc.Title</h6>
+                            <p class="related-card-desc">@rc.Description</p>
+                        </div>
+                    </a>
+                }
             </div>
         </div>
-    }
-    <div class="content-index">
-        @foreach(var s in Model.Sections)
-        {
-            <a href="#@s.Id">@s.Title</a>
+    </aside>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+@section Scripts {
+    <script>
+            document.addEventListener("DOMContentLoaded", function () {
+            // 1. Configurazione del tracciamento a fine lettura (Intersection Observer)
+            const endTrigger = document.getElementById("end-of-article-trigger");
+            const relatedSidebar = document.getElementById("aside-related");
+
+            if (endTrigger && relatedSidebar) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            // L'utente è arrivato alla fine del testo: facciamo scivolare dentro la colonna suggeriti
+                            relatedSidebar.classList.add("open");
+                        }
+                    });
+                }, {
+                    threshold: 0.1,
+                    rootMargin: "0px 0px 100px 0px" // Si attiva poco prima di toccare il fondo
+                });
+
+                observer.observe(endTrigger);
+            }
+        });
+
+        // 2. Controllo manuale tramite click sui pulsanti fluttuanti
+        function toggleSidebar(id) {
+            const sidebar = document.getElementById(id);
+            if (sidebar) {
+                sidebar.classList.toggle("open");
+            }
         }
-    </div>
-    <div class="related-content">
-        <h4>Related content</h4>
-        @foreach(var c in Model.RelatedContents)
-        {
-            <div class="card" style="width: 18rem;">
-                <a asp-page="/Content" asp-route-id="@c.Id">
-                    <img src="..." class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h3 class="card-title">@c.Title</h3>
-                        <p class="card-text">@c.Description</p>
-                        <span>@c.CreatedAt</span>
-                    </div>
-                </a>
-            </div>
-        }
-    </div>
-</section>
+    </script>
+}

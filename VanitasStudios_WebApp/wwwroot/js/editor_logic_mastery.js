@@ -917,7 +917,9 @@ async function saveFullContent() {
         await checkDeletedSections();
 
         // 2. Serializziamo il contenuto dell'editor
+        //const articleData = serializedEditorContent();
         const articleData = serializedEditorContent();
+
         localStorage.setItem(`article_backup_${articleId}`, JSON.stringify(articleData));
 
         // 3. Spediamo al server
@@ -943,8 +945,89 @@ async function saveFullContent() {
     }
 }
 
-// Funzione per serializzare il contenuto dell'editor
+
 function serializedEditorContent() {
+    // 1. Recupera e pulisce il Titolo Principale dell'Articolo
+    // (Assicurati che 'mainTitle' sia il riferimento corretto al tuo input HTML del titolo)
+    const mainTitleInput = mainTitle && mainTitle.value ? mainTitle.value.trim() : "";
+
+    // 2. Seleziona tutti i blocchi sezione presenti nell'editor
+    const sectionElements = Array.from(editor.querySelectorAll(".editor-section"));
+
+    const sections = sectionElements.map((wrapper, index) => {
+        const sectionId = wrapper.getAttribute("data-section-id");
+
+        // Estrazione e pulizia del Titolo della Sezione dal Badge (rimuovendo ##)
+        const badgeEl = wrapper.querySelector(".section-title-badge");
+        let extractedSectionTitle = "Senza Titolo";
+        if (badgeEl) {
+            extractedSectionTitle = badgeEl.textContent.replace(/^##/, "").trim();
+        }
+
+        // Isolamento e pulizia profonda dell'area di testo editabile
+        const contentArea = wrapper.querySelector(".section-content");
+        let sanitizedHtml = "";
+
+        if (contentArea) {
+            let rawHtml = contentArea.innerHTML.trim();
+
+            // Intercettiamo i "falsi vuoti" dell'editor (inclusi i tag div inseriti da Chrome/Firefox sugli invio)
+            if (rawHtml === "<br>" || rawHtml === "" || rawHtml === "<p><br></p>" || rawHtml === "<div><br></div>") {
+                sanitizedHtml = "";
+            } else {
+                sanitizedHtml = cleanHtmlContent(rawHtml);
+            }
+        }
+
+        // Ritorna l'oggetto Sezione mappato sul DTO C# (SectionViewModel)
+        return {
+            ArticleId: parseInt(articleId), // ID di controllo per la sicurezza dei dati
+            Id: sectionId,                  // Stringa (es. "temp-..." o ID reale numerico)
+            Title: extractedSectionTitle,   // Titolo pulito (senza ##)
+            Content: sanitizedHtml,         // HTML purificato pronto per il DB
+            Order: index + 1                // Ordine strutturale basato sulla posizione reale nel DOM
+        };
+    });
+
+    // Ritorna il Payload globale che mappa perfettamente su 'EditorSavePayload' in C#
+    return {
+        ArticleId: parseInt(articleId),
+        Title: mainTitleInput, // <--- Ecco il titolo dell'articolo principale associato e ripulito
+        Sections: sections
+    };
+}
+
+// Funzione di supporto atomica per rimuovere scorie HTML
+function cleanHtmlContent(html) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+
+    // Rimuove la sequenza invisibile Zero-Width Space (\u200B) e pulisce i div vuoti residui
+    let textContent = tempDiv.innerHTML.replace(/\u200B/g, '').replace(/<div><br><\/div>/g, '<br>');
+    tempDiv.innerHTML = textContent;
+
+    // Rimuoviamo eventuali badge o nodi di controllo titolo finiti erroneamente dentro l'area testo
+    const rogueBadges = tempDiv.querySelectorAll(".section-title-badge, .badge");
+    rogueBadges.forEach(b => b.remove());
+
+    // Pulisce attributi spuri da tutti i blocchi di testo interni generati dall'editor editable
+    const blocks = tempDiv.querySelectorAll("p, div, span");
+    blocks.forEach(block => {
+        // Se un blocco interno è rimasto vuoto o ha solo un br, lo rimuoviamo per non creare spazi vuoti giganti nel layout Zen
+        if (block.innerHTML.trim() === "" || block.innerHTML === "<br>") {
+            block.remove();
+        } else {
+            block.removeAttribute("contenteditable");
+            block.removeAttribute("class");
+            block.removeAttribute("style");
+        }
+    });
+
+    return tempDiv.innerHTML.trim();
+}
+
+// Funzione per serializzare il contenuto dell'editor
+function serializedEditorContentOlderVersion() {
     const sections = Array.from(editor.querySelectorAll(".editor-section")).map(wrapper => {
         return {
             id: wrapper.getAttribute("data-section-id"),
