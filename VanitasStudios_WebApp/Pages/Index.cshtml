@@ -1,67 +1,115 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<section class="hero">
-    <div class="hero-container">
-        <div class="hero-text">
-            <h5 class="text-white">We obeserve what remains</h5>
-        </div>
-        <div class="hero-image-wrapper">
-            <img src="/img/StatueVS.png" class="img-fluid" alt="Vanitas Statue, symbol of decay " />
+<!-- SECTION 1: THE THRESHOLD (HERO) -->
+<section class="v-hero-section">
+    <div class="container h-100 position-relative">
+        <div class="row h-100 align-items-center">
+
+            <!-- Testo d'impatto sul lato sinistro -->
+            <div class="col-lg-5 v-hero-core">
+                <span class="v-motto text-monumental d-block mb-2">We observe what remains</span>
+                <h1 class="v-brand-title">VANITAS<br><span class="text-gold">STUDIOS</span></h1>
+                <p class="v-hero-sub text-muted mt-3">Observing time through the lens of matter.</p>
+            </div>
+
+            <!-- Contenitore dedicato alla Maschera 3D (ex Statua) -->
+            <div class="col-lg-7 v-mask-viewport">
+                <!-- Qui dentro inizializzerai Three.js / Babylon o il tuo Canvas 3D -->
+                <div id="mask-3d-container" class="v-mask-canvas-wrapper">
+                    <!-- Placeholder temporaneo invisibile o luce soffusa -->
+                    <div class="v-mask-placeholder-glow"></div>
+                </div>
+            </div>
+
         </div>
     </div>
-    <div class="side-indicator">
-        <span class="side-text">Descend</span>
-        <div class="side-line"></div>
+
+    <!-- Indicatore di discesa cinetica -->
+    <div class="v-descend-indicator">
+        <span class="v-descend-text text-monumental">Descend</span>
+        <div class="v-descend-line"></div>
     </div>
 </section>
 
-<section class="mission">
-    <div class="mission-container">
-        <div class="mission-title">
-            <h1>Vanitas Studios</h1>
-            <p>project</p>
-        </div>
-        <div class="mission-projects">
-            <div class="project-content">
-                <h5>Game documentation</h5>
-                <p>
-                    Technical and conceptual documentation of Vanitas Studios' independent projects. Development chronicles, design documents, and code analysis. The structure behind the aesthetics.
-                </p>
-                <a class="btn mission-btn text-uppercase" asp-page="/GameDoc">Examine Archives</a>
-            </div>
-            <div class="project-content">
-                <h5>Articles</h5>
-                <p>
-                    Critical observations and aesthetic dissections of the digital medium. Analytical essays on narrative fragments, atmospheric ruins, and the philosophy of play. Observing what others overlook.
-                </p>
-                <a class="btn mission-btn text-uppercase" asp-page="/Blog">View Observations</a>
+<!-- SECTION 2: THE ARCHIVE (PINNED CONTENTS) -->
+<section class="v-archive-section">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12">
+                <span class="text-monumental text-gold">01 // Pinned Fragments</span>
+                <h2 class="v-section-title mt-2">Selected Chronicles</h2>
             </div>
         </div>
-    </div>
-</section>
 
-<section class="about">
-    <div class="about-container">
-        <div class="about-body">
-            <h1>The Vision</h1>
-            <p>
-                Vanitas Studios dwells within the shadows, stirring the heavy veil of darkness for those who wander through it. We read what has never been written.<br />
+        <!-- Griglia Asimmetrica per i Contenuti Evidenziati (pinned == 1) -->
+        <div class="row g-5">
+            <!-- Articolo Primario (Più grande) -->
+            <div class="col-lg-7">
+                <article class="v-card-featured">
+                    <div class="v-card-img-mask">
+                        <!-- Qui andrà l'immagine dell'articolo filtrata cromatologicamente -->
+                        <div class="v-card-img-placeholder" style="background-image: url('/img/sample-monolith.jpg');"></div>
+                    </div>
+                    <div class="v-card-body mt-4">
+                        <span class="v-card-meta text-monumental">Game Documentation // June 2026</span>
+                        <h3 class="v-card-title my-2"><a asp-page="/GameDoc">The Structure Behind Aesthetics</a></h3>
+                        <p class="v-card-excerpt">Technical and conceptual documentation of independent projects. Development chronicles, design documents, and code analysis.</p>
+                    </div>
+                </article>
+            </div>
 
-                Every environment conceals a story—an unyielding truth. It lives in the silence of a weathered wall, a chair collapsed upon the floor, the dust suspended in the air. Silence offers what words cannot; it grants the player space to metabolize what has passed, to truly grasp the narrative.<br />
-
-                We study and apply the design of silence in our works. We craft stories without moral boundaries, reflecting only our inherent nature. There is no perfection—only the raw beauty of authenticity.<br />
-
-                Vanitas Studios: observing time through the lens of matter.
-            </p>
-        </div>
-        <div class="about-visual">
-            <div class="square">
-                <p>02/09/2025</p>
+            <!-- Articolo Secondario (Più stretto, sfalsato) -->
+            <div class="col-lg-5 pt-lg-5">
+                <article class="v-card-featured mt-lg-5">
+                    <div class="v-card-img-mask">
+                        <div class="v-card-img-placeholder" style="background-image: url('/img/sample-ruins.jpg');"></div>
+                    </div>
+                    <div class="v-card-body mt-4">
+                        <span class="v-card-meta text-monumental">Critical Observation // May 2026</span>
+                        <h3 class="v-card-title my-2"><a asp-page="/Blog">The Philosophy of Play</a></h3>
+                        <p class="v-card-excerpt">Critical observations and aesthetic dissections of the digital medium. Analytical essays on narrative fragments and atmospheric ruins.</p>
+                    </div>
+                </article>
             </div>
         </div>
     </div>
 </section>
+
+<!-- SECTION 3: THE MANIFESTO (ABOUT) -->
+<section class="v-manifesto-section">
+    <div class="container">
+        <div class="row justify-content-center position-relative">
+
+            <!-- Il micro-dettaglio temporale che avevi inserito -->
+            <div class="v-manifesto-timestamp text-monumental">
+                Index Ref: 02/09/2025
+            </div>
+
+            <div class="col-lg-8 v-manifesto-core">
+                <span class="text-monumental text-gold d-block mb-3">02 // The Vision</span>
+                <h2 class="v-section-title mb-4">We read what has never been written.</h2>
+
+                <div class="v-manifesto-text">
+                    <p>
+                        Vanitas Studios dwells within the shadows, stirring the heavy veil of darkness for those who wander through it.
+                    </p>
+                    <p>
+                        Every environment conceals a story—an unyielding truth. It lives in the silence of a weathered wall, a chair collapsed upon the floor, the dust suspended in the air. Silence offers what words cannot; it grants the player space to metabolize what has passed, to truly grasp the narrative.
+                    </p>
+                    <p>
+                        We study and apply the design of silence in our works. We craft stories without moral boundaries, reflecting only our inherent nature. There is no perfection—only the raw beauty of authenticity.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/index.css" asp-append-version="true" />
+}

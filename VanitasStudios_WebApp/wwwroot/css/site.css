@@ -1,875 +1,281 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
+﻿/* ==========================================================================
+   VANITAS STUDIOS - CORE DESIGN SYSTEM (UNIVERSALE)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
-    --main-font-family: 'Syne', sans-serif;
-    --main-color: #0a0a0a;
-    --main-secondary-color: #1a1a1a;
-    --secondary-background-color: #333333;
-    --main-font-color: #e0e0e0;
-    --secondary-font-color: rgba(255, 255, 255, 0.4);
-    --danger-color: #950101;
-}
-html {
-  font-size: 14px;
+    /* --- PALETTE CROMATICA (Regola 60-30-10 Semantica) --- */
+    --bg-void: #0e0e11; /* 60% Lo Scuro Morbido - Sfondo universale rilassante */
+    --bg-surface: #15151a; /* Sfondo per Card, Sidebar ed Editor blocchi */
+    --bg-surface-light: #1f1f26; /* Per elementi di hover, input attivi o focus */
+
+    --text-pure: #EAEAEA; /* IL TUO CORRETTO: Bianco morbido/avorio per i titoli d'impatto */
+    --text-silver: #C5C6C7; /* 30% La Polvere - Testo lettura, morbido e satinato */
+    --text-ashes: #626270; /* Metadati, date, descrizioni e stati disattivati */
+
+    --accent-gold: #D4AF37; /* 10% Le Rovine - Oro antico per focus, interazioni e badge */
+    --accent-gold-glow: rgba(212, 175, 55, 0.12);
+    /* --- TIPOGRAFIA --- */
+    --font-header: 'Montserrat', sans-serif;
+    --font-body: 'Lora', Georgia, serif;
+    /* --- SPAZIATURA E GEOMETRIA --- */
+    --max-text-width: 72ch;
+    --sidebar-width: 260px;
+    --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+/* --- RESET & LAYER MATERICO COMPLESSO --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    width: 100%;
-    margin-bottom: 60px;
-    font-family: var(--main-font-family);
-}
-
-section{
-    position: relative;
-    width : 100%;
-    height : 100vh;
-}
-
-header {
-    height: 100px;
-    max-height: 100px;
-    width: 100%;
-    position: absolute;
-    z-index: 100;
-}
-/*Style for the index page*/
-
-.hero {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 100vh;
-    background-image: linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.05)), url('../img/background.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    top: 0;
-    overflow: hidden;
-}
-
-.hero-container {
-    width: 100%;
-    padding: 0rem 5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.hero-text {
-    flex: 1;
-}
-
-.hero-text h5 {
-    text-transform: uppercase;
-    letter-spacing: .2rem;
-}
-
-.hero-image-wrapper {
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    overflow: hidden;
-}
-
-.hero-image-wrapper img{
-    width: 100%;
-    /* 1. La rendiamo più alta dello schermo per avere spazio per muoverla */
-    height: 120vh !important; 
-    
-    /* 2. Fondamentale per non schiacciarla */
-    object-fit: cover; 
-    
-    /* 3. Adesso 80% funzionerà perché c'è spazio extra! */
-    object-position: center 0%; 
-    
-    /* 4. Opzionale: la tiriamo su leggermente se scende troppo */
-    margin-top: 10vh;
-}
-
-.side-indicator {
-    position: absolute;
-    bottom: 5rem;
-    left: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    z-index: 5;
-}
-
-.side-text {
-    writing-mode: vertical-rl; /* Ruota il testo verticalmente */
-    transform: rotate(180px); /* Lo orienta correttamente per la lettura dal basso */
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4); /* Grigio tenue come nel mockup */
-    font-size: 0.75rem;
-    letter-spacing: 0.3rem;
-}
-
-.side-line {
-    width: 1px;
-    height: 60px; /* Lunghezza della linea verticale */
-    background-color: rgba(255, 255, 255, 0.3);
-}
-
-.mission {
-    background-color: var(--main-secondary-color);
-}
-
-.mission-container {
-    width: 100%;
-    height: 100%;
-    padding: 6rem 5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5rem;
-}
-
-.mission-title {
-    display: flex;
-    flex-direction: column;
-    color: var(--main-font-color);
-    text-align: center;
-    gap: 1.5rem;
-}
-
-.mission-title h1 {
-    text-transform: uppercase;
-    letter-spacing: 1.5rem;
-}
-
-.mission-title p {
-   font-size: 1.25rem;
-   text-transform: uppercase;
-}
-
-.mission-projects {
-    width: 100%;
-    max-width: 1200px;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    gap: 5rem;
-}
-
-.mission-projects .project-content{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    max-width: 400px;
-}
-
-.project-content h5 {
-    text-transform: uppercase;
-    color: var(--main-font-color);
-    font-weight: 600;
-    letter-spacing: .3rem;
-}
-
-.project-content p {
-    color: var(--secondary-font-color);
-    text-align: left;
-}
-
-.project-content .mission-btn {
-    background-color: var(--danger-color);
-    color: var(--main-font-color);
-    border: 0.5px solid var(--secondary-font-color);
-}
-
-.about {
-    padding: 2rem 5rem;
-    display: flex;
-    align-items: center;
-    background-color: var(--main-color);
-}
-
-.about-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 100%;
-}
-
-.about-container .about-body{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 2rem;
-}
-
-.about-body h1 {
-    text-transform: uppercase;
-    letter-spacing: 1rem;
-    color: var(--main-font-color);
-}
-
-.about-body p {
-    color: var(--secondary-font-color);
-    line-height: 1.5;
-}
-
-.about-container .about-visual{
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.about-visual .square {
-    width: 200px;
-    height: 200px;
-    background-color: transparent;
-    border: 1px solid var(--secondary-font-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: var(--main-font-color);
-}
-
-/*Style for the documentation page*/
-
-section.hero-doc {
-    width: 100%;
-    height: 50vh;
-    padding: 5rem 5rem 0 5rem;
-    display: flex;
-    align-items: center;
-    background-color: var(--main-secondary-color);
-    overflow: hidden;
-}
-
-.doc-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 100%;
-}
-
-.doc-container .doc-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.doc-container .doc-text h1 {
-    text-transform: uppercase;
-    letter-spacing: 1rem;
-    color: var(--main-font-color);
-}
-
-.doc-container .doc-text p {
-    color: var(--secondary-font-color);
-    line-height: 1.5;
-}
-
-.doc-visual {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-.doc-visual img{
-    width: 100%;      /* Prende tutta la larghezza del contenitore */
-    height: 100%;     /* Prende tutta l'altezza del contenitore */
-    object-fit: cover; 
-    object-position: center 0%;
-}
-
-.doc-archive {
-    display: flex;
-    padding: 2rem 5rem;
-    background-color: var(--main-color);
-}
-
-.doc-archive .archive-container{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.archive-container .header-archive {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    width: 100%;
-}
-
-.header-archive h3{
-    text-transform: uppercase;
-    letter-spacing: 0.5rem;
-    color: var(--main-font-color);
-}
-
-.header-archive .archive-search {
-    flex: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-/*Style for the Blog page*/
-
-section.hero-blog {
-    width: 100%;
-    height: 50vh;
-    padding: 5rem 5rem 0 5rem;
-    display: flex;
-    align-items: center;
-    background-color: var(--main-secondary-color);
-    overflow: hidden;
-}
-
-.blog-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 100%;
-}
-
-.blog-container .blog-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.blog-container .blog-text h1 {
-    text-transform: uppercase;
-    letter-spacing: 1rem;
-    color: var(--main-font-color);
-}
-
-.blog-container .blog-text p {
-    color: var(--secondary-font-color);
-    line-height: 1.5;
-}
-
-.blog-visual {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-.blog-visual img{
-    width: 100%;      /* Prende tutta la larghezza del contenitore */
-    height: 100%;     /* Prende tutta l'altezza del contenitore */
-    object-fit: cover; 
-    object-position: center 0%;
-}
-
-.blog-archive {
-    display: flex;
-    padding: 2rem 5rem;
-    background-color: var(--main-color);
-}
-
-.blog-archive .archive-container {
-     display: flex;
-     flex-direction: column;
-     width: 100%;
-}
-
-.archive-container .header-archive {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    width: 100%;
-}
-
-.header-archive h3 {
-    text-transform: uppercase;
-    letter-spacing: 0.5rem;
-    color: var(--main-font-color);
-}
-
-.header-archive .archive-search {
-    flex: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-/*Style for the Add_Content Page*/
-
-.editor-drag-over {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.2s ease;
-}
-
-    .editor-drag-over::after {
-        content: "📥 Rilascia i file qui";
-        position: absolute;
-        inset: 5px; /* Crea un piccolo margine interno */
-        background-color: rgba(37, 140, 251, 0.15);
-        border: 3px dashed #258cfb;
-        border-radius: 12px; /* Angoli più morbidi */
-        backdrop-filter: blur(5px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #258cfb;
-        font-weight: bold;
-        font-size: 1.5rem;
-        pointer-events: none;
-        z-index: 10;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    }
-
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    transition: background-color 0.3s ease;
-}
-
-/* Stati del pallino */
-.dot-success {
-    background-color: #28a745;
-}
-/* Verde */
-.dot-warning {
-    background-color: #ffc107;
-}
-/* Giallo (In corso/Local) */
-.dot-danger {
-    background-color: #dc3545;
-}
-/* Rosso (Errore) */
-
-/* Animazione per quando sta salvando */
-.dot-saving {
-    background-color: #007bff; /* Blu */
-    animation: pulse-blue 1.5s infinite;
-}
-
-@keyframes pulse-blue {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
-    }
-
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 5px rgba(0, 123, 255, 0);
-    }
-
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
-    }
-}
-#editor {
-    max-height: 65vh; /* Imposta un'altezza massima (es. 65% della vista dello schermo) */
-    overflow-y: auto; /* CRUCIALE: Forza la comparsa della barra di scorrimento verticale */
-    position: relative;
-    padding: 15px;
-    /* ... il resto dei tuoi stili per il bordo, background, ecc. ... */
-}
-#search-autocomplete-box.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    z-index: 9999 !important; /* Lo porta sopra qualsiasi carosello o sfondo */
-}
-
-
-/* --- ARCHITETTURA MODALITÀ ZEN --- */
-.zen-article-wrapper {
-    display: grid;
-    grid-template-columns: 260px 1fr 260px;
-    min-height: 100vh;
-    position: relative;
-    background-color: #0d0d11; /* Sfondo scuro profondo */
-    color: #a5a5b0;
+    color: var(--text-silver) !important;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+    /* 🌟 TRICK VISIVO: Sovrapponiamo più layer strutturati.
+       Layer 1: Gradiente radiale per la vignettatura (oscurità ai bordi).
+       Layer 2: Venatura diagonale netta 1 (Simile a quarzo/marmo chiaro).
+       Layer 3: Venatura diagonale netta 2 (Incisione o traccia d'oro minerale).
+    */
+    background-image:
+    /* 1. Il Bagliore Centrale e l'Oscurità periferica */
+    radial-gradient(circle at 50% 45%, transparent 20%, #060608 85%),
+    /* 2. Venatura Chiara (Spaccatura minerale) - Angolata a 135° */
+    linear-gradient(135deg, transparent 45%, rgba(255, 255, 255, 0.015) 46%, rgba(255, 255, 255, 0.025) 46.5%, transparent 47%),
+    /* 3. Venatura Oro Dorata (Filo metallico profondo) - Angolata a 45° */
+    linear-gradient(45deg, transparent 70%, rgba(212, 175, 55, 0.015) 70.5%, rgba(212, 175, 55, 0.03) 71%, transparent 71.5%),
+    /* 4. Il Colore Solido di Base */
+    linear-gradient(to bottom, var(--bg-void), #0a0a0d) !important;
+    background-attachment: fixed; /* Mantiene le venature ferme mentre scendi, come se lo schermo fosse una finestra sulla pietra */
 }
 
-/* --- CORE CENTRALE (LARGHEZZA CONTROLLATA DINAMICA) --- */
-.zen-content-core {
-    grid-column: 2;
-    max-width: 72ch; /* Misura ottimale tipografica (circa 750px-800px) per evitare l'affaticamento visivo */
-    width: 100%;
-    margin: 0 auto;
-    padding: 5rem 2rem;
-}
+    /* --- OVERLAY OPZIONALE: Se vuoi mantenere una porosità di fondo oltre alle venature --- */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* Micro-porosità della pietra arenaria */
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='stoneNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23stoneNoise)' opacity='0.012'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+    }
 
-/* Intestazione */
-.article-header {
-    margin-bottom: 4rem;
-}
-
-.article-meta {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: #626270;
-}
-
-.article-main-tag {
-    color: #45f3ff; /* Colore accento Vanitas (Ciano Neon) */
-}
-
-.article-title {
-    font-size: 3rem;
-    font-weight: 800;
-    color: #ffffff;
-    line-height: 1.2;
-    margin-top: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-
-.article-excerpt {
-    font-size: 1.25rem;
-    line-height: 1.6;
-    color: #838394;
-    font-style: italic;
-}
-
-.header-line {
-    height: 1px;
-    background: linear-gradient(90deg, rgba(69,243,255,0.3) 0%, rgba(255,255,255,0.05) 100%);
-    margin-top: 2rem;
-}
-
-/* Tipografia del Testo Rendering */
-.content-block {
-    margin-bottom: 4rem;
-}
-
-.section-title {
-    font-size: 1.65rem;
+/* --- TIPOGRAFIA GLOBALE (Mitigazione Bootstrap) --- */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: var(--font-header) !important;
+    color: var(--text-pure) !important;
     font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 1.5rem;
     letter-spacing: -0.01em;
 }
 
-.section-text-render {
-    font-size: 1.15rem;
-    line-height: 1.85;
-    letter-spacing: -0.003em;
-    font-family: 'Georgia', serif; /* Font Serif immersivo per la lore/narrazione */
-}
-
-    .section-text-render p {
-        margin-bottom: 1.6rem;
-    }
-
-/* Griglia Multimediale Interna */
-.section-media-grid {
-    margin: 2rem 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.media-frame {
-    background: #141419;
-    border: 1px solid #22222a;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-}
-
-.article-img {
-    width: 100%;
-    max-height: 550px;
-    object-fit: cover;
-    display: block;
-}
-
-.media-caption {
-    padding: 0.75rem;
-    font-size: 0.85rem;
-    text-align: center;
-    color: #626270;
-    background-color: #0b0b0f;
-    border-top: 1px solid #22222a;
-}
-
-/* --- LE BARRE LATERALI FLUTTUANTI (SIDEBARS) --- */
-.zen-sidebar {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    padding: 4rem 1.5rem;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 90;
-}
-
-.sidebar-content {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.zen-sidebar.open .sidebar-content {
-    opacity: 1;
-}
-
-.sidebar-heading {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: #4a4a5a;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #22222a;
-    padding-bottom: 0.5rem;
-}
-
-/* Posizionamento iniziale (Chiuse di Default per non distrarre) */
-.sidebar-left {
-    grid-column: 1;
-    transform: translateX(-82%);
-    border-right: 1px solid rgba(255,255,255,0.02);
-}
-
-.sidebar-right {
-    grid-column: 3;
-    transform: translateX(82%);
-    border-left: 1px solid rgba(255,255,255,0.02);
-}
-
-/* Stato Aperto */
-.zen-sidebar.open {
-    transform: translateX(0);
-    background: rgba(13, 13, 17, 0.98);
-    backdrop-filter: blur(12px);
-}
-
-/* Pulsanti di Attivazione (Toggle) */
-.sidebar-toggle {
-    position: absolute;
-    top: 4rem;
-    width: 42px;
-    height: 42px;
-    background: #141419;
-    border: 1px solid #22222a;
-    color: #838394;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-    .sidebar-toggle:hover {
-        color: #45f3ff;
-        border-color: #45f3ff;
-    }
-
-.sidebar-left .sidebar-toggle {
-    right: -21px;
-}
-
-.sidebar-right .sidebar-toggle {
-    left: -21px;
-}
-
-/* Link dell'Indice */
-.nav-index-link {
-    color: #626270;
+a {
+    color: var(--text-silver);
     text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.2s ease;
-    padding: 0.25rem 0;
+    transition: var(--transition-smooth);
 }
 
-    .nav-index-link:hover {
-        color: #ffffff;
+    a:hover {
+        color: var(--accent-gold) !important;
     }
 
-.index-marker {
-    color: #45f3ff;
-    opacity: 0.5;
-    font-weight: bold;
+/* --- NEUTRALIZZAZIONE COMPONENTI BOOTSTRAP BLINDATA --- */
+
+/* 1. Reset degli Input e delle Textarea (Essenziale per l'Editor) */
+.form-control, .form-select {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-silver) !important;
+    font-family: var(--font-body);
+    border-radius: 4px !important;
+    transition: var(--transition-smooth) !important;
 }
 
-/* Mini Card dei Correlati */
-.related-list {
-    display: flex;
-    flex-column: column;
-    gap: 1rem;
-}
-
-.related-card-link {
-    text-decoration: none;
-}
-
-.related-mini-card {
-    background: #141419;
-    border: 1px solid #22222a;
-    padding: 1rem;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-
-    .related-mini-card:hover {
-        border-color: #45f3ff;
-        transform: translateY(-2px);
+    /* Rimuove l'alone azzurro orribile di default di Bootstrap al click */
+    .form-control:focus, .form-select:focus {
+        background-color: var(--bg-surface-light) !important;
+        border-color: var(--accent-gold) !important;
+        box-shadow: 0 0 0 3px var(--accent-gold-glow) !important;
+        color: var(--text-pure) !important;
     }
 
-.related-card-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 0.25rem;
-}
+    /* Placeholder morbidi come la polvere */
+    .form-control::placeholder {
+        color: var(--text-ashes) !important;
+        opacity: 1;
+    }
 
-.related-card-desc {
-    font-size: 0.8rem;
-    color: #626270;
-    margin-bottom: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* --- FOOTER: AUTORE E TAG --- */
-.article-footer {
-    margin-top: 5rem;
-    padding-top: 3rem;
-    border-top: 1px solid #22222a;
-}
-
-.author-box {
-    display: flex;
-    gap: 1.5rem;
-    background: #141419;
-    border: 1px solid #22222a;
-    padding: 2rem;
-    border-radius: 12px;
-    align-items: center;
-    margin-bottom: 3rem;
-}
-
-.author-avatar {
-    width: 68px;
-    height: 68px;
-    background: #22222a;
-    border: 1px solid #45f3ff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #45f3ff;
-}
-
-.author-label {
-    font-size: 0.75rem;
+/* 2. Reset dei Bottoni di Bootstrap per farli Vanitas-style */
+.btn {
+    font-family: var(--font-header);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #626270;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: var(--transition-smooth) !important;
+    border-radius: 4px !important;
 }
 
-.author-name {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0.15rem 0 0.5rem 0;
+/* Trasformiamo i bottoni primari in pulsanti d'oro minimali */
+.btn-primary {
+    background-color: transparent !important;
+    border: 1px solid var(--accent-gold) !important;
+    color: var(--accent-gold) !important;
 }
 
-.author-bio {
-    font-size: 0.9rem;
-    color: #838394;
-    margin-bottom: 0;
-    line-height: 1.5;
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: var(--accent-gold) !important;
+        color: var(--bg-surface) !important; /* Il testo diventa scuro sullo sfondo oro */
+        box-shadow: 0 0 15px var(--accent-gold-glow) !important;
+    }
+
+/* 3. Reset dei Badge (I tuoi futuri blocchi ## nell'editor) */
+.badge {
+    font-family: var(--font-header);
+    background-color: var(--bg-surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-silver) !important;
+    font-weight: 600;
 }
 
-.tags-cloud {
+/* Scrollbar Personalizzata */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-void);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-gold);
+    }
+
+/* ==========================================================================
+   VANITAS STUDIOS - NAVBAR & FOOTER SYSTEM
+   ========================================================================== */
+
+/* --- CORNICE DI NAVIGAZIONE (NAVBAR) --- */
+.v-navbar {
+    padding: 1.5rem 0;
+    background: transparent !important;
+    transition: var(--transition-smooth);
+}
+
+/* Modifichiamo l'aspetto dei Link del Menu */
+.v-menu-links {
+    gap: 3rem; /* Spaziatura elegante e ampia tra le voci */
+}
+
+    .v-menu-links .nav-link {
+        font-family: var(--font-header);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-silver) !important; /* Polvere, non bianco puro */
+        padding: 0.5rem 1rem !important;
+        position: relative;
+        transition: var(--transition-smooth);
+    }
+
+        /* Effetto Hover Minimalista (La scintilla d'oro) */
+        .v-menu-links .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background-color: var(--accent-gold);
+            transition: var(--transition-smooth);
+            transform: translateX(-50%);
+        }
+
+        .v-menu-links .nav-link:hover {
+            color: var(--text-pure) !important;
+        }
+
+            .v-menu-links .nav-link:hover::after {
+                width: 60%;
+            }
+
+/* Evidenze per i link gestionali (Admin e Scrittura) */
+.v-nav-admin {
+    color: #a881af !important;
+}
+
+.v-nav-write {
+    color: #76a085 !important;
+}
+
+/* Adattamento Toggler Mobile */
+.v-toggler {
+    border: none !important;
+    padding: 0.5rem !important;
+}
+
+    .v-toggler:focus {
+        box-shadow: none !important;
+    }
+
+/* --- IL FOOTER ANCORATO --- */
+.v-footer {
+    background-color: var(--bg-surface); /* Onyx profondo, non il nero pece di Bootstrap */
+    padding: 3rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.02) !important; /* Linea quasi invisibile */
+    margin-top: auto; /* Trucco finale: dice al flexbox di spingere se stesso al fondo */
+}
+
+.v-footer-text, .v-footer-text a {
+    color: var(--text-ashes) !important;
+    font-size: 0.7rem !important;
+}
+
+    .v-footer-text a:hover {
+        color: var(--accent-gold) !important;
+    }
+
+.v-footer-links a {
+    color: var(--text-ashes) !important;
+    font-size: 0.7rem !important;
+    transition: var(--transition-smooth);
+    margin-left: 1.5rem;
+}
+
+    .v-footer-links a:hover {
+        color: var(--text-pure) !important;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+/* Allineamento corretto per le colonne dei flex wrapper */
+.v-nav-brand-wrapper, .v-nav-login-wrapper {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
     align-items: center;
 }
 
-.cloud-label {
-    font-size: 0.85rem;
-    color: #626270;
-    margin-right: 0.5rem;
-}
-
-.tag-pill {
-    background: #0d0d11;
-    border: 1px solid #22222a;
-    color: #838394;
-    padding: 0.35rem 0.75rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-}
-
-/* --- RESPONSIVE: COMPATTAZIONE SU MOBILE --- */
-@media (max-width: 1200px) {
-    .zen-article-wrapper {
-        grid-template-columns: 1fr;
+@media (max-width: 991px) {
+    .v-menu-links {
+        gap: 1rem;
+        padding: 2rem 0 1rem 0;
+        text-align: center;
     }
 
-    .zen-content-core {
-        grid-column: 1;
-        padding: 3rem 1.25rem;
-    }
-
-    .zen-sidebar {
-        position: fixed;
-        width: 280px;
-        background: #0d0d11;
-    }
-
-    .sidebar-left {
-        left: 0;
-        transform: translateX(-100%);
-    }
-
-    .sidebar-right {
-        right: 0;
-        transform: translateX(100%);
-    }
-
-    .sidebar-left.open {
-        transform: translateX(0);
-    }
-
-    .sidebar-right.open {
-        transform: translateX(0);
-    }
-
-    .article-title {
-        font-size: 2.25rem;
+    .v-nav-login-wrapper {
+        justify-content: center;
     }
 }

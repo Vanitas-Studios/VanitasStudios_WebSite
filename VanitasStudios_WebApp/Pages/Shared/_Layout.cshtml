@@ -3,65 +3,80 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - VanitasStudios_WebApp</title>
+    <title>@ViewData["Title"] - Vanitas Studios</title>
+
+    <!-- 1. Fornitore Strutturale (Bootstrap) -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- 2. Il nostro File di Regole e Variabili Universali -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/VanitasStudios_WebApp.styles.css" asp-append-version="true" />
-</head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-transparent box-shadow" id="Nav-menu">
-            <div class="container d-flex align-items-center">
 
-                <div class="flex-1 d-flex justify-content-start" style="flex: 1;">
-                    <a class="navbar-brand" asp-area="" asp-page="/Index">
-                        <img src="/img/Logo.png" width="60" height="70" alt="Logo" decoding="async" fetchpriority="high" />
+    <!-- 3. Iniezione per stili custom (es. index.css) -->
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Forza il body a fare da contenitore flessibile a tutta altezza -->
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark v-navbar" id="Nav-menu">
+            <div class="container">
+
+                <!-- Brand / Logo -->
+                <div class="v-nav-brand-wrapper">
+                    <a class="navbar-brand d-flex align-items-center" asp-area="" asp-page="/Index">
+                        <img src="/img/Logo.png" width="55" height="65" alt="Vanitas Logo" decoding="async" fetchpriority="high" />
                     </a>
                 </div>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <!-- Toggler per Mobile ritoccato -->
+                <button class="navbar-toggler v-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="collapse navbar-collapse justify-content-center" id="navbarContent" style="flex: 2;">
-                    <ul class="navbar-nav menu-links gap-5">
-                        <li class="nav-item"><a class="nav-link text-white text-uppercase px-3" asp-page="/Index">Home</a></li>
-                        <li class="nav-item"><a class="nav-link text-white text-uppercase px-3" asp-page="/GameDoc">Game</a></li>
-                        <li class="nav-item"><a class="nav-link text-white text-uppercase px-3" asp-page="/Blog">Blog</a></li>
-                        @if(User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                <!-- Link Centrali di Navigazione -->
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav mx-auto v-menu-links">
+                        <li class="nav-item"><a class="nav-link" asp-page="/Index">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/GameDoc">Game</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/Blog">Blog</a></li>
+
+                        @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
                         {
-                            <li class="nav-item"><a class="nav-link text-white text-uppercase px-3" asp-page="/AdminInterface">Admin</a></li>
+                            <li class="nav-item"><a class="nav-link v-nav-admin" asp-page="/AdminInterface">Admin</a></li>
                         }
                         @if (User.Identity.IsAuthenticated && (User.IsInRole("Editor") || User.IsInRole("Admin")))
                         {
-                            <li class="nav-item"><a class="nav-link text-white text-uppercase px-3" asp-page="/Add_Content">Write</a></li>
+                            <li class="nav-item"><a class="nav-link v-nav-write" asp-page="/Add_Content">Write</a></li>
                         }
                     </ul>
-                </div>
 
-                <div class="d-none d-sm-flex justify-content-end" style="flex: 1;">
-                    <partial name="_LoginPartial" />
+                    <!-- Elemento Login / Profilo spostato dentro il flusso per il mobile -->
+                    <div class="v-nav-login-wrapper mt-4 mt-lg-0">
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
 
             </div>
         </nav>
     </header>
-    <main role="main" class="">
+
+    <!-- Il main si "allunga" automaticamente riempiendo lo spazio vuoto, spingendo il footer giù -->
+    <main role="main" class="flex-grow-1">
         @RenderBody()
     </main>
 
-    <footer class="border-top border-dark footer text-muted bg-black">
-        <div class="container d-flex justify-content-between align-items-center">
+    <footer class="v-footer">
+        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
 
-            <div class="footer-text">
-                &copy; 2026 - Vanitas Studios - All rights reserved
-                <a asp-area="" asp-page="/Privacy" class="ms-2 text-decoration-none">Privacy</a>
+            <div class="v-footer-text text-monumental">
+                &copy; 2026 - Vanitas Studios // <a asp-area="" asp-page="/Privacy">Privacy Policy</a>
             </div>
 
-            <div class="footer-links d-flex gap-3">
-                <a href="https://www.instagram.com/vanitas_studios_official?igsh=aWQxNmg5cTEyMXFr" target="_blank" class="text-decoration-none text-light">Instagram</a>
-                <a href="https://youtube.com/@@vanitasstudioshub?si=w9BQlbcNE1F63szm" target="_blank" class="text-decoration-none text-light">YouTube</a>
-                <a href="#" target="_blank" class="text-decoration-none text-light">GitHub</a>
+            <div class="v-footer-links text-monumental">
+                <a href="https://www.instagram.com/vanitas_studios_official?igsh=aWQxNmg5cTEyMXFr" target="_blank">Instagram</a>
+                <a href="https://youtube.com/@@vanitasstudioshub?si=w9BQlbcNE1F63szm" target="_blank">YouTube</a>
+                <a href="#" target="_blank">GitHub</a>
             </div>
 
         </div>
