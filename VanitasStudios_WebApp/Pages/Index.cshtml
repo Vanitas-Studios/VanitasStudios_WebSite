@@ -4,34 +4,53 @@
     ViewData["Title"] = "Home";
 }
 
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/index.css" asp-append-version="true" />
+}
+
 <!-- SECTION 1: THE THRESHOLD (HERO) -->
 <section class="v-hero-section">
-    <div class="container h-100 position-relative">
+    <div class="container-fluid h-100 position-relative px-md-5">
         <div class="row h-100 align-items-center">
 
-            <!-- Testo d'impatto sul lato sinistro -->
-            <div class="col-lg-5 v-hero-core">
-                <span class="v-motto text-monumental d-block mb-2">We observe what remains</span>
-                <h1 class="v-brand-title">VANITAS<br><span class="text-gold">STUDIOS</span></h1>
-                <p class="v-hero-sub text-muted mt-3">Observing time through the lens of matter.</p>
+            <!-- LATO SINISTRO: Brand e il motto colorato -->
+            <div class="col-lg-5 offset-lg-1 v-hero-core text-center text-lg-start order-1 ps-lg-5">
+                <h1 class="v-brand-title text-shadow-monumental">
+                    VANITAS<br>STUDIOS
+                </h1>
+                <div class="v-motto-divider"></div>
+                <p class="v-single-motto text-monumental text-gold-muted">We observe what remains</p>
             </div>
 
-            <!-- Contenitore dedicato alla Maschera 3D (ex Statua) -->
-            <div class="col-lg-7 v-mask-viewport">
-                <!-- Qui dentro inizializzerai Three.js / Babylon o il tuo Canvas 3D -->
-                <div id="mask-3d-container" class="v-mask-canvas-wrapper">
-                    <!-- Placeholder temporaneo invisibile o luce soffusa -->
-                    <div class="v-mask-placeholder-glow"></div>
+            <!-- LATO DESTRO: Il Monolito (Maschera Dorata Gigante + Triangolo Deformato) -->
+            <div class="col-lg-6 v-mask-viewport order-2">
+                <div class="v-geometry-wrapper">
+                    <!-- L'alone/bagliore Bianco potenziato di sfondo -->
+                    <div class="v-mask-white-glow"></div>
+
+                    <!-- Il Triangolo Vuoto, Deformato, Solido e Ruotato -->
+                    <div class="v-esoteric-triangle-asymmetric">
+                        <!-- Livello interno per creare l'effetto vuoto (bordo spesso) -->
+                        <div class="v-triangle-inner-cut"></div>
+                    </div>
+
+                    <!-- Contenitore della Maschera (Ingrandito per dominare la scena) -->
+                    <div id="mask-3d-container" class="v-mask-canvas-wrapper">
+                        <img src="~/img/MaskImhotep.png" id="v-static-mask" class="v-mask-fallback" alt="Vanitas Mask Monolith" />
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Indicatore di discesa cinetica -->
-    <div class="v-descend-indicator">
+    <!-- BORDO DESTRO ESTREMO: La CTA Descend Animata -->
+    <div class="v-descend-indicator-right">
         <span class="v-descend-text text-monumental">Descend</span>
-        <div class="v-descend-line"></div>
+        <div class="v-descend-line-container">
+            <div class="v-descend-line"></div>
+        </div>
     </div>
 </section>
 
@@ -109,7 +128,3 @@
         </div>
     </div>
 </section>
-
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/index.css" asp-append-version="true" />
-}

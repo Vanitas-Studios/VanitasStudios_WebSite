@@ -2,86 +2,231 @@
    VANITAS STUDIOS - INDEX PAGE STYLES
    ========================================================================== */
 
-/* --- HERO SECTION (100vh) --- */
+/* --- ANIMAZIONI --- */
+@keyframes vFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+        filter: blur(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes vDescendFloat {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(8px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+/* Bagliore pulsante più visibile */
+@keyframes vGlowPulse {
+    0% {
+        opacity: 0.2;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.4;
+        transform: scale(1.1);
+        filter: blur(60px);
+    }
+
+    100% {
+        opacity: 0.2;
+        transform: scale(1);
+    }
+}
+
+/* --- CONFIGURAZIONE HERO LAYOUT --- */
 .v-hero-section {
     height: 100vh;
-    min-height: 650px;
+    width: 100%;
     position: relative;
     display: flex;
     align-items: center;
-    background: var(--bg-void);
+    background: transparent;
     overflow: hidden;
 }
 
+/* TESTI (LATO SINISTRO) */
 .v-brand-title {
-    font-size: 3.5rem;
-    line-height: 1.1;
+    font-size: 5rem;
+    line-height: 1.0;
     font-weight: 900;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     color: var(--text-pure) !important;
+    animation: vFadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.text-gold {
-    color: var(--accent-gold) !important;
+.text-shadow-monumental {
+    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.95);
 }
 
-.v-motto {
-    color: var(--text-ashes) !important;
+.v-motto-divider {
+    width: 30px;
+    height: 1px;
+    background-color: var(--text-pure);
+    margin: 1.5rem 0;
+    opacity: 0.2;
+}
+
+.text-gold-muted {
+    color: #D4AF37 !important;
     font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    opacity: 0.9;
+    animation: vFadeInUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Contenitore Maschera 3D */
-.v-mask-viewport {
-    height: 80vh;
+/* GERARCHIA VISIVA (LATO DESTRO) */
+.v-geometry-wrapper {
+    position: relative;
+    width: 100%;
+    height: 650px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
 }
 
-.v-mask-canvas-wrapper {
-    width: 100%;
-    height: 100%;
-    max-width: 550px;
-    max-height: 550px;
-    position: relative;
-}
-
-/* Un leggero bagliore d'oro radiale dietro la futura maschera */
-.v-mask-placeholder-glow {
+/* ALONE BIANCO POTENZIATO (Dietro a tutto) */
+.v-mask-white-glow {
     position: absolute;
-    width: 300px;
-    height: 300px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, var(--accent-gold-glow) 0%, transparent 70%);
+    width: 550px;
+    height: 550px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 70%);
+    filter: blur(40px);
+    z-index: 1;
+    pointer-events: none;
+    animation: vGlowPulse 8s ease-in-out infinite;
+}
+
+/* TRIANGOLO VUOTO, SOLIDO, DEFORMATO E RUOTATO */
+.v-esoteric-triangle-asymmetric {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    z-index: 2;
+    background-color: rgba(255, 255, 255, 0.15); /* Colore del bordo solido */
+    /* Deformiamo i tre angoli del triangolo per non renderlo perfetto */
+    clip-path: polygon(52% 5%, 95% 85%, 8% 92%);
+    /* Rotazione personalizzabile per dare dinamismo astratto */
+    transform: rotate(-12deg) translateY(-10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
 }
 
-/* Indicatore di Scorrimento (Cinetico) */
-.v-descend-indicator {
+/* Svuota l'interno del triangolo lasciando un bordo spesso e massiccio */
+.v-triangle-inner-cut {
+    width: calc(100% - 16px); /* Lo spessore del bordo solido (8px per lato) */
+    height: calc(100% - 16px);
+    background-color: #0b0b0b; /* Deve corrispondere al nero di fondo della pagina */
+    /* Replica la stessa identica deformazione del padre in scala ridotta */
+    clip-path: polygon(52% 6%, 94% 84%, 9% 91%);
+}
+
+/* CONTENITORE MASCHERA INGRANDITO */
+.v-mask-canvas-wrapper {
+    width: 100%;
+    max-width: 580px; /* Portato da 480px a 580px per dare impatto massiccio */
+    z-index: 3; /* Sovrapposto al triangolo, nascondendone i lati */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.v-mask-fallback {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    /* Ombra pesante per staccare nettamente l'oro dal triangolo bianco e dall'alone posteriore */
+    filter: drop-shadow(0 25px 45px rgba(0, 0, 0, 0.98)) drop-shadow(0 0 30px rgba(255, 255, 255, 0.05));
+}
+
+/* INTERFACCIA: DESCEND */
+.v-descend-indicator-right {
     position: absolute;
     right: 4rem;
-    bottom: 0;
+    bottom: 3rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     z-index: 10;
+    animation: vFadeInUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards, vDescendFloat 4s ease-in-out infinite 2s;
 }
 
 .v-descend-text {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     color: var(--text-ashes) !important;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.v-descend-line-container {
+    width: 1px;
+    height: 70px;
+    overflow: hidden;
+    position: relative;
 }
 
 .v-descend-line {
     width: 1px;
-    height: 120px;
-    background: linear-gradient(to bottom, var(--text-ashes) 0%, transparent 100%);
+    height: 100%;
+    background: linear-gradient(to bottom, var(--text-ashes) 0%, rgba(255,255,255,0) 100%);
+}
+
+/* RESPONSIVNESS */
+@media (max-width: 991px) {
+    .v-hero-section {
+        height: auto;
+        min-height: 100vh;
+        padding: 7rem 0 4rem 0;
+    }
+
+    .v-geometry-wrapper {
+        height: 450px;
+    }
+
+    .v-mask-canvas-wrapper {
+        max-width: 400px;
+    }
+
+    .v-esoteric-triangle-asymmetric {
+        width: 300px;
+        height: 300px;
+    }
+
+    .v-brand-title {
+        font-size: 3.5rem;
+        text-align: center;
+    }
+
+    .v-motto-divider {
+        margin: 1.5rem auto;
+    }
+
+    .v-descend-indicator-right {
+        display: none;
+    }
 }
 
 /* --- ARCHIVE SECTION (PINNED) --- */
