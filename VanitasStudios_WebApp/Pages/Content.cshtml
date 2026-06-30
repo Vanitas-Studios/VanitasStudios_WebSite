@@ -4,6 +4,11 @@
     ViewData["Title"] = Model.Content.Title;
 }
 
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/content.css" asp-append-version="true" />
+}
+
 <div class="zen-article-wrapper">
     
     <aside class="zen-sidebar sidebar-left" id="aside-index">
@@ -123,7 +128,7 @@
             <div class="related-list">
                 @foreach (var rc in Model.RelatedContents)
                 {
-                    <a asp-page="/Content" asp-route-id="@rc.Id" class="related-card-link">
+                    <a asp-page="/Content" asp-route-id="@rc.Id" asp-route-slug="@rc.Slug" class="related-card-link">
                         <div class="related-mini-card">
                             <h6 class="related-card-title">@rc.Title</h6>
                             <p class="related-card-desc">@rc.Description</p>

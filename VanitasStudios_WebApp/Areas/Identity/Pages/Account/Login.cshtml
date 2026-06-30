@@ -2,79 +2,54 @@
 @model LoginModel
 
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Inizia Sessione";
+    Layout = "/Pages/Shared/_Layout.cshtml"; // Forza l'uso del layout globale di Vanitas
 }
 
-<h1>@ViewData["Title"]</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <form id="account" method="post">
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.UserNameorEmail" class="form-control" autocomplete="username" aria-required="true" placeholder="Username or Email" />
-                    <label asp-for="Input.UserNameorEmail" class="form-label">UserName or Email</label>
-                    <span asp-validation-for="Input.UserNameorEmail" class="text-danger"></span>
-                </div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label asp-for="Input.Password" class="form-label">Password</label>
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="checkbox mb-3">
-                    <label asp-for="Input.RememberMe" class="form-label">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
-                        @Html.DisplayNameFor(m => m.Input.RememberMe)
-                    </label>
-                </div>
-                <div>
-                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </form>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
-            }
-        </section>
+<div class="auth-container">
+    <div class="auth-box">
+        <div class="auth-header text-center">
+            <span class="auth-brand">// VANITAS STUDIOS</span>
+            <h1 class="auth-title">Inizia la Sessione</h1>
+            <p class="auth-subtitle">Accedi per gestire i frammenti, le analisi e le strutture narrative del portale.</p>
+        </div>
+
+        <form id="account" method="post" class="auth-form mt-4">
+            <div asp-validation-summary="ModelOnly" class="auth-error-summary mb-3" role="alert"></div>
+
+            <div class="input-group-custom mb-3">
+                <label asp-for="Input.UserNameorEmail" class="form-label-custom">Nome Utente o Email</label>
+                <input asp-for="Input.UserNameorEmail" class="form-control-custom" autocomplete="username" aria-required="true" placeholder="operatore@vanitas o username" />
+                <span asp-validation-for="Input.UserNameorEmail" class="text-danger small mt-1 d-block"></span>
+            </div>
+
+            <div class="input-group-custom mb-3">
+                <label asp-for="Input.Password" class="form-label-custom">Chiave di Accesso (Password)</label>
+                <input asp-for="Input.Password" class="form-control-custom" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
+                <span asp-validation-for="Input.Password" class="text-danger small mt-1 d-block"></span>
+            </div>
+
+            <div class="auth-utility d-flex justify-content-between align-items-center mb-4">
+                <label asp-for="Input.RememberMe" class="checkbox-custom d-flex align-items-center gap-2">
+                    <input class="form-check-input custom-check" asp-for="Input.RememberMe" />
+                    <span class="checkbox-text">Mantieni la sessione</span>
+                </label>
+                <a id="forgot-password" asp-page="./ForgotPassword" class="auth-link-secondary">Smarrito la chiave?</a>
+            </div>
+
+            <button id="login-submit" type="submit" class="btn-auth-submit w-100">
+                Invia Credenziali
+            </button>
+
+            <div class="auth-footer-links text-center mt-4">
+                <p class="mb-1">
+                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation" class="auth-link-muted">
+                        Non hai ricevuto la mail di conferma?
+                    </a>
+                </p>
+                @* <p class="m-0"><a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link-muted">Crea un nuovo account</a></p> *@
+            </div>
+        </form>
     </div>
 </div>
 

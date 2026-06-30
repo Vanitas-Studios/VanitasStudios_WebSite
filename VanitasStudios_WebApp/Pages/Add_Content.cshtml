@@ -2,44 +2,73 @@
 @using VanitasStudios_WebApp.Models
 @model VanitasStudios_WebApp.Pages.Add_ContentModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Editor Contenuti";
 }
 @Html.AntiForgeryToken();
 
 
-<input type="hidden" id="ArticleId" value="@Model.ArticleId" />
-<section id="editor-page" class="container-xl p-3 px-4 d-flex flex-column" style="min-height: calc(100vh - 60px);">
+@section Styles{
+    <link rel="stylesheet" href="~/css/pages/editor.css" asp-append-version="true" />
+}
 
-    <div class="row py-2">
-        <div class="col">
-            <input type="text" id="main-title" class="form-control form-control-lg" placeholder="Title" />
+<input type="hidden" id="ArticleId" value="@Model.ArticleId" />
+
+<section id="editor-page" class="editor-page-wrapper container-xl p-3 px-4 d-flex flex-column">
+
+    <div class="row align-items-center g-3 mb-3 pb-3 border-bottom">
+        <div class="col-md-8 col-lg-9">
+            <label class="fw-bold text-uppercase text-muted small d-block mb-1">Titolo Articolo</label>
+            <input type="text" id="main-title" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Inserisci il titolo dell'articolo..." />
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="border rounded p-2 bg-light d-flex align-items-center gap-2 shadow-sm" style="height: calc(2.75rem + 2px);">
+                <div class="flex-grow-1 min-width-0">
+                    <h6 class="m-0 fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">Immagine di Copertina</h6>
+                    <span id="cover-status-text" class="text-truncate d-block text-muted small" style="font-size: 0.75rem;">
+                        @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "Nessuna immagine" : "Immagine presente")
+                    </span>
+                </div>
+
+                <div class="position-relative" style="width: 50px; height: 100%;">
+                    <img id="coverPreview" src="@Model.CurrentContent?.CoverImageUrl"
+                         alt="Preview" class="img-fluid rounded border position-absolute top-50 start-50 translate-middle"
+                         style="max-height: 100%; max-width: 100%; object-fit: cover; display: @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "none" : "block");" />
+
+                    <div id="coverPlaceholder" class="text-muted text-center border border-dashed rounded position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex align-items-center justify-content-center"
+                         style="display: @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "flex" : "none"); background: #eee;">
+                        <i class="bi bi-image" style="font-size: 1rem;"></i>
+                    </div>
+                </div>
+
+                <input type="file" id="coverFileInput" accept="image/*" class="d-none" onchange="uploadArticleCover()" />
+                <button type="button" class="btn btn-sm btn-dark px-2" onclick="document.getElementById('coverFileInput').click()" title="Carica Copertina">
+                    <i class="bi bi-upload"></i>
+                </button>
+            </div>
         </div>
     </div>
 
-    <div id="save-status-container" class="d-flex align-items-center mb-2" style="font-size: 0.85rem; color: #666;">
+    <div id="save-status-container" class="d-flex align-items-center mb-3 text-muted" style="font-size: 0.85rem;">
         <span id="save-status-dot" class="status-dot me-2"></span>
         <span id="save-status-text">Tutte le modifiche salvate</span>
     </div>
 
-    <div class="row flex-grow-1 overflow-hidden">
+    <div class="row flex-grow-1 g-4 overflow-hidden">
 
-        <div class="col-10 d-flex flex-column">
-            <div id="editor" contenteditable="true" class="form-control h-100 overflow-auto">
-
+        <div class="col-lg-9 d-flex flex-column mb-3" style="min-height: 50vh;">
+            <div id="editor" contenteditable="true" class="form-control p-4 bg-white shadow-sm rounded overflow-auto flex-grow-1" style="border-color: #dee2e6;">
                 @if (Model.CurrentContent?.Sections != null && Model.CurrentContent.Sections.Any())
                 {
                     @foreach (var sezione in Model.CurrentContent.Sections.OrderBy(s => s.Order))
                     {
-                        <div class="editor-section mb-3" data-section-id="@sezione.Id">
-
-                            <span class="badge bg-primary me-1 section-title-badge" contenteditable="false">
+                        <div class="editor-section mb-4" data-section-id="@sezione.Id">
+                            <span class="badge bg-primary mb-2 px-3 py-2 section-title-badge" contenteditable="false">
                                 @(sezione.Title ?? "Sezione senza titolo")
                             </span>
-
-                            <div class="section-content" contenteditable="true">
+                            <div class="section-content p-2 border-start border-2 border-light" contenteditable="true">
                                 @Html.Raw(sezione.HtmlText ?? "<br>")
                             </div>
-
                         </div>
                     }
                 }
@@ -47,113 +76,90 @@
                 {
                     <br>
                 }
-
             </div>
         </div>
 
-        <div class="col-2 border-start">
-            <h5>Vanitas Structure</h5>
-            <ul id="editor-structure" class="list-unstyled">
-            </ul>
+        <div class="col-lg-3 d-flex flex-column gap-3">
 
-            <div class="border rounded p-2 mb-3 text-center bg-light" style="font-size: 0.9rem;">
-                <h6 class="mb-2 fw-bold text-start text-uppercase text-muted" style="font-size: 0.75rem;">Copertina</h6>
-
-                <img id="coverPreview" src="@Model.CurrentContent?.CoverImageUrl"
-                     alt="Preview" class="img-fluid rounded mb-2 shadow-sm"
-                     style="max-height: 120px; object-fit: cover; display: @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "none" : "block"); width: 100%;" />
-
-                <div id="coverPlaceholder" class="py-3 border border-dashed rounded mb-2 text-muted"
-                     style="display: @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "block" : "none");">
-                    <i class="bi bi-image" style="font-size: 1.5rem;"></i>
-                    <p class="m-0" style="font-size: 0.75rem;">Nessuna immagine</p>
+            <div class="publish-zone p-3 border rounded bg-light shadow-sm">
+                <h6 class="fw-bold text-uppercase text-muted mb-2" style="font-size: 0.75rem;">Stato Contenuto</h6>
+                <div class="mb-3">
+                    @if (Model.CurrentContent.PublishState == PublishState.Pubblico)
+                    {
+                        <span class="badge bg-success w-100 py-2 fs-7">Pubblicato il @Model.CurrentContent.UpdatedAt?.ToString("dd/MM/yyyy")</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark w-100 py-2 fs-7">Bozza (Autosalvato)</span>
+                    }
                 </div>
 
-                <input type="file" id="coverFileInput" accept="image/*" class="d-none" onchange="uploadArticleCover()" />
-                <button type="button" class="btn btn-sm btn-dark w-100" onclick="document.getElementById('coverFileInput').click()">
-                    <i class="bi bi-upload"></i> Carica
+                @if (Model.CurrentContent.PublishState == PublishState.Bozza)
+                {
+                    <button type="button" class="btn btn-primary w-100 shadow-sm mb-2" onclick="changeContentStatus('Publish')">
+                        <i class="bi bi-globe me-1"></i> Metti Online
+                    </button>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-success w-100 shadow-sm" onclick="changeContentStatus('Update')">
+                            <i class="bi bi-check-circle me-1"></i> Aggiorna
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="changeContentStatus('ToDraft')">
+                            <i class="bi bi-eye-slash me-1"></i> Riporta a Bozza
+                        </button>
+                    </div>
+                }
+
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="contentPreview()">
+                    <i class="bi bi-eye"></i> Anteprima Veloce
                 </button>
+            </div>
+
+            <div class="p-3 border rounded bg-light shadow-sm flex-grow-1 overflow-auto" style="max-height: 250px;">
+                <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem;">Vanitas Structure</h6>
+                <ul id="editor-structure" class="list-unstyled custom-structure-list">
+                </ul>
+            </div>
+
+            <div class="p-3 border rounded bg-light shadow-sm">
+                <label class="fw-bold text-uppercase text-muted small d-block mb-2" style="font-size: 0.75rem;">Tag Articolo</label>
+
+                <div id="selected-tags-container" class="d-flex flex-wrap gap-1 mb-2">
+                    @if (Model.CurrentContent?.ContentTags != null)
+                    {
+                        foreach (var ct in Model.CurrentContent.ContentTags)
+                        {
+                            <span class="badge bg-secondary d-flex align-items-center gap-1 p-2" data-tag-id="@ct.TagId" style="font-size: 0.75rem;">
+                                @ct.Tag.Name
+                                <span style="cursor: pointer;" class="ms-1 fw-bold text-danger" onclick="removeTagBlock(this, @ct.TagId)">&#x2715;</span>
+                            </span>
+                        }
+                    }
+                </div>
+
+                <div class="position-relative style-tags-search">
+                    <input type="text" id="tagSearchInput" class="form-control form-control-sm" placeholder="Cerca tag..." autocomplete="off" />
+                    <ul id="tagSuggestionsMenu" class="dropdown-menu w-100 shadow-sm"></ul>
+                </div>
             </div>
 
         </div>
     </div>
-
-    <button type="button" class="btn btn-primary" onclick="contentPreview()">
-        Preview
-    </button>
 
     <div class="modal fade" id="DocumentPreview" tabindex="-1" aria-labelledby="Article" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="Article">Anteprima Articolo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="Article">Anteprima Articolo (Vanitas Style)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="sectionsBodyContent" style="height: 75vh; padding: 0;">
+                <div class="modal-body" id="sectionsBodyContent" style="height: 75vh; padding: 0; background: #121212;">
                 </div>
             </div>
         </div>
     </div>
-
-
-    <div class="row py-3 border-top mt-4">
-        <div class="col-12">
-            <label class="fw-bold text-uppercase text-muted small d-block mb-2">Tag Articolo</label>
-
-            <div id="selected-tags-container" class="d-flex flex-wrap gap-2 mb-2">
-                @if (Model.CurrentContent?.ContentTags != null)
-                {
-                    foreach (var ct in Model.CurrentContent.ContentTags)
-                    {
-                        <span class="badge bg-secondary d-flex align-items-center gap-1 p-2" data-tag-id="@ct.TagId">
-                            @ct.Tag.Name
-                            <span style="cursor: pointer;" class="ms-1 fw-bold" onclick="removeTagBlock(this, @ct.TagId)">&#x2715;</span>
-                        </span>
-                    }
-                }
-            </div>
-
-            <div class="position-relative style-tags-search" style="max-width: 400px;">
-                <input type="text" id="tagSearchInput" class="form-control form-control-sm" placeholder="Scrivi per cercare un tag..." autocomplete="off" />
-
-                <ul id="tagSuggestionsMenu" class="dropdown-menu w-100 shadow-sm position-absolute" style="display: none; max-height: 200px; overflow-y: auto; z-index: 1050;">
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="publish-zone p-3 border rounded bg-light mb-3">
-        <h6 class="fw-bold">Stato Contenuto</h6>
-        <div class="d-flex align-items-center gap-2 mb-3">
-            @if (Model.CurrentContent.PublishState == PublishState.Pubblico)
-            {
-                <span class="badge bg-success">Pubblicato il @Model.CurrentContent.UpdatedAt?.ToString("dd/MM/yyyy")</span>
-            }
-            else
-            {
-                <span class="badge bg-warning text-dark">Bozza (Autosalvato)</span>
-            }
-        </div>
-
-        @if (Model.CurrentContent.PublishState == PublishState.Bozza)
-        {
-            <button type="button" class="btn btn-primary w-100" onclick="changeContentStatus('Publish')">
-                Metti Online
-            </button>
-        }
-        else
-        {
-            <div class="d-flex flex-column gap-2">
-                <button type="button" class="btn btn-success w-100" onclick="changeContentStatus('Update')">
-                    Aggiorna Articolo
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="changeContentStatus('ToDraft')">
-                    Riporta a Bozza (Nascondi)
-                </button>
-            </div>
-        }
-    </div>
-
 
 </section>
 

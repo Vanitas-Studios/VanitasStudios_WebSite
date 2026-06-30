@@ -39,6 +39,7 @@ function setupEventListeners() {
         const tagId = parseInt(this.getAttribute("data-tag-id"));
         if (tagId && !activeTagIds.includes(tagId)) {
             activeTagIds.push(tagId);
+            searchInput.value = ""; // Svuota il testo libero per dare priorità al filtro selezionato
             executeAkinatorSearch();
         }
     });
@@ -178,16 +179,25 @@ function renderResults(articles) {
     }
 
     articles.forEach(art => {
+        // FALLBACK DI SICUREZZA: Intercettiamo sia le risposte camelCase che PascalCase dal server
+        const id = art.id || art.Id;
+        const title = art.title || art.Title;
+        const slug = art.slug || art.Slug || "articolo";
+        const description = art.description || art.Description || "";
+        const coverImageUrl = art.coverImageUrl || art.CoverImageUrl || "/media/placeholder-default.png";
+
         const cardCol = document.createElement("div");
         cardCol.className = "col";
         cardCol.innerHTML = `
             <div class="card bg-transparent border-secondary h-100">
-                <a href="/Content?id=${art.id}" class="text-decoration-none text-white h-100 d-flex flex-column">
-                    <img src="#" class="card-img-top" alt="${art.title}" style="min-height: 140px; background-color: #222;">
+                <a href="/Content/${id}/${slug}" class="text-decoration-none text-white h-100 d-flex flex-column">
+                    <div class="card-img-wrapper" style="position: relative; overflow: hidden; min-height: 140px; background-color: #222;">
+                        <img src="${coverImageUrl}" class="card-img-top" alt="${title}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
                     <div class="card-body d-flex flex-column justify-content-between">
                         <div>
-                            <h3 class="card-title h5">${art.title}</h3>
-                            <p class="card-text text-muted small">${art.description || ''}</p>
+                            <h3 class="card-title h5">${title}</h3>
+                            <p class="card-text text-muted small">${description}</p>
                         </div>
                     </div>
                 </a>

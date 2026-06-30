@@ -1,0 +1,39 @@
+﻿/* ==========================================
+   VANITAS STUDIOS - ADMIN INTERFACE TUNING (REM)
+   ========================================== */
+
+:root {
+    /* Definiamo l'altezza stimata della navbar del sito in rem */
+    --site-navbar-height: 5rem;
+}
+
+/* 1. Spinge in basso l'intera griglia dell'admin per liberare lo spazio della navbar */
+.container-fluid {
+    margin-top: var(--site-navbar-height) !important;
+}
+
+/* 2. Gestione della Sidebar d'Admin: rimane fissa al di sotto della navbar del sito */
+nav.bg-dark {
+    position: sticky;
+    top: var(--site-navbar-height);
+    /* L'altezza calcolata è l'intera viewport meno l'altezza della barra */
+    height: calc(100vh - var(--site-navbar-height)) !important;
+    overflow-y: auto; /* Permette alla sidebar di scrollare internamente se i link aumentano */
+}
+
+/* 3. Sicurezza per evitare scroll orizzontali fastidiosi */
+body {
+    overflow-x: hidden;
+}
+
+/* 4. Spaziatura per i div e le tabelle iniettati dalle Partial View */
+#main-content-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}

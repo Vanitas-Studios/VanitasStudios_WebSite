@@ -1,21 +1,35 @@
 ﻿@page
 @model LogoutModel
 @{
-    ViewData["Title"] = "Log out";
+    ViewData["Title"] = "Sessione Chiusa";
+    Layout = "/Pages/Shared/_Layout.cshtml"; // Forza il layout globale scuro
 }
 
-<header>
-    <h1>@ViewData["Title"]</h1>
-    @{
-        if (User.Identity?.IsAuthenticated ?? false)
-        {
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark">Click here to Logout</button>
-            </form>
-        }
-        else
-        {
-            <p>You have successfully logged out of the application.</p>
-        }
-    }
-</header>
+<div class="auth-container">
+    <div class="auth-box text-center">
+        <div class="auth-header">
+            <span class="auth-brand">// DISCONNESSIONE</span>
+
+            @if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <h1 class="auth-title">Chiudere la Sessione?</h1>
+                <p class="auth-subtitle mt-2">Sei ancora autenticato sul portale. Conferma per terminare la sessione di lavoro attuale.</p>
+
+                <form class="form-inline mt-4" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
+                    <button type="submit" class="btn-auth-submit w-100">Conferma Logout</button>
+                </form>
+            }
+            else
+            {
+                <h1 class="auth-title">Sessione Terminata</h1>
+                <p class="auth-subtitle mt-2">La tua chiave di accesso è stata revocata. Sei stato scollegato con successo dall'applicazione.</p>
+
+                <div class="mt-4">
+                    <a asp-page="/Index" class="btn-auth-submit d-inline-block w-100 text-decoration-none text-center">
+                        Torna alla Home
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

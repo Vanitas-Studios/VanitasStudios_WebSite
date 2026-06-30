@@ -8,6 +8,7 @@ using System.IO;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using VanitasStudios_WebApp.Data;
 using VanitasStudios_WebApp.Models;
 
@@ -16,21 +17,33 @@ namespace VanitasStudios_WebApp.Pages
     [Authorize(Roles = "Admin,Editor")]
     public class Add_ContentModel : PageModel
     {
-        public int? ArticleId { get; set; } // ID del contenuto nel caso esistesse già come bozza, oppure pubblicato ma da editare.
+        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _config;
+
+        public int? ArticleId { get; set; }
         public DateTime LastModified { get; set; }
 
-        // Variabili per settare configurazione per i secrets e database. 
-        private readonly IConfiguration _config;
-        private readonly ApplicationDbContext _context;
-
         [BindProperty]
-        public List<Tag> AvailableTags { get; set; } 
+        public List<Tag> AvailableTags { get; set; } = new();
+
         public Content CurrentContent { get; set; }
 
+        [BindProperty]
+        public List<Content> Suggested { get; set; } = new();
+
+        [BindProperty]
+        public Dictionary<string, int> OrderIndex { get; set; } = new();
+
+        [BindProperty]
+        public List<Section> SectionsList { get; set; } = new();
+
+        // ==========================================
+        // DTO & PAYLOADS (Invariati per il JS)
+        // ==========================================
         public class EditorSavePayload
         {
             public int ArticleId { get; set; }
-            public string Title { get; set; }
+            public string Title { get; set; } = null!;
             public List<SectionViewModel>? Sections { get; set; }
         }
 
@@ -48,10 +61,11 @@ namespace VanitasStudios_WebApp.Pages
             public int SectionId { get; set; }
             public int ArticleId { get; set; }
         }
+
         public class NewOrder
         {
             public int ArticleId { get; set; }
-            public List<string>? SortedIds { get; set; }
+            public List<string> SortedIds { get; set; } = new();
         }
 
         public class PreviewRequest
@@ -64,6 +78,7 @@ namespace VanitasStudios_WebApp.Pages
             public int ArticleId { get; set; }
             public int TagId { get; set; }
         }
+
         public class StatusActionDto
         {
             public int ArticleId { get; set; }
@@ -75,37 +90,37 @@ namespace VanitasStudios_WebApp.Pages
             _context = context;
             _config = config;
         }
+
+        // ==========================================
+        // HANDLER CORE: ON GET
+        // ==========================================
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id.HasValue)
             {
-                // CARICAMENTO ESISTENTE
+                // Caricamento articolo esistente con sezioni incluse
                 CurrentContent = await _context.Contents
-                                    .Include(c => c.Sections)
-                                    .FirstOrDefaultAsync(m => m.Id == id);
+                    .Include(c => c.Sections)
+                    .Include(c => c.ContentTags)
+                        .ThenInclude(ct => ct.Tag)
+                    .FirstOrDefaultAsync(m => m.Id == id);
+
                 if (CurrentContent == null) return NotFound();
 
-                // La data è quella che leggiamo dal DB
-                LastModified = (DateTime)CurrentContent.UpdatedAt;
+                LastModified = CurrentContent.UpdatedAt ?? DateTime.UtcNow;
                 ArticleId = id;
             }
             else
             {
-                // NUOVO CONTENUTO
-                // 1. Recuperiamo l'ID dell'utente loggato direttamente dai Claims (arriva come stringa, es: "1")
+                // Inizializzazione Nuovo Contenuto in Sicurezza
                 var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
                 if (string.IsNullOrEmpty(userIdString))
                 {
                     return RedirectToPage("/Account/Login");
                 }
 
-                // 2. Convertiamo la stringa in un intero nativo (visto che ApplicationUser usa <int>)
                 int currentUserId = int.Parse(userIdString);
-
-                // 3. Cerchiamo l'autore direttamente tramite la sua Chiave Primaria (Id)
                 var currentAuthor = await _context.Users.FindAsync(currentUserId);
-
                 if (currentAuthor == null)
                 {
                     return NotFound("Autore non trovato nel sistema con questo ID.");
@@ -114,7 +129,7 @@ namespace VanitasStudios_WebApp.Pages
                 CurrentContent = new Content
                 {
                     Title = "Nuovo Articolo",
-                    Slug = "nuovo-articolo-" + Guid.NewGuid().ToString().Substring(0, 5), // Evita slug duplicati all'inizio
+                    Slug = "nuovo-articolo-" + Guid.NewGuid().ToString()[..5],
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     PublishState = PublishState.Bozza,
@@ -123,28 +138,26 @@ namespace VanitasStudios_WebApp.Pages
 
                 LastModified = DateTime.UtcNow;
                 _context.Contents.Add(CurrentContent);
-                await _context.SaveChangesAsync(); // Qui il DB genera l'ID
+                await _context.SaveChangesAsync();
 
-                // Ora reindirizziamo alla stessa pagina ma con l'ID appena creato
-                // Questo evita che l'utente crei mille articoli vuoti premendo F5
+                // Post-Redirect-Get per impedire doppie creazioni con F5
                 return RedirectToPage(new { id = CurrentContent.Id });
             }
 
-            // Inserisci questo pezzetto di codice temporaneo dentro l'OnGet o OnGetAsync della pagina
-            if (!_context.Tags.Any())
+            // Seed dei tag di test se il database è vuoto
+            if (!await _context.Tags.AnyAsync())
             {
                 var tagDiTest = new List<Tag>
-                    {
-                        new Tag { Name = "Calisthenics", CategoryGroup = "Allenamento" },
-                        new Tag { Name = "Programmazione", CategoryGroup = "Tech" },
-                        new Tag { Name = "C#", CategoryGroup = "Tech" },
-                        new Tag { Name = "Game Development", CategoryGroup = "Design" },
-                        new Tag { Name = "Unity", CategoryGroup = "Design" },
-                        new Tag { Name = "Minimalism", CategoryGroup = "Art" },
-                        new Tag { Name = "Dark Fantasy", CategoryGroup = "Scrittura" },
-                        new Tag { Name = "Web Design", CategoryGroup = "Tech" }
-                    };
-
+                {
+                    new() { Name = "Calisthenics", CategoryGroup = "Allenamento" },
+                    new() { Name = "Programmazione", CategoryGroup = "Tech" },
+                    new() { Name = "C#", CategoryGroup = "Tech" },
+                    new() { Name = "Game Development", CategoryGroup = "Design" },
+                    new() { Name = "Unity", CategoryGroup = "Design" },
+                    new() { Name = "Minimalism", CategoryGroup = "Art" },
+                    new() { Name = "Dark Fantasy", CategoryGroup = "Scrittura" },
+                    new() { Name = "Web Design", CategoryGroup = "Tech" }
+                };
                 _context.Tags.AddRange(tagDiTest);
                 await _context.SaveChangesAsync();
             }
@@ -152,128 +165,9 @@ namespace VanitasStudios_WebApp.Pages
             return Page();
         }
 
-        //public async Task<IActionResult> OnPostSaveContentAsync([FromBody] EditorSavePayload payload)
-        //{
-        //   // Controllo di base: Validazione 
-        //   if(payload == null || payload.ArticleId == 0)
-        //    {
-        //        return new JsonResult(new { success = false, message = "Invalid Data" });
-        //    }
-
-        //    // SICUREZZA: Se il JS manda la proprietà vuota o con un nome disallineato, 
-        //    // evitiamo il crash inizializzandola come lista vuota.
-        //    payload.Sections ??= new List<SectionViewModel>();
-
-        //    // Controlliamo che il contenuto esista e preleviamo le sezioni esistenti per aggiornarle.
-        //    var article = await _context.Contents
-        //                    .Include(c => c.Sections)
-        //                    .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
-
-        //    if (article == null) return new JsonResult(new { success = false, message = "Article not Found" });
-
-        //    var incomingIds = payload.Sections
-        //                        .Where(i => !i.Id.StartsWith("temp-"))
-        //                        .Select(s => int.Parse(s.Id))
-        //                        .ToList();
-
-        //    var sectionsToRemove = article.Sections
-        //                            .Where(i => !incomingIds.Contains(i.Id))
-        //                            .ToList();
-        //    if (sectionsToRemove.Any())
-        //    {
-        //        _context.Sections.RemoveRange(sectionsToRemove);
-        //    }
-
-        //    foreach( var sDto in payload.Sections)
-        //    {
-        //        if (sDto.Id.StartsWith("temp-")) continue;
-
-        //        if(int.TryParse(sDto.Id, out int realId))
-        //        {
-        //            var existingSections = article.Sections.FirstOrDefault(s => s.Id == realId);
-
-        //            if (existingSections != null)
-        //            {
-        //                // TODO: Implementare HtmlSanitizer per pulire sDto.Content
-        //                string cleanContent = sDto.Content
-        //                    .Replace("\u200B", "").Trim();
-
-        //                existingSections.HtmlText = cleanContent;
-        //                existingSections.Title = sDto.Title?.Trim();
-        //                existingSections.Order = sDto.Order;
-        //            }
-        //        }
-        //    }
-
-        //    article.UpdatedAt = DateTime.UtcNow;
-
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //        return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt });
-        //    }
-        //    catch (DbUpdateException ex)
-        //    {
-        //        // Logga l'errore per Vanitas Studios
-        //        return new JsonResult(new { success = false, message = "Errore durante il salvataggio nel database" });
-        //    }
-        //}
-
-
-
-
-        //public async Task<IActionResult> OnPostSaveSectionAsync([FromBody] SectionViewModel sDto)
-        //{
-        //    if (sDto == null) return new JsonResult(new { success = false });
-
-        //    Section section;
-        //    bool isNew = sDto.Id.StartsWith("temp-");
-
-        //    if (isNew)
-        //    {
-        //        // L'utente ha appena premuto invio: creiamo la sezione "vuota"
-        //        section = new Section
-        //        {
-        //            ContentId = sDto.ArticleId,
-        //            Title = sDto.Title?.Trim() ?? "Senza Titolo",
-        //            HtmlText = sDto.Content ?? "", // Sarà probabilmente stringa vuota all'inizio
-        //            Order = sDto.Order
-        //        };
-        //        _context.Sections.Add(section);
-        //    }
-        //    else
-        //    {
-        //        // Aggiornamento di una sezione esistente (già dotata di ID)
-        //        if (!int.TryParse(sDto.Id, out int realId)) return BadRequest();
-
-        //        section = await _context.Sections.FindAsync(realId);
-        //        if (section == null) return NotFound();
-
-        //        // Aggiorniamo solo se i dati sono effettivamente diversi (ottimizzazione)
-        //        section.Title = sDto.Title?.Trim() ?? section.Title;
-        //        section.Order = sDto.Order;
-
-        //        // Se sDto.Content è null (magari non lo invii per risparmiare banda), 
-        //        // non sovrascrivere il testo esistente.
-        //        if (sDto.Content != null)
-        //        {
-        //            section.HtmlText = sDto.Content.Replace("\u200B", "").Trim();
-        //        }
-        //    }
-
-        //    await _context.SaveChangesAsync();
-
-        //    // Aggiorniamo il timestamp dell'articolo per mostrare "Ultima modifica: poco fa"
-        //    var article = await _context.Contents.FindAsync(sDto.ArticleId);
-        //    if (article != null)
-        //    {
-        //        article.UpdatedAt = DateTime.UtcNow;
-        //        await _context.SaveChangesAsync();
-        //    }
-
-        //    return new JsonResult(new { success = true, sectionId = section.Id });
-        //}
-
+        // ==========================================
+        // HANDLER AJAX: SALVATAGGIO GLOBALE OPTIMIZED
+        // ==========================================
         public async Task<IActionResult> OnPostSaveContentAsync([FromBody] EditorSavePayload payload)
         {
             Debug.WriteLine("=== [DEBUG VANITAS] ENTRATO IN ONPOSTSAVECONTENTASYNC OPTIMIZED ===");
@@ -282,28 +176,23 @@ namespace VanitasStudios_WebApp.Pages
                 return new JsonResult(new { success = false, message = "C# Errore: Payload globale nullo." });
             }
 
-            if (payload.Sections == null)
-            {
-                payload.Sections = new List<SectionViewModel>();
-            }
+            payload.Sections ??= new List<SectionViewModel>();
 
             try
             {
-                // Recuperiamo l'articolo includendo le sezioni per la sincronizzazione
                 var article = await _context.Contents
-                                            .Include(c => c.Sections)
-                                            .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
+                    .Include(c => c.Sections)
+                    .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
+
                 if (article == null)
                 {
-                    return new JsonResult(new { success = false, message = "Article not Found" });
+                    return new JsonResult(new { success = false, message = "Articolo non trovato." });
                 }
 
-                // 1. Aggiornamento Titolo Principale dell'Articolo
+                // 1. Gestione Titolo & SEO Slug
                 if (!string.IsNullOrWhiteSpace(payload.Title))
                 {
                     article.Title = payload.Title.Trim();
-
-                    // Se l'articolo è ancora in bozza, aggiorniamo lo slug SEO in automatico
                     if (article.PublishState == PublishState.Bozza)
                     {
                         article.Slug = GenerateSlug(article.Title);
@@ -314,7 +203,6 @@ namespace VanitasStudios_WebApp.Pages
                     article.Title = "Nuovo articolo";
                 }
 
-                // Se non ci sono sezioni nel payload, aggiorniamo solo il timestamp del contenuto ed usciamo
                 if (!payload.Sections.Any())
                 {
                     article.UpdatedAt = DateTime.UtcNow;
@@ -322,24 +210,24 @@ namespace VanitasStudios_WebApp.Pages
                     return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt, message = "Solo timestamp aggiornato." });
                 }
 
-                // 2. Rilevazione ed Eliminazione Sezioni Rimosse (Sincronizzazione)
+                // 2. Sincronizzazione ed Eliminazione sezioni rimosse dal layout grafico
                 var incomingIds = payload.Sections
-                                        .Where(i => i.Id != null && !i.Id.StartsWith("temp-"))
-                                        .Select(s => int.Parse(s.Id))
-                                        .ToList();
+                    .Where(i => i.Id != null && !i.Id.StartsWith("temp-"))
+                    .Select(s => int.Parse(s.Id!))
+                    .ToList();
 
                 var sectionsToRemove = article.Sections
-                                                    .Where(i => !incomingIds.Contains(i.Id))
-                                                    .ToList();
+                    .Where(i => !incomingIds.Contains(i.Id))
+                    .ToList();
+
                 if (sectionsToRemove.Any())
                 {
                     _context.Sections.RemoveRange(sectionsToRemove);
                 }
 
-                // 3. Loop di Aggiornamento / Inserimento dei blocchi Sezione storici
+                // 3. Update dei blocchi di testo storici
                 foreach (var sDto in payload.Sections)
                 {
-                    // Ignoriamo i blocchi temporanei (gestiti dal salvataggio singolo OnPostSaveSectionAsync)
                     if (sDto.Id == null || sDto.Id.StartsWith("temp-")) continue;
 
                     if (int.TryParse(sDto.Id, out int realId))
@@ -347,9 +235,7 @@ namespace VanitasStudios_WebApp.Pages
                         var existingSection = article.Sections.FirstOrDefault(s => s.Id == realId);
                         if (existingSection != null)
                         {
-                            // Pulizia caratteri invisibili
                             string cleanContent = sDto.Content?.Replace("\u200B", "").Trim() ?? "";
-
                             existingSection.HtmlText = cleanContent;
                             existingSection.Title = !string.IsNullOrWhiteSpace(sDto.Title) ? sDto.Title.Trim() : "Senza Titolo";
                             existingSection.Order = sDto.Order;
@@ -357,52 +243,33 @@ namespace VanitasStudios_WebApp.Pages
                     }
                 }
 
-                // ==========================================================================
-                // 4. ESTRAZIONE INTELLIGENTE DELLA DESCRIZIONE (LATO SERVER)
-                // ==========================================================================
-                // Cerchiamo la prima sezione utile in ordine di visualizzazione che contenga testo
+                // 4. Estrattore Intelligente della Descrizione SEO per frammenti
                 var firstTextSection = article.Sections
-                                              .OrderBy(s => s.Order)
-                                              .FirstOrDefault(s => !string.IsNullOrWhiteSpace(s.HtmlText));
+                    .Where(s => !string.IsNullOrWhiteSpace(s.HtmlText))
+                    .MinBy(s => s.Order);
 
                 if (firstTextSection != null)
                 {
-                    // Rimuoviamo i tag HTML e normalizziamo gli spazi bianchi/accapo
-                    string plainText = System.Text.RegularExpressions.Regex.Replace(firstTextSection.HtmlText, "<.*?>", string.Empty);
-                    plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\s+", " ").Trim();
+                    string plainText = Regex.Replace(firstTextSection.HtmlText, "<.*?>", string.Empty);
+                    plainText = Regex.Replace(plainText, @"\s+", " ").Trim();
 
                     int maxChars = 160;
-
                     if (plainText.Length > maxChars)
                     {
-                        // Taglio preliminare a 160 caratteri
-                        string truncated = plainText.Substring(0, maxChars);
-
-                        // Cerchiamo l'ultimo spazio utile per non troncare una parola a metà
+                        string truncated = plainText[..maxChars];
                         int lastSpace = truncated.LastIndexOf(' ');
-                        if (lastSpace > 0)
-                        {
-                            article.Description = truncated.Substring(0, lastSpace) + "...";
-                        }
-                        else
-                        {
-                            article.Description = truncated + "...";
-                        }
+                        article.Description = lastSpace > 0 ? truncated[..lastSpace] + "..." : truncated + "...";
                     }
                     else
                     {
                         article.Description = plainText;
                     }
-
-                    Debug.WriteLine($"[DEBUG VANITAS] Descrizione calcolata: {article.Description}");
                 }
                 else
                 {
-                    // Fallback se l'articolo non ha ancora testo inserito nelle sezioni
                     article.Description = "Fragments of an untold chronicle. Read the full entry to uncover its structure.";
                 }
 
-                // 5. Aggiornamento Timestamp finali e persistenza sul Database
                 article.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
@@ -412,21 +279,19 @@ namespace VanitasStudios_WebApp.Pages
             catch (Exception ex)
             {
                 Debug.WriteLine($"[CRASH GLOBAL SAVE]: {ex.Message}");
-                return new JsonResult(new { success = false, error = "Crash globale", details = ex.Message });
+                return new JsonResult(new { success = false, error = "Crash globale del server", details = ex.Message });
             }
         }
 
+        // ==========================================
+        // HANDLER AJAX: SALVATAGGIO BLOCCO SINGOLO (INVIO)
+        // ==========================================
         public async Task<IActionResult> OnPostSaveSectionAsync([FromBody] SectionViewModel sDto)
         {
-            Debug.WriteLine("=== [DEBUG VANITAS] ENTRATO IN ONPOSTSAVESECTIONASYNC (SINGOLO) ===");
-
             if (sDto == null)
             {
-                Debug.WriteLine("[ERR] DTO Sezione singola NULLO");
                 return new JsonResult(new { success = false, message = "C# Errore: DTO Singolo nullo." });
             }
-
-            Debug.WriteLine($"[INFO] Sezione Singola - Id: {sDto.Id}, ArticleId: {sDto.ArticleId}, Ordine: {sDto.Order}");
 
             try
             {
@@ -435,11 +300,9 @@ namespace VanitasStudios_WebApp.Pages
 
                 if (isNew)
                 {
-                    Debug.WriteLine($"[INFO] Rilevata NUOVA sezione. Controllo esistenza articolo ID: {sDto.ArticleId}");
                     var contentExists = await _context.Contents.AnyAsync(c => c.Id == sDto.ArticleId);
                     if (!contentExists)
                     {
-                        Debug.WriteLine($"[ERR] Impossibile creare sezione: l'articolo {sDto.ArticleId} non esiste.");
                         return new JsonResult(new { success = false, message = $"L'articolo con ID {sDto.ArticleId} non esiste!" });
                     }
 
@@ -456,15 +319,13 @@ namespace VanitasStudios_WebApp.Pages
                 {
                     if (!int.TryParse(sDto.Id, out int realId))
                     {
-                        Debug.WriteLine($"[ERR] ID Sezione esistente non parsabile: {sDto.Id}");
-                        return new JsonResult(new { success = false, message = "ID non valido" });
+                        return new JsonResult(new { success = false, message = "ID sezione non valido." });
                     }
 
                     section = await _context.Sections.FindAsync(realId);
                     if (section == null)
                     {
-                        Debug.WriteLine($"[ERR] Sezione {realId} non trovata nel DB");
-                        return new JsonResult(new { success = false, message = "Sezione non trovata" });
+                        return new JsonResult(new { success = false, message = "Sezione non trovata nel database." });
                     }
 
                     section.Title = sDto.Title?.Trim() ?? section.Title;
@@ -484,306 +345,154 @@ namespace VanitasStudios_WebApp.Pages
                     await _context.SaveChangesAsync();
                 }
 
-                Debug.WriteLine($"=== [DEBUG VANITAS] SEZIONE SINGOLA SALVATA CON ID REALE: {section.Id} ===");
                 return new JsonResult(new { success = true, sectionId = section.Id });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CRASH SINGLE SAVE]: {ex.Message}");
-                return new JsonResult(new { success = false, error = "Crash singolo", details = ex.Message, inner = ex.InnerException?.Message });
+                return new JsonResult(new { success = false, error = "Crash salvataggio singolo", details = ex.Message });
             }
         }
 
+        // ==========================================
+        // HANDLER AJAX: ELIMINAZIONE BLOCCO SEZIONE
+        // ==========================================
         public async Task<IActionResult> OnPostDeleteSectionAsync(DeleteSectionDto dto)
         {
-            // 1. Recupera la sezione controllando la proprietà di navigazione (o FK) dell'articolo
-            Section section = await _context.Sections
+            var section = await _context.Sections
                 .FirstOrDefaultAsync(s => s.Id == dto.SectionId && s.ContentId == dto.ArticleId);
 
-            // Se non esiste, rispondiamo comunque success: true (idempotenza: se era già cancellata, il risultato desiderato è ottenuto)
             if (section == null)
-                return new JsonResult(new { success = true, message = "Section already deleted or not found" });
+                return new JsonResult(new { success = true, message = "Sezione già rimossa o inesistente." });
 
             int eliminatedOrder = section.Order;
             _context.Sections.Remove(section);
 
-            // 2. Recupera le sezioni successive per scalare l'ordine
+            // Ricalibrazione degli indici di ordinamento successivi per evitare buchi
             var nextSections = await _context.Sections
                 .Where(s => s.ContentId == dto.ArticleId && s.Order > eliminatedOrder)
                 .ToListAsync();
 
-            // Se ci sono sezioni successive, scala il loro indice di 1
-            if (nextSections.Any())
+            foreach (var s in nextSections)
             {
-                foreach (var s in nextSections)
-                {
-                    s.Order--;
-                }
+                s.Order--;
             }
 
-            // 3. Aggiorna la data di modifica dell'articolo padre (Coerenza temporale)
             var article = await _context.Contents.FindAsync(dto.ArticleId);
             if (article != null)
             {
-                article.UpdatedAt = DateTime.UtcNow; // Usiamo sempre UtcNow come stabilito!
+                article.UpdatedAt = DateTime.UtcNow;
             }
 
-            // 4. Unico salvataggio per ottimizzare le transazioni sul DB
             await _context.SaveChangesAsync();
-
-            return new JsonResult(new { success = true, message = "Section deleted and structural order synchronized" });
+            return new JsonResult(new { success = true, message = "Sezione eliminata e indici ricalcolati." });
         }
 
-
+        // ==========================================
+        // HANDLER AJAX: DRAG & DROP REORDER RECALC
+        // ==========================================
         public async Task<IActionResult> OnPostUpdateOrderAsync([FromBody] NewOrder sectionOrder)
         {
-            // 1. Usiamo l'await corretto per verificare se l'articolo esiste
+            if (sectionOrder?.SortedIds == null) return BadRequest();
+
             var articleExists = await _context.Contents.AnyAsync(c => c.Id == sectionOrder.ArticleId);
             if (!articleExists)
             {
                 return new JsonResult(new { success = false, message = "Articolo non trovato." });
             }
 
-            // 2. Recuperiamo TUTTE le sezioni di questo articolo con UNA SOLA query
             var articleSections = await _context.Sections
                 .Where(s => s.ContentId == sectionOrder.ArticleId)
                 .ToListAsync();
 
-            // 3. Cicliamo l'array ricevuto dal frontend
             for (int i = 0; i < sectionOrder.SortedIds.Count; i++)
             {
                 string badgeId = sectionOrder.SortedIds[i];
-
-                // Cerchiamo la sezione nella lista in memoria (molto più veloce, non tocca il DB)
                 var section = articleSections.FirstOrDefault(s => s.Id.ToString() == badgeId);
                 if (section != null)
                 {
-                    section.Order = i + 1; // Aggiorna l'ordine (1-based)
+                    section.Order = i + 1; // 1-based index
                 }
             }
 
-            // 4. FONDAMENTALE: Salviamo le modifiche sul database fisicamente
             await _context.SaveChangesAsync();
-
             return new JsonResult(new { success = true });
         }
 
+        // ==========================================
+        // HANDLER UPLOAD FILE: COVER E MEDIA INTERNI
+        // ==========================================
         public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int articleId, [FromForm] string uploadType, [FromForm] int sectionId)
         {
-            // 1. Validazioni Generiche (Tuo codice nativo ottimizzato)
-            if (file == null || file.Length == 0) return BadRequest(new { messaggio = "File vuoto" });
+            if (file == null || file.Length == 0) return BadRequest(new { messaggio = "File vuoto o non valido" });
 
-            string[] fileExtensions = [".png", ".jpg", ".jpeg", ".webp", ".mp4"];
+            string[] fileExtensions = { ".png", ".jpg", ".jpeg", ".webp", ".mp4" };
             string currentExtension = Path.GetExtension(file.FileName).ToLower();
-            if (!fileExtensions.Contains(currentExtension)) return BadRequest(new { messaggio = "Formato non supportato" });
 
-            if (file.Length > 5 * 1024 * 1024) return BadRequest(new { messaggio = "File troppo pesante" });
+            if (!fileExtensions.Contains(currentExtension)) return BadRequest(new { messaggio = "Estensione file non supportata." });
+            if (file.Length > 5 * 1024 * 1024) return BadRequest(new { messaggio = "File troppo pesante. Massimo 5MB." });
 
-            // Verifichiamo l'articolo
             var article = await _context.Contents.FirstOrDefaultAsync(c => c.Id == articleId);
             if (article == null) return NotFound(new { messaggio = "Articolo non trovato" });
 
             string contentType = currentExtension == ".mp4" ? "video" : "image";
-
-            // 2. Gestione Dinamica della Cartella in base all'uploadType
-            // Se è "cover" va in image/covers, altrimenti segue il percorso standard per data
             string subPath = uploadType.ToLower() == "cover"
-                ? Path.Combine("image", "covers")//? Path.Combine(contentType, "covers")
+                ? Path.Combine("image", "covers")
                 : GenerateFolderPath(contentType, file.FileName);
 
             string? baseroot = _config["ExternalAssetsPath"];
-            string fullPath = Path.Combine(baseroot, subPath);
+            if (string.IsNullOrEmpty(baseroot))
+            {
+                return StatusCode(500, new { messaggio = "Configurazione ExternalAssetsPath mancante sul server." });
+            }
 
+            string fullPath = Path.Combine(baseroot, subPath);
             if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
 
-            // 3. Hash e Nome File
-            string hashName = GenerateImageHashName(file.FileName + file.Length.ToString());
+            string hashName = GenerateImageHashName(file.FileName + file.Length);
             string finalName = $"{hashName}{currentExtension}";
             string physicalSavePath = Path.Combine(fullPath, finalName);
 
-            //string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
             string webSubPath = subPath.Replace("\\", "/");
             string publicUrl = $"/media/{webSubPath}/{finalName}";
 
-            // Generazione Alt Text
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName);
             string[] values = fileNameWithoutExt.Split(new[] { '/', '-', '_', '|', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string imageAlt = string.Join(" ", values);
 
-            // 4. Salvataggio Fisico (se non esiste già)
+            // Salvataggio effettivo su disco se l'hash univoco non è presente
             if (!System.IO.File.Exists(physicalSavePath))
             {
-                using (var stream = new FileStream(physicalSavePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                await using var stream = new FileStream(physicalSavePath, FileMode.Create);
+                await file.CopyToAsync(stream);
             }
 
-            // 5. AGGIORNAMENTO LOGICA DB (Il cuore del cambio)
             if (uploadType.ToLower() == "cover")
             {
-                // Caso A: È la copertina dell'articolo
                 article.CoverImageUrl = publicUrl;
                 article.UpdatedAt = DateTime.UtcNow;
                 _context.Contents.Update(article);
             }
             else
             {
-                // Caso B: È un'immagine di sezione. La tracciamo nella tabella Media.
-                // Calcoliamo l'ordine di visualizzazione all'interno di QUELLA specifica sezione
-                int currentCountInSection = await _context.Media
-                    .Where(m => m.SectionId == sectionId)
-                    .CountAsync();
-
+                int currentCountInSection = await _context.Media.CountAsync(m => m.SectionId == sectionId);
                 var nuovoMedia = new Media
                 {
                     Url = publicUrl,
                     Caption = imageAlt,
                     Type = MediaType.Image,
-                    SectionId = sectionId, // ID della sezione reale passato dal JS
-                    Order = currentCountInSection + 1 // Contatore progressivo interno
+                    SectionId = sectionId,
+                    Order = currentCountInSection + 1
                 };
-
                 await _context.Media.AddAsync(nuovoMedia);
             }
 
             await _context.SaveChangesAsync();
-
-            return new JsonResult(new
-            {
-                success = true,
-                url = publicUrl,
-                alt = imageAlt,
-                extension = currentExtension,
-                uploadType = uploadType
-            });
+            return new JsonResult(new { success = true, url = publicUrl, alt = imageAlt, extension = currentExtension, uploadType });
         }
 
-        //public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int ArticleId)
-        //{
-
-        //    if (file == null || file.Length == 0)
-        //    {
-        //        return BadRequest(new { messaggio = "File vuoto" });
-        //    }
-
-        //    string[] fileExtensions = [".png", ".jpg", ".jpeg", ".webp", ".mp4"];
-        //    string currentExtension = Path.GetExtension(file.FileName).ToLower(); //Fix --> controllare mime type o magic bytes
-
-        //    if(!fileExtensions.Contains(currentExtension))
-        //    {
-        //        return BadRequest(new {messaggio = "Formato non supportato"});
-        //    }
-
-        //    string contentType = currentExtension switch
-        //    {
-        //        ".mp4" => "video",
-        //        _ => "image"
-        //    };
-
-        //    if (file.Length > 5 * 1024 * 1024)
-        //    {
-        //        return BadRequest(new { messaggio = "File troppo pesante" });
-        //    }
-
-        //    string? baseroot = _config["ExternalAssetsPath"];
-        //    string subPath = GenerateFolderPath(contentType, file.FileName);
-        //    string fullPath = Path.Combine(baseroot, subPath);
-
-        //    if (!Directory.Exists(fullPath))
-        //    {
-        //        Directory.CreateDirectory(fullPath);
-        //    }
-
-        //    string hashName = GenerateImageHashName(file.FileName + file.Length.ToString());
-        //    string finalName = $"{hashName}{currentExtension}";
-        //    string physicalSavePath = Path.Combine(fullPath, finalName);
-
-        //    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName); 
-        //    string[] values = fileNameWithoutExt.Split(new[] { '/', '-', '_', '|', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        //    string imageAlt = string.Join(" ", values);
-
-        //    string publicUrl = $"/media/{subPath.Replace("\\", "/")}/{finalName}";
-
-        //    if (System.IO.File.Exists(physicalSavePath))
-        //    {
-        //        // Se esiste già, non serve salvarlo di nuovo, restituiamo direttamente l'URL
-        //        return new JsonResult(new { url = publicUrl, alt = imageAlt, extension = currentExtension, success = true });
-        //    }
-
-        //    using (var stream = new FileStream(physicalSavePath, FileMode.Create))
-        //    {
-        //        await file.CopyToAsync(stream);
-        //    }
-
-        //    return new JsonResult(new
-        //    {
-        //        url = publicUrl,
-        //        alt = imageAlt,
-        //        extension = currentExtension,
-        //        success = true
-        //    });
-
-        //}
-
-        public string GenerateFolderPath(string category, string fileName)
-        {
-            string categoryPath = category.ToLower();
-
-            string year = DateTime.Now.ToString("yyyy");
-
-            string monthDay = DateTime.Now.ToString("MM_dd");
-
-            return Path.Combine(categoryPath, year, monthDay);
-        }
-
-        public string GenerateImageHashName(string imageBit)
-        {
-            using(MD5 md5 = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(imageBit);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                StringBuilder sb = new StringBuilder();
-                foreach(byte b in hashBytes)
-                {
-                    sb.Append(b.ToString("x2"));
-                }
-
-                return sb.ToString();
-            }
-        }
-
-        //public IActionResult OnPostDeleteMedia(string fileUrl)
-        //{
-        //    try
-        //    {
-        //        string? baseroot = _config["ExternalAssetsPath"];
-        //        // Trasformiamo l'URL pubblico in percorso fisico
-        //        string relativePath = fileUrl.Replace("/media/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
-        //        string fullPath = Path.Combine(baseroot, relativePath);
-
-        //        if (!fullPath.StartsWith(baseroot, StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            return BadRequest("Tentativo di accesso non autorizzato.");
-        //        }
-
-        //        if (System.IO.File.Exists(fullPath))
-        //        {
-        //            System.IO.File.Delete(fullPath);
-        //            return new JsonResult(new { success = true });
-        //        }
-        //        return BadRequest();
-        //    }
-        //    catch { return StatusCode(500); }
-        //}
-        [BindProperty]
-        public List<Content> Suggested {  get; set; }
-        [BindProperty]
-        public Dictionary<string,int> OrderIndex { get; set; } // l'indice potrebbe semplicemente associare al titolo, l'ordine...?
-        [BindProperty]
-        public List<Section> SectionsList { get; set; }
-
+        // ==========================================
+        // HANDLER AJAX: GENERAZIONE LIVE PREVIEW
+        // ==========================================
         public async Task<IActionResult> OnPostLoadPreviewAsync([FromBody] PreviewRequest request)
         {
             if (request == null || request.ArticleId == 0)
@@ -791,191 +500,115 @@ namespace VanitasStudios_WebApp.Pages
                 return new JsonResult(new { success = false, message = "Payload non valido." });
             }
 
-            int articleId = request.ArticleId;
-
-            // Controllo preventivo sull'articolo per evitare NullReferenceException
-            var currentArticle = await _context.Contents.FirstOrDefaultAsync(i => i.Id == articleId);
+            var currentArticle = await _context.Contents.FirstOrDefaultAsync(i => i.Id == request.ArticleId);
             if (currentArticle == null)
             {
                 return new JsonResult(new { success = false, message = "Articolo non trovato." });
             }
 
-            // 1. Recuperiamo le sezioni ORDINATE direttamente dal database
             var sectionsList = await _context.Sections
-                                            .Where(s => s.ContentId == articleId)
-                                            .OrderBy(s => s.Order)
-                                            .ToListAsync();
+                .Where(s => s.ContentId == request.ArticleId)
+                .OrderBy(s => s.Order)
+                .ToListAsync();
 
-            if (sectionsList == null || !sectionsList.Any())
+            if (!sectionsList.Any())
             {
-                return new JsonResult(new { success = false, message = "Nessuna sezione trovata per questo articolo." });
+                return new JsonResult(new { success = false, message = "Nessuna sezione trovata." });
             }
 
             var htmlBuilder = new StringBuilder();
             var orderIndex = new List<object>();
 
-            // Costruzione Head e Body dell'Iframe
-            htmlBuilder.AppendLine("<html>");
-            htmlBuilder.AppendLine("<head>");
-            htmlBuilder.AppendLine("  <title>Page-Preview</title>");
-            // Quando sarai pronto, scommenta queste righe per applicare i tuoi stili reali!
-            // htmlBuilder.AppendLine("  <link rel='stylesheet' href='/css/bootstrap.min.css'>");
-            // htmlBuilder.AppendLine("  <link rel='stylesheet' href='/css/vanitas-theme.css'>");
-            htmlBuilder.AppendLine("</head>");
-            htmlBuilder.AppendLine("<body class='vanitas-preview-mode'>");
-            htmlBuilder.AppendLine("<div class='container-fluid main-section'>");
-            htmlBuilder.AppendLine("  <div class='row'>");
-
-            // COLONNA SINISTRA: Spazio IA (In futuro dinamico)
+            htmlBuilder.AppendLine("<html><head><title>Page-Preview</title>");
+            htmlBuilder.AppendLine("</head><body class='vanitas-preview-mode'><div class='container-fluid main-section'><div class='row'>");
             htmlBuilder.AppendLine("    <div class='col-md-3 suggested-article'><h5 class='text-muted'>Correlati IA</h5></div>");
-
-            // COLONNA CENTRALE: Corpo del documento
             htmlBuilder.AppendLine("    <div class='col-md-6 article-body'>");
-            htmlBuilder.AppendLine($"       <h1 class='display-4'>{currentArticle.Title}</h1>");
-            htmlBuilder.AppendLine("        <hr />");
+            htmlBuilder.AppendLine($"       <h1 class='display-4'>{currentArticle.Title}</h1><hr />");
 
-            // Ciclo 1: Stampiamo il corpo dell'articolo e popoliamo la lista per il JSON
             foreach (var s in sectionsList)
             {
-                // Avvolgiamo la sezione in un div con un ID univoco per permettere l'ancoraggio dello scroll
-                htmlBuilder.AppendLine($"<div id='section-anchor-{s.Id}' class='mb-4'>");
-                htmlBuilder.AppendLine(s.HtmlText);
-                htmlBuilder.AppendLine("</div>");
-
-                orderIndex.Add(new
-                {
-                    title = s.Title ?? "Sezione senza titolo",
-                    order = s.Order,
-                    id = s.Id
-                });
+                htmlBuilder.AppendLine($"<div id='section-anchor-{s.Id}' class='mb-4'>{s.HtmlText}</div>");
+                orderIndex.Add(new { title = s.Title ?? "Sezione senza titolo", order = s.Order, id = s.Id });
             }
-            htmlBuilder.AppendLine("    </div>");
 
-            // COLONNA DESTRA: Generazione dell'INDICE DINAMICO
-            htmlBuilder.AppendLine("    <div class='col-md-3 content-index'>");
-            htmlBuilder.AppendLine("      <div class='sticky-top' style='top: 20px;'>"); // Mantiene l'indice fermo durante lo scroll
-            htmlBuilder.AppendLine("        <h5>Indice Contenuti</h5>");
-            htmlBuilder.AppendLine("        <ul class='list-unstyled'>");
+            htmlBuilder.AppendLine("    </div><div class='col-md-3 content-index'><div class='sticky-top' style='top: 20px;'><h5>Indice Contenuti</h5><ul class='list-unstyled'>");
 
-            // Ciclo 2: Generiamo i link puntatori reali per l'indice dentro l'iframe
             foreach (var s in sectionsList)
             {
                 string displayTitle = s.Title ?? $"Sezione {s.Order}";
-                // Il link punta all'ID del div generato nel Ciclo 1
                 htmlBuilder.AppendLine($"<li class='mb-2'><a href='#section-anchor-{s.Id}' class='text-decoration-none'>{displayTitle}</a></li>");
             }
 
-            htmlBuilder.AppendLine("        </ul>");
-            htmlBuilder.AppendLine("      </div>");
-            htmlBuilder.AppendLine("    </div>");
+            htmlBuilder.AppendLine("        </ul></div></div></div></div></body></html>");
 
-            // Chiusura dei tag HTML
-            htmlBuilder.AppendLine("  </div>");
-            htmlBuilder.AppendLine("</div>");
-            htmlBuilder.AppendLine("</body>");
-            htmlBuilder.AppendLine("</html>");
-
-            return new JsonResult(new
-            {
-                success = true,
-                htmlContent = htmlBuilder.ToString(),
-                index = orderIndex
-            });
+            return new JsonResult(new { success = true, htmlContent = htmlBuilder.ToString(), index = orderIndex });
         }
 
+        // ==========================================
+        // UTILITIES & TAG CONTROLLERS
+        // ==========================================
         public async Task<IActionResult> OnGetSearchTagsAsync(string query, int articleId)
         {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return new JsonResult(new List<object>());
-            }
+            if (string.IsNullOrWhiteSpace(query)) return new JsonResult(new List<object>());
 
             string cleanQuery = query.Trim().ToLower();
-
-            // 1. Prendiamo gli ID dei tag già associati a questo articolo per escluderli
             var excludedTagIds = await _context.ContentTags
                 .Where(ct => ct.ContentId == articleId)
                 .Select(ct => ct.TagId)
                 .ToListAsync();
 
-            // 2. Cerchiamo i tag corrispondenti escludendo i duplicati
             var tags = await _context.Tags
                 .Where(t => t.Name.ToLower().Contains(cleanQuery) && !excludedTagIds.Contains(t.Id))
                 .OrderBy(t => t.Name)
-                .Take(10) // Limite massimo di efficienza
-                .Select(t => new { id = t.Id, name = t.Name }) // Payload leggerissimo
+                .Take(10)
+                .Select(t => new { id = t.Id, name = t.Name })
                 .ToListAsync();
 
             return new JsonResult(tags);
         }
 
-        // 2. HANDLER: Aggiunta associazione Tag
-        [HttpPost]
         public async Task<IActionResult> OnPostAddTagAsync([FromBody] TagActionDto data)
         {
             if (data == null || data.ArticleId <= 0 || data.TagId <= 0)
             {
-                return new JsonResult(new { success = false, message = "Dati della richiesta non validi." });
+                return new JsonResult(new { success = false, message = "Dati richiesta non validi." });
             }
 
             try
             {
-                // 1. Verifichiamo se l'associazione esiste già
-                bool alreadyExists = await _context.ContentTags
-                    .AnyAsync(ct => ct.ContentId == data.ArticleId && ct.TagId == data.TagId);
+                bool alreadyExists = await _context.ContentTags.AnyAsync(ct => ct.ContentId == data.ArticleId && ct.TagId == data.TagId);
+                if (alreadyExists) return new JsonResult(new { success = true, message = "Tag già associato." });
 
-                if (alreadyExists)
-                {
-                    return new JsonResult(new { success = true, message = "Tag già associato." });
-                }
-
-                // 2. Creiamo l'oggetto valorizzando TUTTI i campi richiesti, incluso il Weight
-                var newContentTag = new ContentTag
-                {
-                    ContentId = data.ArticleId,
-                    TagId = data.TagId,
-                    Weight = 1.0f // Impostiamo il peso iniziale (fondamentale per l'albero di decisione dell'IA)
-                };
-
-                // 3. Passiamo la variabile corretta al metodo Add
+                var newContentTag = new ContentTag { ContentId = data.ArticleId, TagId = data.TagId, Weight = 1.0f };
                 _context.ContentTags.Add(newContentTag);
                 await _context.SaveChangesAsync();
 
                 return new JsonResult(new { success = true });
             }
-            catch (Exception ex)
+            catch
             {
-                // Se si pianta ancora, puoi mettere un breakpoint qui per leggere ex.InnerException
                 return new JsonResult(new { success = false, message = "Errore durante il salvataggio sul database." });
             }
         }
 
-        // 3. HANDLER: Rimozione associazione Tag
         public async Task<IActionResult> OnPostRemoveTagAsync([FromBody] TagActionDto data)
         {
             if (data == null || data.ArticleId <= 0 || data.TagId <= 0)
             {
-                return new JsonResult(new { success = false, message = "Dati della richiesta non validi." });
+                return new JsonResult(new { success = false, message = "Dati richiesta non validi." });
             }
 
             try
             {
-                // Cerchiamo la riga specifica nella tabella di giunzione
-                var contentTagToRemove = await _context.ContentTags
-                    .FirstOrDefaultAsync(ct => ct.ContentId == data.ArticleId && ct.TagId == data.TagId);
-
-                if (contentTagToRemove == null)
+                var contentTagToRemove = await _context.ContentTags.FirstOrDefaultAsync(ct => ct.ContentId == data.ArticleId && ct.TagId == data.TagId);
+                if (contentTagToRemove != null)
                 {
-                    // Se non c'è già, per il client è comunque un successo (idempotenza)
-                    return new JsonResult(new { success = true });
+                    _context.ContentTags.Remove(contentTagToRemove);
+                    await _context.SaveChangesAsync();
                 }
-
-                _context.ContentTags.Remove(contentTagToRemove);
-                await _context.SaveChangesAsync();
-
                 return new JsonResult(new { success = true });
             }
-            catch (Exception ex)
+            catch
             {
                 return new JsonResult(new { success = false, message = "Errore durante la rimozione dal database." });
             }
@@ -990,83 +623,66 @@ namespace VanitasStudios_WebApp.Pages
 
             try
             {
-                // CONTROLLO DI SICUREZZA 1: Esistenza dell'articolo
-                var article = await _context.Contents
-                    .FirstOrDefaultAsync(c => c.Id == data.ArticleId);
+                var article = await _context.Contents.FirstOrDefaultAsync(c => c.Id == data.ArticleId);
+                if (article == null) return new JsonResult(new { success = false, message = "Articolo non trovato." });
 
-                if (article == null)
-                {
-                    return new JsonResult(new { success = false, message = "Articolo non trovato." });
-                }
-
-                // CONTROLLO DI SICUREZZA 2: Integrità del contenuto prima della pubblicazione
-                // Evitiamo che venga messo online un articolo senza titolo o palesemente incompleto
                 if ((data.Action == "Publish" || data.Action == "Update") && string.IsNullOrWhiteSpace(article.Title))
                 {
                     return new JsonResult(new { success = false, message = "Impossibile pubblicare un articolo senza titolo." });
                 }
 
-                // 3. GESTIONE DELLE AZIONI LOGICHE
                 switch (data.Action)
                 {
-                    case "Publish":
-                        // Passa da Bozza a Pubblicato
-                        article.PublishState = PublishState.Pubblico;
-
-                        // Impostiamo la data di pubblicazione solo se non è mai stato pubblicato prima
-                        if (article.UpdatedAt == null)
-                        {
-                            article.UpdatedAt = DateTime.UtcNow; // O DateTime.Now a seconda di come gestisci i fusi orari
-                        }
-                        break;
-
-                    case "Update":
-                        // Se è già pubblicato, l'azione di aggiornamento conferma lo stato
-                        // e aggiorna la data di ultima modifica (se hai quel campo)
+                    case "Publish" or "Update":
                         article.PublishState = PublishState.Pubblico;
                         article.UpdatedAt = DateTime.UtcNow;
                         break;
-
                     case "ToDraft":
-                        // Riporta l'articolo in bozza (oscurandolo dal frontend pubblico)
                         article.PublishState = PublishState.Bozza;
                         break;
-
                     default:
                         return new JsonResult(new { success = false, message = "Azione non riconosciuta." });
                 }
 
-                // 4. SALVATAGGIO FINALE
                 await _context.SaveChangesAsync();
-
                 return new JsonResult(new { success = true });
             }
-            catch (Exception ex)
+            catch
             {
-                // Qui puoi loggare l'errore specifico (es. ex.Message)
                 return new JsonResult(new { success = false, message = "Errore critico durante l'aggiornamento dello stato." });
             }
+        }
+
+        public string GenerateFolderPath(string category, string fileName)
+        {
+            string categoryPath = category.ToLower();
+            string year = DateTime.UtcNow.ToString("yyyy");
+            string monthDay = DateTime.UtcNow.ToString("MM_dd");
+            return Path.Combine(categoryPath, year, monthDay);
+        }
+
+        public string GenerateImageHashName(string imageBit)
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(imageBit);
+            byte[] hashBytes = MD5.HashData(inputBytes); // Ottimizzazione moderna .NET senza istanziare MD5.Create()
+
+            StringBuilder sb = new();
+            foreach (byte b in hashBytes)
+            {
+                sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
         }
 
         private string GenerateSlug(string title)
         {
             if (string.IsNullOrWhiteSpace(title)) return "untitled";
-
-            // 1. Tutto in minuscolo
             string str = title.ToLowerInvariant().Trim();
-
-            // 2. Sostituisci gli spazi e i trattini bassi con un trattino singolo
-            str = System.Text.RegularExpressions.Regex.Replace(str, @"[\s_]+", "-");
-
-            // 3. Rimuovi tutti i caratteri che non sono lettere, numeri o trattini
-            str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\-]", "");
-
-            // 4. Rimuovi trattini multipli consecutivi (es. "test---articolo" diventa "test-articolo")
-            str = System.Text.RegularExpressions.Regex.Replace(str, @"-+", "-");
-
-            // 5. Taglio di sicurezza finale sui bordi
+            str = Regex.Replace(str, @"[\s_]+", "-");
+            str = Regex.Replace(str, @"[^a-z0-9\-]", "");
+            str = Regex.Replace(str, @"-+", "-");
             return str.Trim('-');
         }
-
     }
 }
+

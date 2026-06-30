@@ -154,25 +154,66 @@ a {
         background: var(--accent-gold);
     }
 
+
 /* ==========================================================================
    VANITAS STUDIOS - NAVBAR & FOOTER SYSTEM
    ========================================================================== */
-
 /* --- CORNICE DI NAVIGAZIONE (NAVBAR) --- */
 .v-navbar {
-    padding: 1.5rem 0;
+    padding: 1rem 0; /* Spazio controllato sopra e sotto */
     background: transparent !important;
-    position: absolute; /* Rende la navbar fluttuante */
+    position: absolute; /* Fluttua sopra la hero dell'applicazione */
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 100; /* Sopra la hero, ma sotto il noise di sistema */
+    z-index: 100;
     transition: var(--transition-smooth);
+    /* Mantiene un'altezza minima strutturale bilanciata */
+    min-height: 85px;
+    display: flex !important;
+    align-items: center !important;
 }
 
-/* Modifichiamo l'aspetto dei Link del Menu */
+    /* Forza la centratura geometrica assoluta di tutti i blocchi interni */
+    .v-navbar .container {
+        height: 100%;
+    }
+
+/* --- GESTIONE LOGO (TORNA GRANDE E CENTRATO) --- */
+.v-nav-brand-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .v-nav-brand-wrapper .navbar-brand {
+        padding: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+.v-logo-img {
+    height: 60px; /* Ripristina la dimensione visibile e fiera del brand */
+    width: auto; /* Calcola la larghezza in automatico mantenendo le proporzioni nativa (es. ~50px) */
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.6));
+    transition: transform 0.3s ease;
+}
+
+/* Leggero effetto interattivo sul logo al passaggio del mouse */
+.v-nav-brand-wrapper .navbar-brand:hover .v-logo-img {
+    transform: scale(1.02);
+}
+
+/* --- COLLEGAMENTI MENU --- */
 .v-menu-links {
-    gap: 3rem; /* Spaziatura elegante e ampia tra le voci */
+    gap: 3rem;
+    display: flex;
+    align-items: center !important; /* Forza i link a stare sulla stessa mezzeria del logo */
+    margin: 0;
+    padding: 0;
 }
 
     .v-menu-links .nav-link {
@@ -181,17 +222,19 @@ a {
         letter-spacing: 0.15em;
         font-size: 0.8rem;
         font-weight: 600;
-        color: var(--text-silver) !important; /* Polvere, non bianco puro */
+        color: var(--text-silver) !important;
         padding: 0.5rem 1rem !important;
         position: relative;
         transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
     }
 
-        /* Effetto Hover Minimalista (La scintilla d'oro) */
+        /* Scintilla d'oro sotto i link */
         .v-menu-links .nav-link::after {
             content: '';
             position: absolute;
-            bottom: 0;
+            bottom: -2px; /* Abbassato leggermente per non toccare il testo */
             left: 50%;
             width: 0;
             height: 1px;
@@ -208,7 +251,7 @@ a {
                 width: 60%;
             }
 
-/* Evidenze per i link gestionali (Admin e Scrittura) */
+/* Gestionali */
 .v-nav-admin {
     color: #a881af !important;
 }
@@ -217,15 +260,37 @@ a {
     color: #76a085 !important;
 }
 
-/* Adattamento Toggler Mobile */
-.v-toggler {
-    border: none !important;
-    padding: 0.5rem !important;
+/* Wrapper Login laterale */
+.v-nav-login-wrapper {
+    display: flex;
+    align-items: center;
 }
 
-    .v-toggler:focus {
-        box-shadow: none !important;
+/* --- MEDIA QUERY MOBILE REVISIONATA --- */
+@media (max-width: 991px) {
+    .v-navbar {
+        position: relative; /* Evita sovrapposizioni distruttive su mobile */
+        background: #141418 !important; /* Sfondo scuro compatto all'apertura */
+        min-height: auto;
+        padding: 0.75rem 0;
     }
+
+    .v-logo-img {
+        height: 48px; /* Leggermente più piccolo sui display degli smartphone per salvare spazio */
+    }
+
+    .v-menu-links {
+        flex-direction: column;
+        gap: 1.2rem;
+        padding: 2rem 0 1rem 0;
+        text-align: center;
+    }
+
+    .v-nav-login-wrapper {
+        justify-content: center;
+        padding-bottom: 1.5rem;
+    }
+}
 
 /* --- IL FOOTER ANCORATO --- */
 .v-footer {
@@ -272,4 +337,113 @@ a {
     .v-nav-login-wrapper {
         justify-content: center;
     }
+}
+
+/* ==========================================================================
+   VANITAS STUDIOS - NAVBAR AUTHENTICATION OVERRIDES
+   ========================================================================== */
+
+/* Il pulsante quando l'utente non è loggato */
+.btn-login-nav {
+    color: var(--accent-gold, #c5a880) !important;
+    font-family: var(--font-header, monospace);
+    font-size: 0.8rem !important;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+    .btn-login-nav:hover {
+        opacity: 1;
+        text-shadow: 0 0 8px rgba(197, 168, 128, 0.4);
+        transform: translateY(-1px);
+    }
+
+/* Il selettore dropdown dell'utente connesso */
+.btn-profile-dropdown {
+    color: var(--text-pure, #ffffff) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.4rem 0.8rem !important;
+    transition: all 0.25s ease;
+}
+
+.profile-marker {
+    color: var(--accent-gold, #c5a880);
+    font-weight: 700;
+    margin-right: 2px;
+}
+
+/* Il box del menu a tendina che scivola giù */
+.auth-dropdown-box {
+    background: rgba(20, 20, 24, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    margin-top: 10px !important;
+    border-radius: 4px !important;
+    padding: 0.5rem 0 !important;
+}
+
+    .auth-dropdown-box .dropdown-item {
+        font-size: 0.8rem !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        transition: all 0.2s ease;
+    }
+
+        .auth-dropdown-box .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: #fff !important;
+        }
+
+        .auth-dropdown-box .dropdown-item.text-danger:hover {
+            background: rgba(220, 53, 69, 0.08) !important;
+            color: #ff4d5a !important;
+        }
+
+/* Rimozione stili nativi distruttivi sul bottone di logout */
+.backend-logout-btn {
+    border: none !important;
+    background: transparent !important;
+}
+
+
+/* Stile specifico per il processo a step della 2FA */
+.step-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent-gold, #c5a880);
+}
+
+.step-link {
+    color: #fff;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+    .step-link:hover {
+        color: #bc9cff;
+    }
+
+.custom-kbd {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff !important;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.qr-canvas-frame {
+    background: rgba(20, 20, 24, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 1.5rem;
+    border-radius: 6px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
 }

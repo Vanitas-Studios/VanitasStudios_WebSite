@@ -103,8 +103,6 @@ namespace VanitasStudios_WebApp.Models
             }
 
             // ------------------------------------------------------------------
-            // STEP 3: Calcolo dei StatisticalWeights (I Pesi Algoritmici delle tabelle di giunzione)
-            // ------------------------------------------------------------------
             // STEP 3: Calcolo dei StatisticalWeights con DECADIMENTO TEMPORALE
             // ------------------------------------------------------------------
             if (selectedTagIds.Any())
@@ -149,14 +147,15 @@ namespace VanitasStudios_WebApp.Models
                 scores[articleId] += freshnessBonus;
             }
 
+
             // ------------------------------------------------------------------
             // STEP 5: Ordinamento Finale e Valutazione del Bivio Akinator
             // ------------------------------------------------------------------
             var rankedCandidates = scores
-            .Where(kv => kv.Value > 0)
-            .OrderByDescending(kv => kv.Value)
-            .Select(kv => articles.First(a => a.Id == kv.Key))
-            .ToList();
+                .Where(kv => kv.Value > 0)
+                .OrderByDescending(kv => kv.Value)
+                .Select(kv => articles.First(a => a.Id == kv.Key))
+                .ToList();
 
             if (!rankedCandidates.Any())
             {
@@ -169,21 +168,29 @@ namespace VanitasStudios_WebApp.Models
             double secondScore = rankedCandidates.Count > 1 ? scores[rankedCandidates[1].Id] : 0.0;
             double scoreGap = topScore - secondScore;
 
-            // Se l'algoritmo ha le idee chiare o abbiamo fatto troppe domande (es. 5 filtri attivi)
+            // Se l'algoritmo ha le idee chiare o abbiamo fatto troppe domande
             if (rankedCandidates.Count == 1 || scoreGap > 40.0 || selectedTagIds.Count >= 5)
             {
                 result.IsFinalResult = true;
 
-                // MODIFICA: Invece di troncare a 3 articoli fissi, restituiamo TUTTI i candidati validi 
-                // trovati dall'algoritmo, ordinati dal più pertinente al meno pertinente.
-                result.Articles = rankedCandidates;
+                // MAPPATURA DI SICUREZZA: Trasformiamo i Content nel DTO controllato
+                result.Articles = rankedCandidates.Select(c => new SearchArticleResultDto
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    Description = c.Description,
+                    Slug = c.Slug,
+                    CoverImageUrl = !string.IsNullOrEmpty(c.CoverImageUrl) ? c.CoverImageUrl : "/media/placeholder-default.png",
+                    FormattedDate = c.CreatedAt.ToString("dd/MM/yyyy")
+                }).ToList();
+
                 return result;
             }
+
 
             // ------------------------------------------------------------------
             // STEP 6: Modalità Akinator - Estrazione del Tag discriminante
             // ------------------------------------------------------------------
-            // Prendiamo i tag dei primi 3 articoli finalisti, escludendo quelli già usati dall'utente
             var topCandidateIds = rankedCandidates.Take(3).Select(c => c.Id).ToList();
 
             var nextBestTag = await _context.StatisticalWeights
@@ -200,16 +207,24 @@ namespace VanitasStudios_WebApp.Models
 
             if (nextBestTag != null)
             {
-                // Non siamo sicuri, configuriamo la domanda per il Front-End
                 result.IsFinalResult = false;
                 result.NextTagIdSuggested = nextBestTag.TagId;
-                result.NextQuestionText = nextBestTag.TagName; // Es: "Planche" o "Grimdark"
+                result.NextQuestionText = nextBestTag.TagName;
             }
             else
             {
-                // Se non ci sono più tag utili per discriminare, forziamo l'uscita con i risultati correnti
                 result.IsFinalResult = true;
-                result.Articles = rankedCandidates.Take(3).ToList();
+
+                // MAPPATURA DI SICUREZZA ANCHE IN USCITA FORZATA
+                result.Articles = rankedCandidates.Take(3).Select(c => new SearchArticleResultDto
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    Description = c.Description,
+                    Slug = c.Slug,
+                    CoverImageUrl = !string.IsNullOrEmpty(c.CoverImageUrl) ? c.CoverImageUrl : "/media/placeholder-default.png",
+                    FormattedDate = c.CreatedAt.ToString("dd/MM/yyyy")
+                }).ToList();
             }
 
             return result;

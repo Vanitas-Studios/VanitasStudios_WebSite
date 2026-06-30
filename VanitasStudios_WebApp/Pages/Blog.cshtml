@@ -4,120 +4,130 @@
     ViewData["Title"] = "Critical Essay - Archive";
 }
 
-<section class="hero-blog">
-    <div class="blog-container">
-        <div class="blog-text">
-            <h1 class="hero-blog-title">Critical_Essay</h1>
-            <p class="hero-blog-desc">Narrative dissections and reflections on the beauty of decay.</p>
-        </div>
-        <div class="blog-visual">
-            <img src="#" alt="Horus, Character Design" class="doc-image">
-        </div>
-    </div>
-</section>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/blog.css" asp-append-version="true" />
+}
 
-<section class="blog-archive">
-    <div class="archive-container">
-        
-        <div class="header-archive">
-            <h3>Last Fragments</h3>
-            
-            <div class="archive-search position-relative">
-                <div class="input-group">
-                    <input type="search" id="main-search-input" class="form-control bg-transparent text-white" placeholder="Cerca un frammento o un tag..." autocomplete="off" />
-                    <button class="btn btn-outline-secondary" type="button" id="btn-execute-search">Search</button>
-                </div>
-                
-                <div id="search-autocomplete-box" class="dropdown-menu w-100 shadow mt-1 p-2 bg-dark border-secondary d-none">
-                    <h6 class="dropdown-header text-uppercase text-muted p-1" style="font-size: 0.75rem;">Tag Suggeriti</h6>
-                    <div id="autocomplete-suggestions-list">
-                        </div>
-                </div>
-
-                <div id="akinator-suggestion-box" class="mt-2 px-1 d-none">
-                    <span class="text-muted small">Forse cercavi contenuti legati a:</span>
-                    <a href="#" id="akinator-next-tag-link" class="text-decoration-none ms-1 fw-bold" data-tag-id="" style="color: #bc9cff;">
-                        #NomeTag
-                    </a>
-                </div>
+<main class="main-content-offset">
+    <section class="hero-blog">
+        <div class="blog-container">
+            <div class="blog-text">
+                <h1 class="hero-blog-title">Critical_Essay</h1>
+                <p class="hero-blog-desc">Narrative dissections and reflections on the beauty of decay.</p>
+            </div>
+            <div class="blog-visual">
+                <img src="/media/horus-design.png" alt="Horus, Character Design" class="doc-image">
             </div>
         </div>
+    </section>
 
-        <hr class="border-secondary my-4" />
+    <section class="blog-archive">
+        <div class="archive-container">
 
-        <div id="netflix-explorer-section">
-            
-            <div class="category-row mb-5">
-                <h4 class="category-title mb-3 text-white">#Chronicles_Latest</h4>
-                <div class="d-flex flex-nowrap overflow-auto g-3 pb-2 hidden-scrollbar" style="gap: 1.5rem;">
-                    @foreach (var content in Model.LatestContents)
-                    {
-                        <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
-                            <a asp-page="/Content" asp-route-id="@content.Id" asp-route-id="@content.Slug" class="text-decoration-none text-white">
+            <div class="header-archive">
+                <h3 class="archive-section-title">Last Fragments</h3>
 
-                                @if (!string.IsNullOrEmpty(content.CoverImageUrl))
-                                {
-                                    <img src="@content.CoverImageUrl" class="card-img-top" alt="Copertina di @content.Title" style="height: 12rem; object-fit: cover;">
-                                }
-                                else
-                                {
-                                    <img src="/media/placeholder-default.png" class="card-img-top" alt="Nessuna copertina disponibile" style="height: 12rem; object-fit: cover;">
-                                }
+                <div class="archive-search position-relative">
+                    <div class="input-group">
+                        <input type="search" id="main-search-input" class="form-control bg-transparent text-white" placeholder="Cerca un frammento o un tag..." autocomplete="off" />
+                        <button class="btn btn-search-execute" type="button" id="btn-execute-search">Search</button>
+                    </div>
 
-                                <div class="card-body">
-                                    <h3 class="card-title h5">@content.Title</h3>
-                                    <p class="card-text text-muted small">@content.Description</p>
-                                    <span class="text-secondary" style="font-size: 0.8rem;">@content.CreatedAt.ToString("dd/MM/yyyy")</span>
-                                </div>
-                            </a>
-                        </div>
-                    }
+                    <div id="search-autocomplete-box" class="dropdown-menu w-100 shadow mt-1 p-2 bg-dark border-secondary d-none">
+                        <h6 class="dropdown-header text-uppercase text-muted p-1" style="font-size: 0.75rem;">Tag Suggeriti</h6>
+                        <div id="autocomplete-suggestions-list"></div>
+                    </div>
+
+                    <div id="akinator-suggestion-box" class="mt-2 px-1 d-none">
+                        <span class="text-muted small">Forse cercavi contenuti legati a:</span>
+                        <a href="#" id="akinator-next-tag-link" class="text-decoration-none ms-1 fw-bold akinator-link">
+                            #NomeTag
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            @foreach (var categoryGroup in Model.CategorizedContents)
-            {
+            <hr class="border-secondary my-4" />
+
+            <!-- Vista Esplorazione (Stile Netflix) -->
+            <div id="netflix-explorer-section">
+
                 <div class="category-row mb-5">
-                    <h4 class="category-title mb-3 text-white">#Category_@categoryGroup.Key</h4>
-                    <div class="d-flex flex-nowrap overflow-auto g-3 pb-2 hidden-scrollbar" style="gap: 1.5rem;">
-                        @foreach (var content in categoryGroup.Value)
+                    <h4 class="category-title mb-3 text-white">#Chronicles_Latest</h4>
+                    <div class="d-flex flex-nowrap overflow-auto pb-2 hidden-scrollbar category-cards-wrapper">
+                        @foreach (var content in Model.LatestContents)
                         {
-                            <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
-                                <a asp-page="/Content" asp-route-id="@content.Id" asp-route-id="@content.Slug" class="text-decoration-none text-white">
-
-                                    @if (!string.IsNullOrEmpty(content.CoverImageUrl))
-                                    {
-                                        <img src="@content.CoverImageUrl" class="card-img-top" alt="Copertina di @content.Title" style="height: 12rem; object-fit: cover;">
-                                    }
-                                    else
-                                    {
-                                        <img src="/media/placeholder-default.png" class="card-img-top" alt="Nessuna copertina disponibile" style="height: 12rem; object-fit: cover;">
-                                    }
-
-                                    <div class="card-body">
-                                        <h3 class="card-title h5">@content.Title</h3>
-                                        <p class="card-text text-muted small">@content.Description</p>
+                            <div class="card blog-card flex-shrink-0">
+                                <a asp-page="/Content" asp-route-id="@content.Id" asp-route-slug="@content.Slug" class="text-decoration-none text-white h-100 d-flex flex-column">
+                                    <div class="card-img-wrapper">
+                                        @if (!string.IsNullOrEmpty(content.CoverImageUrl))
+                                        {
+                                            <img src="@content.CoverImageUrl" class="card-img-top" alt="Copertina di @content.Title">
+                                        }
+                                        else
+                                        {
+                                            <img src="/media/placeholder-default.png" class="card-img-top" alt="Nessuna copertina disponibile">
+                                        }
+                                    </div>
+                                    <div class="card-body d-flex flex-column justify-content-between">
+                                        <div>
+                                            <h3 class="card-title h5">@content.Title</h3>
+                                            <p class="card-text text-muted small">@content.Description</p>
+                                        </div>
+                                        <span class="text-secondary card-date">@content.CreatedAt.ToString("dd/MM/yyyy")</span>
                                     </div>
                                 </a>
                             </div>
                         }
                     </div>
                 </div>
-            }
-        </div>
 
-        <div id="algo-results-section" class="d-none">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="text-white m-0">Dissected Results</h4>
-                <button id="btn-clear-search" class="btn btn-sm btn-outline-danger">Reset Filters</button>
+                @foreach (var categoryGroup in Model.CategorizedContents)
+                {
+                    <div class="category-row mb-5">
+                        <h4 class="category-title mb-3 text-white">#Category_@categoryGroup.Key</h4>
+                        <div class="d-flex flex-nowrap overflow-auto pb-2 hidden-scrollbar category-cards-wrapper">
+                            @foreach (var content in categoryGroup.Value)
+                            {
+                                <div class="card blog-card flex-shrink-0">
+                                    <a asp-page="/Content" asp-route-id="@content.Id" asp-route-slug="@content.Slug" class="text-decoration-none text-white h-100 d-flex flex-column">
+                                        <div class="card-img-wrapper">
+                                            @if (!string.IsNullOrEmpty(content.CoverImageUrl))
+                                            {
+                                                <img src="@content.CoverImageUrl" class="card-img-top" alt="Copertina di @content.Title">
+                                            }
+                                            else
+                                            {
+                                                <img src="/media/placeholder-default.png" class="card-img-top" alt="Nessuna copertina disponibile">
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <h3 class="card-title h5">@content.Title</h3>
+                                            <p class="card-text text-muted small">@content.Description</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
-            
-            <div id="results-grid" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-                </div>
-        </div>
 
-    </div>
-</section>
+            <!-- Vista Risultati Algoritmo (Griglia Dinamica) -->
+            <div id="algo-results-section" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-white m-0 section-results-title">Dissected Results</h4>
+                    <button id="btn-clear-search" class="btn btn-sm btn-outline-danger btn-reset-filters">Reset Filters</button>
+                </div>
+
+                <div id="results-grid" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+                    <!-- Popolato dinamicamente da search-engine.js -->
+                </div>
+            </div>
+
+        </div>
+    </section>
+</main>
 
 @section Scripts {
     <script src="~/js/search-engine.js" asp-append-version="true"></script>

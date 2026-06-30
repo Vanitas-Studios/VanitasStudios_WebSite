@@ -1,38 +1,49 @@
 ﻿@page
 @model LoginWith2faModel
 @{
-    ViewData["Title"] = "Two-factor authentication";
+    ViewData["Title"] = "Verifica Identità";
+    Layout = "/Pages/Shared/_Layout.cshtml"; // Forza il layout globale di Vanitas
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+<div class="auth-container">
+    <div class="auth-box">
+        <div class="auth-header text-center">
+            <span class="auth-brand">// SECURE LAYER</span>
+            <h1 class="auth-title">Autenticazione 2FA</h1>
+            <p class="auth-subtitle">La sessione è protetta. Inserisci il codice generato dalla tua applicazione di autenticazione.</p>
+        </div>
+
+        <form method="post" asp-route-returnUrl="@Model.ReturnUrl" class="auth-form mt-4">
             <input asp-for="RememberMe" type="hidden" />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label asp-for="Input.TwoFactorCode" class="form-label"></label>
-                <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
+
+            <div asp-validation-summary="ModelOnly" class="auth-error-summary mb-3" role="alert"></div>
+
+            <div class="input-group-custom mb-3">
+                <label asp-for="Input.TwoFactorCode" class="form-label-custom">Codice di Verifica</label>
+                <input asp-for="Input.TwoFactorCode" class="form-control-custom text-center" style="letter-spacing: 0.3em; font-size: 1.2rem; font-family: monospace;" autocomplete="off" placeholder="000000" inputmode="numeric" />
+                <span asp-validation-for="Input.TwoFactorCode" class="text-danger small mt-1 d-block"></span>
             </div>
-            <div class="checkbox mb-3">
-                <label asp-for="Input.RememberMachine" class="form-label">
-                    <input asp-for="Input.RememberMachine" />
-                    @Html.DisplayNameFor(m => m.Input.RememberMachine)
+
+            <div class="auth-utility mb-4">
+                <label asp-for="Input.RememberMachine" class="checkbox-custom d-flex align-items-center gap-2">
+                    <input class="form-check-input custom-check" asp-for="Input.RememberMachine" />
+                    <span class="checkbox-text">Ricorda questo dispositivo</span>
                 </label>
             </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+
+            <button type="submit" class="btn-auth-submit w-100">Verifica e Accedi</button>
+
+            <div class="auth-footer-links text-center mt-4">
+                <p class="m-0">
+                    <a id="recovery-code-login" asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link-secondary small">
+                        Non hai accesso al dispositivo? <br>
+                        <span class="text-muted">Usa un codice di recupero</span>
+                    </a>
+                </p>
             </div>
         </form>
     </div>
 </div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a id="recovery-code-login" asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">log in with a recovery code</a>.
-</p>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

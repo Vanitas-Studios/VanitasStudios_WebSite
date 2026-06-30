@@ -21,22 +21,19 @@
 
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark v-navbar" id="Nav-menu">
-            <div class="container">
+            <div class="container d-flex align-items-center">
 
-                <!-- Brand / Logo -->
                 <div class="v-nav-brand-wrapper">
                     <a class="navbar-brand d-flex align-items-center" asp-area="" asp-page="/Index">
-                        <img src="/img/Logo.png" width="55" height="65" alt="Vanitas Logo" decoding="async" fetchpriority="high" />
+                        <img src="/img/Logo.png" alt="Vanitas Logo" decoding="async" fetchpriority="high" class="v-logo-img" />
                     </a>
                 </div>
 
-                <!-- Toggler per Mobile ritoccato -->
                 <button class="navbar-toggler v-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Link Centrali di Navigazione -->
-                <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="collapse navbar-collapse align-items-lg-center" id="navbarContent">
                     <ul class="navbar-nav mx-auto v-menu-links">
                         <li class="nav-item"><a class="nav-link" asp-page="/Index">Home</a></li>
                         <li class="nav-item"><a class="nav-link" asp-page="/GameDoc">Game</a></li>
@@ -44,7 +41,7 @@
 
                         @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
                         {
-                            <li class="nav-item"><a class="nav-link v-nav-admin" asp-page="/AdminInterface">Admin</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/AdminInterface">Admin</a></li>
                         }
                         @if (User.Identity.IsAuthenticated && (User.IsInRole("Editor") || User.IsInRole("Admin")))
                         {
@@ -52,7 +49,6 @@
                         }
                     </ul>
 
-                    <!-- Elemento Login / Profilo spostato dentro il flusso per il mobile -->
                     <div class="v-nav-login-wrapper mt-4 mt-lg-0">
                         <partial name="_LoginPartial" />
                     </div>

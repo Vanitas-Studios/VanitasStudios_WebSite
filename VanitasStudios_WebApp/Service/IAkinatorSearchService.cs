@@ -28,7 +28,7 @@ namespace VanitasStudios_WebApp.Service
 
         // Questa lista conterrà gli articoli reali. 
         // Verrà popolata SOLO se IsFinalResult è TRUE.
-        public List<Content> Articles { get; set; } = new();
+        public List<SearchArticleResultDto> Articles { get; set; } = new();
 
         // Se IsFinalResult è FALSE, qua dentro ci mettiamo l'ID del prossimo tag consigliato
         // su cui l'utente dovrà esprimere la sua preferenza.
@@ -36,5 +36,15 @@ namespace VanitasStudios_WebApp.Service
 
         // Il testo della domanda da mostrare sotto la barra (es: "#Planche")
         public string NextQuestionText { get; set; } = string.Empty;
+    }
+
+    public class SearchArticleResultDto
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = null!;
+        public string? Description { get; set; }
+        public string Slug { get; set; } = null!;
+        public string? CoverImageUrl { get; set; }
+        public string FormattedDate { get; set; } = string.Empty;
     }
 }
