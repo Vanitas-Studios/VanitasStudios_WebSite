@@ -2,12 +2,12 @@
    VANITAS STUDIOS - INDEX PAGE STYLES
    ========================================================================== */
 
-/* --- ANIMAZIONI --- */
+/* --- ANIMAZIONI OTTIMIZZATE PER GPU (COMPOSITED) --- */
 @keyframes vFadeInUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
-        filter: blur(5px);
+        transform: translateY(1.25rem);
+        filter: blur(0.31rem);
     }
 
     to {
@@ -19,34 +19,15 @@
 
 @keyframes vDescendFloat {
     0% {
-        transform: translateY(0px);
+        transform: translateY(0);
     }
 
     50% {
-        transform: translateY(8px);
+        transform: translateY(0.5rem);
     }
 
     100% {
-        transform: translateY(0px);
-    }
-}
-
-/* Bagliore pulsante più visibile */
-@keyframes vGlowPulse {
-    0% {
-        opacity: 0.2;
-        transform: scale(1);
-    }
-
-    50% {
-        opacity: 0.4;
-        transform: scale(1.1);
-        filter: blur(60px);
-    }
-
-    100% {
-        opacity: 0.2;
-        transform: scale(1);
+        transform: translateY(0);
     }
 }
 
@@ -63,7 +44,7 @@
 
 /* TESTI (LATO SINISTRO) */
 .v-brand-title {
-    font-size: 5rem;
+    font-size: 5rem; /* Mantiene la monumentalità scalando con il font del browser */
     line-height: 1.0;
     font-weight: 900;
     letter-spacing: -0.01em;
@@ -72,23 +53,23 @@
 }
 
 .text-shadow-monumental {
-    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.95);
+    text-shadow: 0 0.625rem 2.5rem rgba(0, 0, 0, 0.95);
 }
 
 .v-motto-divider {
-    width: 30px;
-    height: 1px;
+    width: 1.875rem;
+    height: 0.0625rem;
     background-color: var(--text-pure);
     margin: 1.5rem 0;
     opacity: 0.2;
 }
 
 .text-gold-muted {
-    color: #D4AF37 !important;
+    color: var(--accent-gold) !important;
     font-size: 0.85rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    opacity: 0.9;
+    opacity: 1; /* Portata a 1 per superare il controllo di contrasto di Lighthouse */
     animation: vFadeInUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -96,55 +77,44 @@
 .v-geometry-wrapper {
     position: relative;
     width: 100%;
-    height: 650px;
+    height: 46.875rem; /* Esprimiamo l'altezza in rem per assecondare lo zoom dello schermo */
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* ALONE BIANCO POTENZIATO (Dietro a tutto) */
-.v-mask-white-glow {
+/* ALONE DORATO DESATURATO */
+.v-mask-gold-glow {
     position: absolute;
-    width: 550px;
-    height: 550px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 70%);
-    filter: blur(40px);
+    width: 37.5rem; /* Dinamico in rem */
+    height: 37.5rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(212, 175, 55, 0.03) 55%, transparent 70%);
+    filter: blur(2.5rem);
     z-index: 1;
     pointer-events: none;
-    animation: vGlowPulse 8s ease-in-out infinite;
 }
 
-/* TRIANGOLO VUOTO, SOLIDO, DEFORMATO E RUOTATO */
-.v-esoteric-triangle-asymmetric {
+/* TRIANGOLO SVG VUOTO E TAGLIENTE */
+.v-esoteric-triangle-svg {
     position: absolute;
-    width: 420px;
-    height: 420px;
+    width: 32.5rem;
+    height: 32.5rem;
     z-index: 2;
-    background-color: rgba(255, 255, 255, 0.15); /* Colore del bordo solido */
-    /* Deformiamo i tre angoli del triangolo per non renderlo perfetto */
-    clip-path: polygon(52% 5%, 95% 85%, 8% 92%);
-    /* Rotazione personalizzabile per dare dinamismo astratto */
-    transform: rotate(-12deg) translateY(-10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    fill: none !important;
+    stroke: var(--accent-gold);
+    stroke-width: 0.1rem; /* Sottilissimo ed elegante */
+    stroke-linejoin: miter;
+    transform: rotate(-8deg) translateY(-1.25rem);
     pointer-events: none;
-}
-
-/* Svuota l'interno del triangolo lasciando un bordo spesso e massiccio */
-.v-triangle-inner-cut {
-    width: calc(100% - 16px); /* Lo spessore del bordo solido (8px per lato) */
-    height: calc(100% - 16px);
-    background-color: #0b0b0b; /* Deve corrispondere al nero di fondo della pagina */
-    /* Replica la stessa identica deformazione del padre in scala ridotta */
-    clip-path: polygon(52% 6%, 94% 84%, 9% 91%);
+    opacity: 0.4;
 }
 
 /* CONTENITORE MASCHERA INGRANDITO */
 .v-mask-canvas-wrapper {
-    width: 100%;
-    max-width: 580px; /* Portato da 480px a 580px per dare impatto massiccio */
-    z-index: 3; /* Sovrapposto al triangolo, nascondendone i lati */
+    width: 130%;
+    max-width: 46.875rem;
+    z-index: 3;
     position: relative;
     display: flex;
     align-items: center;
@@ -155,8 +125,8 @@
     width: 100%;
     height: auto;
     object-fit: contain;
-    /* Ombra pesante per staccare nettamente l'oro dal triangolo bianco e dall'alone posteriore */
-    filter: drop-shadow(0 25px 45px rgba(0, 0, 0, 0.98)) drop-shadow(0 0 30px rgba(255, 255, 255, 0.05));
+    transform: scale(1.1);
+    filter: drop-shadow(0 1.875rem 2.81rem rgba(0, 0, 0, 0.98)) saturate(0.4) brightness(0.85);
 }
 
 /* INTERFACCIA: DESCEND */
@@ -168,13 +138,14 @@
     flex-direction: column;
     align-items: center;
     z-index: 10;
+    /* Ottimizzato l'accorpamento delle animazioni senza rompere la GPU */
     animation: vFadeInUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards, vDescendFloat 4s ease-in-out infinite 2s;
 }
 
 .v-descend-text {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    color: var(--text-ashes) !important;
+    color: var(--text-silver) !important; /* Cambiato da ashes a silver per aumentare il contrasto accessibilità! */
     margin-bottom: 1.2rem;
     font-size: 0.75rem;
     letter-spacing: 0.2em;
@@ -182,16 +153,16 @@
 }
 
 .v-descend-line-container {
-    width: 1px;
-    height: 70px;
+    width: 0.0625rem;
+    height: 4.375rem;
     overflow: hidden;
     position: relative;
 }
 
 .v-descend-line {
-    width: 1px;
+    width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, var(--text-ashes) 0%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(to bottom, var(--text-silver) 0%, rgba(255,255,255,0) 100%);
 }
 
 /* RESPONSIVNESS */
@@ -238,6 +209,7 @@
 .v-section-title {
     font-size: 2rem;
     font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 /* Card Minimali */
@@ -249,10 +221,11 @@
 
 .v-card-img-mask {
     width: 100%;
-    height: 380px;
+    height: 23.75rem; /* Convertito da 380px a 23.75rem per elasticità */
     overflow: hidden;
     background: var(--bg-void);
     border: 1px solid rgba(255, 255, 255, 0.02);
+    position: relative;
 }
 
 .v-card-img-placeholder {
@@ -260,13 +233,14 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    filter: grayscale(100%) sepia(20%) contrast(1.1) brightness(0.8); /* Filtro cromatico "Vanitas" */
+    /* Il filtro cromatico identitario di Vanitas Studios */
+    filter: grayscale(100%) sepia(20%) contrast(1.1) brightness(0.8);
     transition: var(--transition-smooth);
     opacity: 0.6;
 }
 
 .v-card-featured:hover .v-card-img-placeholder {
-    transform: scale(1.03);
+    transform: scale(1.03); /* Movimento microscopico e controllato */
     filter: grayscale(40%) sepia(15%) contrast(1.1) brightness(0.9);
     opacity: 0.8;
 }
@@ -274,13 +248,21 @@
 .v-card-meta {
     font-size: 0.75rem;
     color: var(--text-ashes) !important;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
 }
 
 .v-card-title a {
     color: var(--text-pure);
     font-size: 1.4rem;
     font-weight: 700;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
+
+    .v-card-title a:hover {
+        color: var(--accent-gold);
+    }
 
 .v-card-excerpt {
     font-family: var(--font-body);

@@ -53,7 +53,7 @@
                     @foreach (var content in Model.LatestContents)
                     {
                         <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
-                            <a asp-page="/Content" asp-route-id="@content.Id" class="text-decoration-none text-white">
+                            <a asp-page="/Content" asp-route-id="@content.Id" asp-route-id="@content.Slug" class="text-decoration-none text-white">
 
                                 @if (!string.IsNullOrEmpty(content.CoverImageUrl))
                                 {
@@ -83,7 +83,7 @@
                         @foreach (var content in categoryGroup.Value)
                         {
                             <div class="card bg-transparent border-secondary flex-shrink-0" style="width: 18rem;">
-                                <a asp-page="/Content" asp-route-id="@content.Id" class="text-decoration-none text-white">
+                                <a asp-page="/Content" asp-route-id="@content.Id" asp-route-id="@content.Slug" class="text-decoration-none text-white">
 
                                     @if (!string.IsNullOrEmpty(content.CoverImageUrl))
                                     {

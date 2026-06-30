@@ -140,6 +140,38 @@ async function restoreArticle(articleId, articleTitle) {
     }
 }
 
+async function toggleArticlePin(articleId) {
+    const btn = document.getElementById(`pin-btn-${articleId}`);
+    if (!btn) return;
+
+    // Protezione contro spam-click: disabilitiamo temporaneamente il bottone
+    btn.disabled = true;
+
+    // 💡 Sfruttiamo commitToServer inviando l'ID come oggetto nel body della POST
+    const result = await commitToServer('TogglePin', articleId, 'POST');
+
+    if (result && result.success) {
+        // Aggiornamento visivo immediato basato sul booleano di ritorno dal server
+        if (result.isPinned) {
+            btn.classList.remove('text-secondary', 'opacity-50');
+            btn.classList.add('text-warning');
+            btn.innerHTML = '<i class="bi bi-pin-angle-fill fs-5"></i>';
+            btn.title = 'Rimuovi dalla prima pagina';
+        } else {
+            btn.classList.remove('text-warning');
+            btn.classList.add('text-secondary', 'opacity-50');
+            btn.innerHTML = '<i class="bi bi-pin-angle fs-5"></i>';
+            btn.title = 'Metti in evidenza in prima pagina';
+        }
+        console.log(`[VANITAS ADMIN] Articolo #${articleId} aggiornato. Nuovo Score Akinator: ${result.newScore}`);
+    } else {
+        alert(result ? result.message : "Errore di connessione durante l'operazione di Pin.");
+    }
+
+    // Riabilitiamo il bottone ad elaborazione conclusa
+    btn.disabled = false;
+}
+
 // Funzione per intercettare l'invio asincrono del modulo Tag
 async function submitTagForm(event, handlerName) {
     event.preventDefault(); // Sganciamo il comportamento nativo del browser

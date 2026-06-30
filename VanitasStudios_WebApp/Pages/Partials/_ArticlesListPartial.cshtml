@@ -4,7 +4,7 @@
 @{
 }
 
-@model VanitasStudios_WebApp.Models.ArticlesManagementViewModel;
+@model VanitasStudios_WebApp.Pages.ArticlesManagementViewModel
 @using VanitasStudios_WebApp.Models
 @using System.Text.Encodings.Web
 
@@ -14,7 +14,6 @@
             <h2 class="fw-bold m-0">Gestione Contenuti</h2>
             <p class="text-muted small m-0">Modifica, pubblica o rimuovi gli articoli all'interno del database.</p>
         </div>
-        <!-- Pulsante rapido per creare un nuovo articolo da zero -->
         <a asp-page="/Admin/Editor" class="btn btn-dark btn-sm px-3">
             <i class="bi bi-plus-lg me-1"></i> Nuovo Articolo
         </a>
@@ -25,10 +24,10 @@
             <table class="table table-hover align-middle m-0">
                 <thead>
                     <tr class="text-muted small text-uppercase font-monospace border-bottom">
-                        <th style="width: 40%;">Titolo</th>
+                        <th style="width: 35%;">Titolo</th>
                         <th style="width: 15%;">Categoria</th>
-                        <th style="width: 15%;">Stato</th>
-                        <th style="width: 15%;">Ultima Modifica</th>
+                        <th style="width: 12%;">Stato</th>
+                        <th style="width: 10%;" class="text-center">Pinned</th> <th style="width: 13%;">Ultima Modifica</th>
                         <th style="width: 15%;" class="text-end">Azioni</th>
                     </tr>
                 </thead>
@@ -39,7 +38,7 @@
                         {
                             <tr>
                                 <td>
-                                    <div class="fw-bold text-dark text-truncate" style="max-width: 350px;">
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 320px;">
                                         @article.Title
                                     </div>
                                     <div class="d-flex align-items-center gap-2 mt-1">
@@ -73,8 +72,43 @@
                                         <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1">Bozza</span>
                                     }
                                 </td>
+                                <td class="text-center">
+                                    @if (article.EliminatedAt != null)
+                                    {
+                                        <button type="button" class="btn btn-link text-muted p-0 opacity-25" disabled title="Impossibile pinnare un articolo cestinato">
+                                            <i class="bi bi-pin-angle fs-5"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" 
+                                                id="pin-btn-@article.Id"
+                                                class="btn btn-link p-0 dynamic-pin-toggle @(article.IsPinned ? "text-warning" : "text-secondary opacity-50")" 
+                                                title="@(article.IsPinned ? "Rimuovi dalla prima pagina" : "Metti in evidenza in prima pagina")"
+                                                onclick="toggleArticlePin(@article.Id)">
+                                            <i class="bi @(article.IsPinned ? "bi-pin-angle-fill" : "bi-pin-angle") fs-5"></i>
+                                        </button>
+                                    }
+                                </td>
                                 <td class="text-muted small">
-                                    @(article.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? article.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/D")
+                                    @{
+                                        string dataDaMostrare;
+
+                                        if (article.UpdatedAt != DateTime.MinValue)
+                                        {
+                                            dataDaMostrare = article.UpdatedAt.ToString("dd/MM/yyyy HH:mm");
+                                        }
+                                        else if (article.CreatedAt != DateTime.MinValue)
+                                        {
+                                            dataDaMostrare = article.CreatedAt.ToString("dd/MM/yyyy HH:mm");
+                                        }
+                                        else
+                                        {
+                                            dataDaMostrare = "N/D";
+                                        }
+                                    }
+
+                                    Aggiornato il @dataDaMostrare
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex justify-content-end gap-2">
@@ -105,7 +139,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-5">
+                            <td colspan="6" class="text-center text-muted py-5">
                                 <i class="bi bi-journal-text fs-2 d-block mb-2"></i>
                                 <p class="m-0">Nessun articolo trovato nel database. Comincia creandone uno nuovo!</p>
                             </td>

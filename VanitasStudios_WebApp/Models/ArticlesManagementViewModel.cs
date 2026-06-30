@@ -14,8 +14,7 @@
         public PublishState PublishState { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-
-        // ➕ AGGIUNGI QUESTA RIGA:
         public DateTime? EliminatedAt { get; set; }
+        public bool IsPinned { get; set; }
     }
 }

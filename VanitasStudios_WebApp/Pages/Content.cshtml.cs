@@ -19,7 +19,7 @@ namespace VanitasStudios_WebApp.Pages
             _context = context;
         }
 
-        public async Task<IActionResult> OnGetAsync(int id)
+        public async Task<IActionResult> OnGetAsync(int id, string slug)
         {
             // Carichiamo l'articolo con Autore, Tag, Sezioni e Media ordinati
             var content = await _context.Contents
@@ -54,6 +54,11 @@ namespace VanitasStudios_WebApp.Pages
                 .OrderByDescending(c => c.CreatedAt)
                 .Take(4) // Griglia pulita di 4 elementi al massimo
                 .ToListAsync();
+
+            if (content.Slug != slug)
+            {
+                return RedirectToPage(new { id = content.Id, slug = content.Slug });
+            }
 
             return Page();
         }

@@ -279,87 +279,140 @@ namespace VanitasStudios_WebApp.Pages
             Debug.WriteLine("=== [DEBUG VANITAS] ENTRATO IN ONPOSTSAVECONTENTASYNC OPTIMIZED ===");
             if (payload == null)
             {
-                return new JsonResult(new { success = false, message = "C# Errore: Payload globale nullo." }); // [cite: 53]
+                return new JsonResult(new { success = false, message = "C# Errore: Payload globale nullo." });
             }
 
             if (payload.Sections == null)
             {
-                payload.Sections = new List<SectionViewModel>(); // [cite: 54-55]
+                payload.Sections = new List<SectionViewModel>();
             }
 
             try
             {
+                // Recuperiamo l'articolo includendo le sezioni per la sincronizzazione
                 var article = await _context.Contents
-                                        .Include(c => c.Sections)
-                                        .FirstOrDefaultAsync(i => i.Id == payload.ArticleId); // [cite: 56]
+                                            .Include(c => c.Sections)
+                                            .FirstOrDefaultAsync(i => i.Id == payload.ArticleId);
                 if (article == null)
                 {
-                    return new JsonResult(new { success = false, message = "Article not Found" }); // [cite: 58]
+                    return new JsonResult(new { success = false, message = "Article not Found" });
                 }
 
                 // 1. Aggiornamento Titolo Principale dell'Articolo
                 if (!string.IsNullOrWhiteSpace(payload.Title))
                 {
-                    article.Title = payload.Title.Trim(); // [cite: 58]
+                    article.Title = payload.Title.Trim();
+
+                    // Se l'articolo è ancora in bozza, aggiorniamo lo slug SEO in automatico
+                    if (article.PublishState == PublishState.Bozza)
+                    {
+                        article.Slug = GenerateSlug(article.Title);
+                    }
                 }
                 else if (string.IsNullOrWhiteSpace(article.Title))
                 {
-                    article.Title = "Nuovo articolo"; // [cite: 59]
+                    article.Title = "Nuovo articolo";
                 }
 
+                // Se non ci sono sezioni nel payload, aggiorniamo solo il timestamp del contenuto ed usciamo
                 if (!payload.Sections.Any())
                 {
-                    article.UpdatedAt = DateTime.UtcNow; // [cite: 60]
-                    await _context.SaveChangesAsync(); // [cite: 60]
-                    return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt, message = "Solo timestamp aggiornato." }); // [cite: 60]
+                    article.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                    return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt, message = "Solo timestamp aggiornato." });
                 }
 
                 // 2. Rilevazione ed Eliminazione Sezioni Rimosse (Sincronizzazione)
                 var incomingIds = payload.Sections
-                                    .Where(i => i.Id != null && !i.Id.StartsWith("temp-"))
-                                    .Select(s => int.Parse(s.Id))
-                                    .ToList(); // [cite: 61]
+                                        .Where(i => i.Id != null && !i.Id.StartsWith("temp-"))
+                                        .Select(s => int.Parse(s.Id))
+                                        .ToList();
 
                 var sectionsToRemove = article.Sections
-                                            .Where(i => !incomingIds.Contains(i.Id))
-                                            .ToList(); // [cite: 62]
+                                                    .Where(i => !incomingIds.Contains(i.Id))
+                                                    .ToList();
                 if (sectionsToRemove.Any())
                 {
-                    _context.Sections.RemoveRange(sectionsToRemove); // [cite: 62]
+                    _context.Sections.RemoveRange(sectionsToRemove);
                 }
 
-                // 3. Loop di Aggiornamento / Inserimento dei blocchi Sezione
+                // 3. Loop di Aggiornamento / Inserimento dei blocchi Sezione storici
                 foreach (var sDto in payload.Sections)
                 {
-                    // Ignoriamo i blocchi temporanei in questa fase (vengono salvati dal salvataggio singolo OnPostSaveSectionAsync)
-                    if (sDto.Id == null || sDto.Id.StartsWith("temp-")) continue; // [cite: 63]
+                    // Ignoriamo i blocchi temporanei (gestiti dal salvataggio singolo OnPostSaveSectionAsync)
+                    if (sDto.Id == null || sDto.Id.StartsWith("temp-")) continue;
 
-                    if (int.TryParse(sDto.Id, out int realId)) // [cite: 64]
+                    if (int.TryParse(sDto.Id, out int realId))
                     {
-                        var existingSection = article.Sections.FirstOrDefault(s => s.Id == realId); // [cite: 64]
+                        var existingSection = article.Sections.FirstOrDefault(s => s.Id == realId);
                         if (existingSection != null)
                         {
-                            // Pulizia finale lato server contro caratteri invisibili (es: Zero-Width Space \u200B)
-                            string cleanContent = sDto.Content?.Replace("\u200B", "").Trim() ?? ""; // [cite: 65]
+                            // Pulizia caratteri invisibili
+                            string cleanContent = sDto.Content?.Replace("\u200B", "").Trim() ?? "";
 
-                            // Ottimizzazione: Assegniamo i dati puliti
-                            existingSection.HtmlText = cleanContent; // 
-                            existingSection.Title = !string.IsNullOrWhiteSpace(sDto.Title) ? sDto.Title.Trim() : "Senza Titolo"; // 
-                            existingSection.Order = sDto.Order; // 
+                            existingSection.HtmlText = cleanContent;
+                            existingSection.Title = !string.IsNullOrWhiteSpace(sDto.Title) ? sDto.Title.Trim() : "Senza Titolo";
+                            existingSection.Order = sDto.Order;
                         }
                     }
                 }
 
-                article.UpdatedAt = DateTime.UtcNow; // 
-                await _context.SaveChangesAsync(); // 
+                // ==========================================================================
+                // 4. ESTRAZIONE INTELLIGENTE DELLA DESCRIZIONE (LATO SERVER)
+                // ==========================================================================
+                // Cerchiamo la prima sezione utile in ordine di visualizzazione che contenga testo
+                var firstTextSection = article.Sections
+                                              .OrderBy(s => s.Order)
+                                              .FirstOrDefault(s => !string.IsNullOrWhiteSpace(s.HtmlText));
 
-                Debug.WriteLine("=== [DEBUG VANITAS] SALVATAGGIO GLOBALE COMPLETATO CON SUCCESSO ==="); // [cite: 67]
-                return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt }); // [cite: 67]
+                if (firstTextSection != null)
+                {
+                    // Rimuoviamo i tag HTML e normalizziamo gli spazi bianchi/accapo
+                    string plainText = System.Text.RegularExpressions.Regex.Replace(firstTextSection.HtmlText, "<.*?>", string.Empty);
+                    plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\s+", " ").Trim();
+
+                    int maxChars = 160;
+
+                    if (plainText.Length > maxChars)
+                    {
+                        // Taglio preliminare a 160 caratteri
+                        string truncated = plainText.Substring(0, maxChars);
+
+                        // Cerchiamo l'ultimo spazio utile per non troncare una parola a metà
+                        int lastSpace = truncated.LastIndexOf(' ');
+                        if (lastSpace > 0)
+                        {
+                            article.Description = truncated.Substring(0, lastSpace) + "...";
+                        }
+                        else
+                        {
+                            article.Description = truncated + "...";
+                        }
+                    }
+                    else
+                    {
+                        article.Description = plainText;
+                    }
+
+                    Debug.WriteLine($"[DEBUG VANITAS] Descrizione calcolata: {article.Description}");
+                }
+                else
+                {
+                    // Fallback se l'articolo non ha ancora testo inserito nelle sezioni
+                    article.Description = "Fragments of an untold chronicle. Read the full entry to uncover its structure.";
+                }
+
+                // 5. Aggiornamento Timestamp finali e persistenza sul Database
+                article.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                Debug.WriteLine("=== [DEBUG VANITAS] SALVATAGGIO GLOBALE COMPLETATO CON SUCCESSO ===");
+                return new JsonResult(new { success = true, lastUpdate = article.UpdatedAt });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CRASH GLOBAL SAVE]: {ex.Message}"); // [cite: 68]
-                return new JsonResult(new { success = false, error = "Crash globale", details = ex.Message }); // [cite: 68]
+                Debug.WriteLine($"[CRASH GLOBAL SAVE]: {ex.Message}");
+                return new JsonResult(new { success = false, error = "Crash globale", details = ex.Message });
             }
         }
 
@@ -993,6 +1046,26 @@ namespace VanitasStudios_WebApp.Pages
                 // Qui puoi loggare l'errore specifico (es. ex.Message)
                 return new JsonResult(new { success = false, message = "Errore critico durante l'aggiornamento dello stato." });
             }
+        }
+
+        private string GenerateSlug(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return "untitled";
+
+            // 1. Tutto in minuscolo
+            string str = title.ToLowerInvariant().Trim();
+
+            // 2. Sostituisci gli spazi e i trattini bassi con un trattino singolo
+            str = System.Text.RegularExpressions.Regex.Replace(str, @"[\s_]+", "-");
+
+            // 3. Rimuovi tutti i caratteri che non sono lettere, numeri o trattini
+            str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\-]", "");
+
+            // 4. Rimuovi trattini multipli consecutivi (es. "test---articolo" diventa "test-articolo")
+            str = System.Text.RegularExpressions.Regex.Replace(str, @"-+", "-");
+
+            // 5. Taglio di sicurezza finale sui bordi
+            return str.Trim('-');
         }
 
     }

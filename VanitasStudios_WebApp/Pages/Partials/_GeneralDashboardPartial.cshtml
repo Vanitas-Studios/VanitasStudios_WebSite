@@ -3,7 +3,7 @@
 *@
 @{
 }
-@model VanitasStudios_WebApp.Models.DashboardViewModel
+@model VanitasStudios_WebApp.Pages.DashboardViewModel
 
 <div class="animate-fade-in">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -100,7 +100,7 @@
                                 <div class="text-truncate me-2">
                                     <div class="fw-bold text-truncate small">@article.Title</div>
                                     <span class="text-muted" style="font-size: 0.75rem;">
-                                        Aggiornato il @(article.UpdatedAt?.ToString("dd/MM/yyyy") ?? "N/D")
+                                        Aggiornato il @article.UpdatedAt.ToString("dd/MM/yyyy")
                                     </span>
                                 </div>
                                 <span class="badge bg-secondary">@article.CumulativeWeight pts</span>
