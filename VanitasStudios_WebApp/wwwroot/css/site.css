@@ -404,6 +404,9 @@ a {
             color: #ff4d5a !important;
         }
 
+
+
+
 /* Rimozione stili nativi distruttivi sul bottone di logout */
 .backend-logout-btn {
     border: none !important;
@@ -446,4 +449,281 @@ a {
     padding: 1.5rem;
     border-radius: 6px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+/* ==========================================================================
+   VANITAS STUDIOS - CORE AUTHENTICATION & IDENTITY LAYOUTS
+   ========================================================================== */
+
+/* --- 1. SCHERMATE DI AUTENTICAZIONE (Login, Register, Logout) --- */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    padding: 6rem 1rem 3rem 1rem; /* Aumentato il padding-top a 6rem per spingere il box più in basso */
+}
+
+.auth-box {
+    background: rgba(20, 20, 24, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    max-width: 460px;
+    padding: 3rem 2.5rem;
+    border-radius: 4px;
+}
+
+.auth-brand {
+    font-family: var(--font-header, monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent-gold, #c5a880);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.auth-title {
+    font-family: var(--font-header, monospace);
+    font-size: 1.75rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+}
+
+/* --- 2. CAMPI DI INPUT CUSTOM & ETICHETTE --- */
+.input-group-custom {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label-custom {
+    font-family: var(--font-header, monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.form-control-custom {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+    .form-control-custom:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-color: var(--accent-gold, #c5a880) !important;
+        box-shadow: 0 0 12px rgba(197, 168, 128, 0.15) !important;
+    }
+
+    .form-control-custom::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+/* --- 3. PULSANTI, LINK E UTILITY --- */
+.btn-auth-submit {
+    background: var(--accent-gold, #c5a880);
+    border: 1px solid var(--accent-gold, #c5a880);
+    color: #141418 !important;
+    font-family: var(--font-header, monospace);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .btn-auth-submit:hover {
+        background: transparent;
+        color: var(--accent-gold, #c5a880) !important;
+        box-shadow: 0 0 20px rgba(197, 168, 128, 0.25);
+    }
+
+.auth-link-secondary {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    .auth-link-secondary:hover {
+        color: var(--accent-gold, #c5a880);
+    }
+
+.auth-link-muted {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.75rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    .auth-link-muted:hover {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+/* Checkbox personalizzato */
+.checkbox-custom {
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-check {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 2px !important;
+    width: 14px;
+    height: 14px;
+}
+
+    .custom-check:checked {
+        background-color: var(--accent-gold, #c5a880) !important;
+        border-color: var(--accent-gold, #c5a880) !important;
+    }
+
+.checkbox-text {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+}
+
+/* Messaggi di errore Identity scuri */
+.auth-error-summary {
+    background: rgba(220, 53, 69, 0.06);
+    border-left: 3px solid #ff4d5a;
+    padding: 0.75rem 1rem;
+    border-radius: 2px;
+}
+
+    .auth-error-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        color: #ff4d5a;
+        font-size: 0.75rem;
+    }
+
+/* --- 4. PANNELLO DI GESTIONE ACCOUNT (MANAGE AREA A DUE COLONNE) --- */
+.manage-account-wrapper {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 6rem auto 3rem auto; /* Aumentato il margine superiore a 6rem rispetto al menu */
+    padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .manage-account-wrapper {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin: 5rem auto 1.5rem auto; /* Regolato anche per i dispositivi mobili */
+    }
+}
+
+.manage-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+    padding-right: 2rem;
+}
+
+@media (max-width: 768px) {
+    .manage-sidebar {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        padding-right: 0;
+        padding-bottom: 1.5rem;
+    }
+}
+
+.sidebar-brand-ctx {
+    font-family: var(--font-header, monospace);
+    font-size: 0.65rem;
+    color: var(--accent-gold, #c5a880);
+    letter-spacing: 0.15em;
+    font-weight: 700;
+}
+
+.sidebar-ctx-title {
+    font-family: var(--font-header, monospace);
+    font-size: 1.25rem;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+/* Navigazione interna (_ManageNav) */
+.design-manage-nav .nav-link {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    font-size: 0.8rem !important;
+    padding: 0.6rem 1rem !important;
+    border-left: 2px solid transparent;
+    border-radius: 0 !important;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+    .design-manage-nav .nav-link:hover {
+        color: rgba(255, 255, 255, 0.8) !important;
+        padding-left: 1.25rem !important;
+    }
+
+    .design-manage-nav .nav-link.active {
+        color: #ffffff !important;
+        border-left-color: var(--accent-gold, #c5a880);
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.01) !important;
+    }
+
+/* Area dei Contenuti di Destra */
+.manage-content-core {
+    max-width: 680px;
+}
+
+.manage-core-title {
+    font-family: var(--font-header, monospace);
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+}
+
+.manage-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.header-line-left {
+    width: 40px;
+    height: 1px;
+    background: var(--accent-gold, #c5a880);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Colpisce solo il contenitore del Manage Account di Identity */
+main.flex-grow-1 > div:has(ul.design-manage-nav),
+main.flex-grow-1 > h1:has(+ div > hr + .row ul.design-manage-nav) {
+    margin-top: 7rem !important;
+}
+
+/* Soluzione alternativa più sicura basata sulla gerarchia HTML che hai ispezionato */
+main.flex-grow-1 > h1 + div > .row:has(.design-manage-nav) {
+    margin-top: 5rem !important;
 }

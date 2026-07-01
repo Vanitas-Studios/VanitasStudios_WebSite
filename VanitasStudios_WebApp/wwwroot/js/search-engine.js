@@ -1,5 +1,5 @@
-﻿let searchInput, autocompleteBox, suggestionsList, akinatorBox, akinatorLink, btnSearch, btnReset, netflixSection, algoSection, resultsGrid;
-let activeTagIds = [];
+﻿let searchInput, autocompleteBox, suggestionsList, akinatorBox, akinatorLink, btnSearch, btnReset, netflixSection, algoSection, resultsGrid, activeTagsContainer;
+let activeTags = [];
 
 function initMyEditor(config) {
     searchInput = document.getElementById(config.searchInput);
@@ -12,11 +12,68 @@ function initMyEditor(config) {
     netflixSection = document.getElementById(config.netflixSection);
     algoSection = document.getElementById(config.algoSection);
     resultsGrid = document.getElementById(config.resultsGrid);
+    activeTagsContainer = document.getElementById(config.activeTagsContainer);
 
     setupEventListeners();
+    setupTrackingListener();
 }
 
 function setupEventListeners() {
+
+    function setupEventListeners() {
+        // Controlli difensivi per evitare crash se la pagina non ha tutti gli elementi
+        if (searchInput) {
+            searchInput.addEventListener("input", async function () {
+                autocompleteFunc();
+            });
+
+            searchInput.addEventListener("keypress", function (e) {
+                if (e.key === "Enter") {
+                    executeAkinatorSearch();
+                }
+            });
+        } else {
+            console.warn("Search engine: 'searchInput' non trovato nella pagina.");
+        }
+
+        document.addEventListener("click", function (e) {
+            if (searchInput && autocompleteBox && !searchInput.contains(e.target) && !autocompleteBox.contains(e.target)) {
+                autocompleteBox.classList.remove("show");
+            }
+        });
+
+        if (btnSearch) {
+            btnSearch.addEventListener("click", executeAkinatorSearch);
+        } else {
+            console.warn("Search engine: 'btnSearch' non trovato nella pagina.");
+        }
+
+        if (akinatorLink) {
+            akinatorLink.addEventListener("click", function (e) {
+                e.preventDefault();
+                const tagId = parseInt(this.getAttribute("data-tag-id"));
+                const tagName = this.textContent.trim().replace("#", "");
+
+                if (tagId && !activeTags.some(t => t.id === tagId)) {
+                    activeTags.push({ id: tagId, name: tagName });
+                    if (searchInput) searchInput.value = "";
+                    renderActiveTagsAndSearch();
+                }
+            });
+        }
+
+        if (btnReset) {
+            btnReset.addEventListener("click", function () {
+                activeTags = [];
+                if (searchInput) searchInput.value = "";
+                if (activeTagsContainer) activeTagsContainer.innerHTML = "";
+                if (akinatorBox) akinatorBox.classList.add("d-none");
+                if (algoSection) algoSection.classList.add("d-none");
+                if (netflixSection) netflixSection.classList.remove("d-none");
+            });
+        }
+    }
+
     searchInput.addEventListener("input", async function () {
         autocompleteFunc();
     });
@@ -37,16 +94,19 @@ function setupEventListeners() {
     akinatorLink.addEventListener("click", function (e) {
         e.preventDefault();
         const tagId = parseInt(this.getAttribute("data-tag-id"));
-        if (tagId && !activeTagIds.includes(tagId)) {
-            activeTagIds.push(tagId);
-            searchInput.value = ""; // Svuota il testo libero per dare priorità al filtro selezionato
-            executeAkinatorSearch();
+        const tagName = this.textContent.trim().replace("#", ""); // Estrae il nome pulito
+
+        if (tagId && !activeTags.some(t => t.id === tagId)) {
+            activeTags.push({ id: tagId, name: tagName });
+            searchInput.value = "";
+            renderActiveTagsAndSearch();
         }
     });
 
     btnReset.addEventListener("click", function () {
-        activeTagIds = [];
+        activeTags = []; // Svuota i tag
         searchInput.value = "";
+        if (activeTagsContainer) activeTagsContainer.innerHTML = ""; // Svuota i badge visivi
         akinatorBox.classList.add("d-none");
         algoSection.classList.add("d-none");
         netflixSection.classList.remove("d-none");
@@ -87,6 +147,46 @@ async function commitToServer(handlerName, payload = null, method = 'GET') {
     }
 }
 
+// 🎯 NUOVA FUNZIONE: Ascoltatore centralizzato per incrementare il valore dei saggi cercati
+function setupTrackingListener() {
+    // Intercettiamo i clic su tutto il documento per catturare anche le card generate a runtime
+    document.addEventListener("click", async function (e) {
+        const trackableLink = e.target.closest(".blog-trackable-link");
+
+        if (trackableLink) {
+            const currentSearchValue = searchInput ? searchInput.value.trim() : "";
+
+            // 🎯 AGGIORNATO: Usiamo activeTags.length invece di activeTagIds.length
+            if (currentSearchValue !== "" || activeTags.length > 0) {
+                e.preventDefault(); // Congela momentaneamente lo spostamento di pagina
+
+                const contentId = trackableLink.getAttribute("data-content-id");
+                const destinationUrl = trackableLink.getAttribute("href");
+
+                // Prepariamo i dati strutturati per l'handler POST
+                const formData = new FormData();
+                formData.append("articleId", contentId);
+
+                // 🎯 AGGIORNATO: Estraiamo al volo gli ID degli oggetti dentro activeTags per fare il join
+                const tagIdsArray = activeTags.map(t => t.id);
+
+                // Se la ricerca è testuale invia il testo, altrimenti invia la nota sui tag attivi
+                formData.append("searchQuery", currentSearchValue !== "" ? currentSearchValue : `[Filtro Tag Attivi: ${tagIdsArray.join(',')}]`);
+
+                try {
+                    // Utilizziamo la tua funzione nativa commitToServer per la POST
+                    await commitToServer("RecordSearchSuccess", formData, 'POST');
+                } catch (err) {
+                    console.error("Errore durante il salvataggio delle metriche:", err);
+                } finally {
+                    // Reindirizza l'utente in ogni caso (anche se la chiamata fallisce)
+                    window.location.href = destinationUrl;
+                }
+            }
+        }
+    });
+}
+
 async function autocompleteFunc() {
     const term = searchInput.value.trim();
 
@@ -117,12 +217,13 @@ async function autocompleteFunc() {
                 item.innerHTML = `<span style="color: #bc9cff;">#</span>${name} <small class="text-muted ms-2">(${cat})</small>`;
 
                 item.addEventListener("click", function () {
-                    if (!activeTagIds.includes(id)) {
-                        activeTagIds.push(id);
+                    // Controlla se il tag è già stato inserito
+                    if (!activeTags.some(t => t.id === id)) {
+                        activeTags.push({ id: id, name: name });
+                        renderActiveTagsAndSearch(); // Aggiorna i badge visivi ed esegue la ricerca
                     }
                     searchInput.value = "";
                     autocompleteBox.classList.remove("show");
-                    executeAkinatorSearch();
                 });
 
                 suggestionsList.appendChild(item);
@@ -142,8 +243,9 @@ async function executeAkinatorSearch() {
 
     // 🎯 Costruiamo la query string completa con testo e TUTTI i tag accumulati
     let queryString = `&userText=${encodeURIComponent(userText)}`;
-    activeTagIds.forEach(id => {
-        queryString += `&selectedTagIds=${id}`;
+    // Mappiamo gli id dall'array di oggetti
+    activeTags.forEach(tag => {
+        queryString += `&selectedTagIds=${tag.id}`;
     });
 
     try {
@@ -158,6 +260,8 @@ async function executeAkinatorSearch() {
         if (!data.isFinalResult && data.nextTagIdSuggested) {
             akinatorLink.textContent = `#${data.nextQuestionText}`;
             akinatorLink.setAttribute("data-tag-id", data.nextTagIdSuggested);
+            // riga aggiunta per salvare il nome
+            akinatorLink.setAttribute("data-tag-name", data.nextQuestionText);
             akinatorBox.classList.remove("d-none");
         } else {
             akinatorBox.classList.add("d-none");
@@ -179,7 +283,6 @@ function renderResults(articles) {
     }
 
     articles.forEach(art => {
-        // FALLBACK DI SICUREZZA: Intercettiamo sia le risposte camelCase che PascalCase dal server
         const id = art.id || art.Id;
         const title = art.title || art.Title;
         const slug = art.slug || art.Slug || "articolo";
@@ -190,7 +293,7 @@ function renderResults(articles) {
         cardCol.className = "col";
         cardCol.innerHTML = `
             <div class="card bg-transparent border-secondary h-100">
-                <a href="/Content/${id}/${slug}" class="text-decoration-none text-white h-100 d-flex flex-column">
+                <a href="/Content/${id}/${slug}" class="text-decoration-none text-white h-100 d-flex flex-column blog-trackable-link" data-content-id="${id}">
                     <div class="card-img-wrapper" style="position: relative; overflow: hidden; min-height: 140px; background-color: #222;">
                         <img src="${coverImageUrl}" class="card-img-top" alt="${title}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
@@ -205,4 +308,41 @@ function renderResults(articles) {
         `;
         resultsGrid.appendChild(cardCol);
     });
+}
+
+function renderActiveTagsAndSearch() {
+    if (!activeTagsContainer) return;
+
+    activeTagsContainer.innerHTML = "";
+
+    activeTags.forEach(tag => {
+        // Crea il badge (stile chip scura con bordo viola)
+        const badge = document.createElement("span");
+        badge.className = "badge bg-dark border text-white d-inline-flex align-items-center gap-2 px-3 py-2";
+        badge.style.borderColor = "#bc9cff";
+        badge.style.borderRadius = "20px";
+        badge.style.fontSize = "0.85rem";
+
+        badge.innerHTML = `
+            <span style="color: #bc9cff;">#</span>${tag.name}
+            <button type="button" class="btn-close btn-close-white" style="font-size: 0.65rem; float:none;" aria-label="Rimuovi"></button>
+        `;
+
+        // Gestione della rimozione del singolo tag al click sulla "X"
+        badge.querySelector(".btn-close").addEventListener("click", function () {
+            activeTags = activeTags.filter(t => t.id !== tag.id);
+
+            // Se non ci sono più tag e l'input è vuoto, resettiamo la vista come se fosse premuto Reset
+            if (activeTags.length === 0 && searchInput.value.trim() === "") {
+                btnReset.click();
+            } else {
+                renderActiveTagsAndSearch(); // Ridisegna ed esegue la nuova ricerca con i tag rimasti
+            }
+        });
+
+        activeTagsContainer.appendChild(badge);
+    });
+
+    // Lancia automaticamente la ricerca aggiornata con i filtri rimasti
+    executeAkinatorSearch();
 }

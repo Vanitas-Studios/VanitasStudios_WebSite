@@ -33,23 +33,23 @@
                         <button class="btn btn-search-execute" type="button" id="btn-execute-search">Search</button>
                     </div>
 
-                    <div id="search-autocomplete-box" class="dropdown-menu w-100 shadow mt-1 p-2 bg-dark border-secondary d-none">
+                    <div id="active-tags-container" class="d-flex flex-wrap gap-2 mt-2"></div>
+
+                    <div id="akinator-suggestion-box" class="mt-2 d-none">
+                        <small class="text-muted">Forse cercavi: </small>
+                        <a href="#" id="akinator-next-tag-link" class="badge bg-dark text-decoration-none p-2" style="color: #bc9cff !important; border: 1px solid #bc9cff;">#Tag</a>
+                    </div>
+
+                    <div id="search-autocomplete-box" class="dropdown-menu w-100 shadow mt-1 p-2 bg-dark border-secondary">
                         <h6 class="dropdown-header text-uppercase text-muted p-1" style="font-size: 0.75rem;">Tag Suggeriti</h6>
                         <div id="autocomplete-suggestions-list"></div>
                     </div>
 
-                    <div id="akinator-suggestion-box" class="mt-2 px-1 d-none">
-                        <span class="text-muted small">Forse cercavi contenuti legati a:</span>
-                        <a href="#" id="akinator-next-tag-link" class="text-decoration-none ms-1 fw-bold akinator-link">
-                            #NomeTag
-                        </a>
-                    </div>
                 </div>
             </div>
 
             <hr class="border-secondary my-4" />
 
-            <!-- Vista Esplorazione (Stile Netflix) -->
             <div id="netflix-explorer-section">
 
                 <div class="category-row mb-5">
@@ -58,7 +58,7 @@
                         @foreach (var content in Model.LatestContents)
                         {
                             <div class="card blog-card flex-shrink-0">
-                                <a asp-page="/Content" asp-route-id="@content.Id" asp-route-slug="@content.Slug" class="text-decoration-none text-white h-100 d-flex flex-column">
+                                <a asp-page="/Content" asp-route-id="@content.Id" asp-route-slug="@content.Slug" class="text-decoration-none text-white h-100 d-flex flex-column blog-trackable-link" data-content-id="@content.Id">
                                     <div class="card-img-wrapper">
                                         @if (!string.IsNullOrEmpty(content.CoverImageUrl))
                                         {
@@ -90,7 +90,7 @@
                             @foreach (var content in categoryGroup.Value)
                             {
                                 <div class="card blog-card flex-shrink-0">
-                                    <a asp-page="/Content" asp-route-id="@content.Id" asp-route-slug="@content.Slug" class="text-decoration-none text-white h-100 d-flex flex-column">
+                                    <a asp-page="/Content" asp-route-id="@content.Id" asp-route-slug="@content.Slug" class="text-decoration-none text-white h-100 d-flex flex-column blog-trackable-link" data-content-id="@content.Id">
                                         <div class="card-img-wrapper">
                                             @if (!string.IsNullOrEmpty(content.CoverImageUrl))
                                             {
@@ -113,7 +113,6 @@
                 }
             </div>
 
-            <!-- Vista Risultati Algoritmo (Griglia Dinamica) -->
             <div id="algo-results-section" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="text-white m-0 section-results-title">Dissected Results</h4>
@@ -121,7 +120,6 @@
                 </div>
 
                 <div id="results-grid" class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-                    <!-- Popolato dinamicamente da search-engine.js -->
                 </div>
             </div>
 
@@ -133,7 +131,6 @@
     <script src="~/js/search-engine.js" asp-append-version="true"></script>
 
     <script>
-
         document.addEventListener("DOMContentLoaded", function() {
             initMyEditor({
                 searchInput : "main-search-input",
@@ -146,7 +143,8 @@
 
                 netflixSection : "netflix-explorer-section",
                 algoSection : "algo-results-section",
-                resultsGrid : "results-grid"
+                resultsGrid : "results-grid",
+                activeTagsContainer : "active-tags-container"
             });
         });
     </script>
