@@ -1,0 +1,194 @@
+﻿/* --- LAYOUT GENERALE E STRUTTURA DI DISTACCO --- */
+.main-content-offset {
+    padding-top: 80px; /* Altezza di sicurezza per staccare il contenuto sotto il menu fisso */
+    min-height: 100vh;
+    background-color: #0d0d0f; /* Sfondo scuro coerente con il design zen/dark fantasy */
+    color: #e2e2e6;
+}
+
+/* --- HERO BLOG SECTION --- */
+.hero-blog {
+    padding: 3.5rem 1.5rem;
+    background: linear-gradient(180deg, rgba(24, 24, 28, 0.6) 0%, rgba(13, 13, 15, 1) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.blog-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.hero-blog-title {
+    font-family: 'Cinzel', 'Playfair Display', serif; /* Font evocativo se disponibile, altrimenti fallback */
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.hero-blog-desc {
+    font-size: 1.1rem;
+    color: #a1a1aa;
+    max-width: 500px;
+    line-height: 1.6;
+}
+
+.blog-visual {
+    max-width: 280px;
+}
+
+.doc-image {
+    width: 100%;
+    height: auto;
+    filter: grayscale(40%) contrast(110%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+}
+
+/* --- ARCHIVE SECTION --- */
+.blog-archive {
+    padding: 3rem 1.5rem;
+}
+
+.archive-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-archive {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.archive-section-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.archive-search {
+    width: 100%;
+    max-width: 400px;
+}
+
+.btn-search-execute {
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #e2e2e6;
+    transition: all 0.3s ease;
+}
+
+    .btn-search-execute:hover {
+        background-color: #ffffff;
+        color: #0d0d0f;
+        border-color: #ffffff;
+    }
+
+.akinator-link {
+    color: #bc9cff;
+    transition: color 0.2s ease;
+}
+
+    .akinator-link:hover {
+        color: #dac7ff;
+    }
+
+/* --- SCROLL ORIZZONTALE FLUIDO (STILE NETFLIX) --- */
+.category-cards-wrapper {
+    gap: 1.5rem;
+    scrollbar-width: none; /* Nasconde la scrollbar su Firefox */
+    -ms-overflow-style: none; /* Nasconde la scrollbar su IE/Edge */
+}
+
+    .category-cards-wrapper::-webkit-scrollbar {
+        display: none; /* Nasconde la scrollbar su Chrome, Safari e Opera */
+    }
+
+/* --- VANITAS CARDS STYLE --- */
+.blog-card {
+    width: 18rem;
+    background-color: #141418 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .blog-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(188, 156, 255, 0.4) !important; /* Colore d'accento violaceo/soft dark */
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+.card-img-wrapper {
+    width: 100%;
+    height: 12rem;
+    overflow: hidden;
+    background-color: #1a1a22;
+}
+
+.blog-card .card-img-top {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.blog-card:hover .card-img-top {
+    transform: scale(1.04);
+}
+
+.blog-card .card-body {
+    padding: 1.25rem;
+    background-color: #141418;
+}
+
+.blog-card .card-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+
+.blog-card .card-text {
+    color: #a1a1aa !important;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Taglia il testo alla seconda riga per omogeneità */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-date {
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .blog-container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-blog-title {
+        font-size: 2.2rem;
+    }
+
+    .header-archive {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .archive-search {
+        max-width: 100%;
+    }
+}

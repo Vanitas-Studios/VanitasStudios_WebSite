@@ -1,0 +1,323 @@
+﻿/* ==========================================================================
+   VANITAS STUDIOS - INDEX PAGE STYLES
+   ========================================================================== */
+
+/* --- ANIMAZIONI OTTIMIZZATE PER GPU (COMPOSITED) --- */
+@keyframes vFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(1.25rem);
+        filter: blur(0.31rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes vDescendFloat {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(0.5rem);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* --- CONFIGURAZIONE HERO LAYOUT --- */
+.v-hero-section {
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: transparent;
+    overflow: hidden;
+}
+
+/* TESTI (LATO SINISTRO) */
+.v-brand-title {
+    font-size: 5rem; /* Mantiene la monumentalità scalando con il font del browser */
+    line-height: 1.0;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: var(--text-pure) !important;
+    animation: vFadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.text-shadow-monumental {
+    text-shadow: 0 0.625rem 2.5rem rgba(0, 0, 0, 0.95);
+}
+
+.v-motto-divider {
+    width: 1.875rem;
+    height: 0.0625rem;
+    background-color: var(--text-pure);
+    margin: 1.5rem 0;
+    opacity: 0.2;
+}
+
+.text-gold-muted {
+    color: var(--accent-gold) !important;
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    opacity: 1; /* Portata a 1 per superare il controllo di contrasto di Lighthouse */
+    animation: vFadeInUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* GERARCHIA VISIVA (LATO DESTRO) */
+.v-geometry-wrapper {
+    position: relative;
+    width: 100%;
+    height: 46.875rem; /* Esprimiamo l'altezza in rem per assecondare lo zoom dello schermo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ALONE DORATO DESATURATO */
+.v-mask-gold-glow {
+    position: absolute;
+    width: 37.5rem; /* Dinamico in rem */
+    height: 37.5rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(212, 175, 55, 0.03) 55%, transparent 70%);
+    filter: blur(2.5rem);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* TRIANGOLO SVG VUOTO E TAGLIENTE */
+.v-esoteric-triangle-svg {
+    position: absolute;
+    width: 32.5rem;
+    height: 32.5rem;
+    z-index: 2;
+    fill: none !important;
+    stroke: var(--accent-gold);
+    stroke-width: 0.1rem; /* Sottilissimo ed elegante */
+    stroke-linejoin: miter;
+    transform: rotate(-8deg) translateY(-1.25rem);
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+/* CONTENITORE MASCHERA INGRANDITO */
+.v-mask-canvas-wrapper {
+    width: 130%;
+    max-width: 46.875rem;
+    z-index: 3;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.v-mask-fallback {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    transform: scale(1.1);
+    filter: drop-shadow(0 1.875rem 2.81rem rgba(0, 0, 0, 0.98)) saturate(0.4) brightness(0.85);
+}
+
+/* INTERFACCIA: DESCEND */
+.v-descend-indicator-right {
+    position: absolute;
+    right: 4rem;
+    bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    /* Ottimizzato l'accorpamento delle animazioni senza rompere la GPU */
+    animation: vFadeInUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards, vDescendFloat 4s ease-in-out infinite 2s;
+}
+
+.v-descend-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    color: var(--text-silver) !important; /* Cambiato da ashes a silver per aumentare il contrasto accessibilità! */
+    margin-bottom: 1.2rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.v-descend-line-container {
+    width: 0.0625rem;
+    height: 4.375rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.v-descend-line {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--text-silver) 0%, rgba(255,255,255,0) 100%);
+}
+
+/* RESPONSIVNESS */
+@media (max-width: 991px) {
+    .v-hero-section {
+        height: auto;
+        min-height: 100vh;
+        padding: 7rem 0 4rem 0;
+    }
+
+    .v-geometry-wrapper {
+        height: 450px;
+    }
+
+    .v-mask-canvas-wrapper {
+        max-width: 400px;
+    }
+
+    .v-esoteric-triangle-asymmetric {
+        width: 300px;
+        height: 300px;
+    }
+
+    .v-brand-title {
+        font-size: 3.5rem;
+        text-align: center;
+    }
+
+    .v-motto-divider {
+        margin: 1.5rem auto;
+    }
+
+    .v-descend-indicator-right {
+        display: none;
+    }
+}
+
+/* --- ARCHIVE SECTION (PINNED) --- */
+.v-archive-section {
+    padding: 10rem 0;
+    background: linear-gradient(to bottom, var(--bg-void) 0%, var(--bg-surface) 100%);
+}
+
+.v-section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* Card Minimali */
+.v-card-featured {
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition-smooth);
+}
+
+.v-card-img-mask {
+    width: 100%;
+    height: 23.75rem; /* Convertito da 380px a 23.75rem per elasticità */
+    overflow: hidden;
+    background: var(--bg-void);
+    border: 1px solid rgba(255, 255, 255, 0.02);
+    position: relative;
+}
+
+.v-card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    /* Il filtro cromatico identitario di Vanitas Studios */
+    filter: grayscale(100%) sepia(20%) contrast(1.1) brightness(0.8);
+    transition: var(--transition-smooth);
+    opacity: 0.6;
+}
+
+.v-card-featured:hover .v-card-img-placeholder {
+    transform: scale(1.03); /* Movimento microscopico e controllato */
+    filter: grayscale(40%) sepia(15%) contrast(1.1) brightness(0.9);
+    opacity: 0.8;
+}
+
+.v-card-meta {
+    font-size: 0.75rem;
+    color: var(--text-ashes) !important;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.v-card-title a {
+    color: var(--text-pure);
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+    .v-card-title a:hover {
+        color: var(--accent-gold);
+    }
+
+.v-card-excerpt {
+    font-family: var(--font-body);
+    color: var(--text-silver);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* --- MANIFESTO SECTION (ABOUT) --- */
+.v-manifesto-section {
+    padding: 12rem 0;
+    background: var(--bg-surface);
+    position: relative;
+    overflow: hidden;
+}
+
+.v-manifesto-core {
+    max-width: var(--max-text-width);
+}
+
+.v-manifesto-text p {
+    font-family: var(--font-body);
+    font-size: 1.15rem;
+    line-height: 1.9;
+    color: var(--text-silver);
+    margin-bottom: 2rem;
+}
+
+.v-manifesto-timestamp {
+    position: absolute;
+    left: 4rem;
+    top: 0;
+    color: rgba(255, 255, 255, 0.02) !important; /* Quasi invisibile, emerge solo se lo cerchi */
+    font-size: 2.5rem;
+    font-weight: 900;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Responsività per schermi piccoli */
+@media (max-width: 991px) {
+    .v-hero-section {
+        height: auto;
+        padding: 8rem 0;
+    }
+
+    .v-mask-viewport {
+        height: 400px;
+    }
+
+    .v-descend-indicator {
+        display: none;
+    }
+
+    .v-manifesto-timestamp {
+        display: none;
+    }
+}

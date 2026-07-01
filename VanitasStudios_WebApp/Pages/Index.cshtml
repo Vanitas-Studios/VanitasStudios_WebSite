@@ -1,67 +1,161 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<section class="hero">
-    <div class="hero-container">
-        <div class="hero-text">
-            <h5 class="text-white">We obeserve what remains</h5>
-        </div>
-        <div class="hero-image-wrapper">
-            <img src="/img/StatueVS.png" class="img-fluid" alt="Vanitas Statue, symbol of decay " />
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/index.css" asp-append-version="true" />
+}
+
+<!-- SECTION 1: THE THRESHOLD (HERO) -->
+<section class="v-hero-section">
+    <div class="container-fluid h-100 position-relative px-md-5">
+        <div class="row h-100 align-items-center">
+
+            <!-- LATO SINISTRO: Brand e il motto colorato -->
+            <div class="col-lg-5 offset-lg-1 v-hero-core text-center text-lg-start order-1 ps-lg-5">
+                <h1 class="v-brand-title text-shadow-monumental">
+                    VANITAS<br>STUDIOS
+                </h1>
+                <div class="v-motto-divider"></div>
+                <p class="v-single-motto text-monumental text-gold-muted">We observe what remains</p>
+            </div>
+
+            <!-- LATO DESTRO: Il Monolito (Maschera Dorata Gigante + Triangolo Deformato) -->
+            <div class="col-lg-6 v-mask-viewport order-2">
+                <div class="v-geometry-wrapper">
+                    <!-- L'alone/bagliore Bianco potenziato di sfondo -->
+                    <div class="v-mask-gold-glow"></div>
+
+                    <!-- Il Triangolo Vuoto, Deformato, Solido e Ruotato -->
+                    <svg class="v-esoteric-triangle-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <!-- Un tracciato chiuso a tre punti (X Y). Puoi modificare i numeri per deformarlo ancora di più -->
+                        <polygon points="52,5 95,85 8,92" />
+                    </svg>
+
+                    <!-- Contenitore della Maschera (Ingrandito per dominare la scena) -->
+                    <div id="mask-3d-container" class="v-mask-canvas-wrapper">
+                        <!-- Forniamo le dimensioni native del file (es. 800x800 o quelle reali del tuo PNG) per blindare le performance -->
+                        <img src="~/img/mask-monolith.png"
+                             id="v-static-mask"
+                             class="v-mask-fallback"
+                             alt="Vanitas Mask Monolith"
+                             width="800"
+                             height="800" />
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
-    <div class="side-indicator">
-        <span class="side-text">Descend</span>
-        <div class="side-line"></div>
+
+    <!-- BORDO DESTRO ESTREMO: La CTA Descend Animata -->
+    <div class="v-descend-indicator-right">
+        <span class="v-descend-text text-monumental">Descend</span>
+        <div class="v-descend-line-container">
+            <div class="v-descend-line"></div>
+        </div>
     </div>
 </section>
 
-<section class="mission">
-    <div class="mission-container">
-        <div class="mission-title">
-            <h1>Vanitas Studios</h1>
-            <p>project</p>
+<!-- SECTION 2: THE ARCHIVE (PINNED CONTENTS) -->
+<section class="v-archive-section">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12">
+                <span class="text-monumental text-gold">01 // Pinned Fragments</span>
+                <h2 class="v-section-title mt-2">Selected Chronicles</h2>
+            </div>
         </div>
-        <div class="mission-projects">
-            <div class="project-content">
-                <h5>Game documentation</h5>
-                <p>
-                    Technical and conceptual documentation of Vanitas Studios' independent projects. Development chronicles, design documents, and code analysis. The structure behind the aesthetics.
-                </p>
-                <a class="btn mission-btn text-uppercase" asp-page="/GameDoc">Examine Archives</a>
-            </div>
-            <div class="project-content">
-                <h5>Articles</h5>
-                <p>
-                    Critical observations and aesthetic dissections of the digital medium. Analytical essays on narrative fragments, atmospheric ruins, and the philosophy of play. Observing what others overlook.
-                </p>
-                <a class="btn mission-btn text-uppercase" asp-page="/Blog">View Observations</a>
-            </div>
+
+        <!-- Griglia Asimmetrica Dinamica mappata sul DB reale -->
+        <div class="row g-5">
+            @{
+                int index = 0;
+            }
+            @foreach (var article in Model.PinnedArticles)
+            {
+                bool isEven = index % 2 != 0;
+
+                <!-- Alternanza asimmetrica delle colonne -->
+                <div class="col-lg-@(isEven ? "5 pt-lg-5" : "7")">
+                    <article class="v-card-featured @(isEven ? "mt-lg-5" : "")">
+                        <div class="v-card-img-mask">
+                            <div class="v-card-img-placeholder"
+                                 style="background-image: url('@(string.IsNullOrEmpty(article.CoverImageUrl) ? "/img/sample-monolith.jpg" : article.CoverImageUrl)');">
+                            </div>
+                        </div>
+                        <div class="v-card-body mt-4">
+                            <span class="v-card-meta text-monumental">
+                                Chronicle // @article.CreatedAt.ToString("MMMM yyyy")
+                            </span>
+
+                            <h3 class="v-card-title my-2">
+                                <a asp-page="/Content" asp-route-id="@article.Id" asp-route-slug="@article.Slug">@article.Title</a>
+                            </h3>
+
+                            <p class="v-card-excerpt">
+                                @if (!string.IsNullOrEmpty(article.Description))
+                                {
+                                    @article.Description
+                                }
+                                else
+                                {
+                                    // Otteniamo il testo della prima sezione (se presente) come ripiego dinamico
+                                    var firstSectionBody = article.Sections?.OrderBy(s => s.Id).FirstOrDefault()?.HtmlText;
+
+                                    if (!string.IsNullOrEmpty(firstSectionBody))
+                                    {
+                                        var plainText = System.Text.RegularExpressions.Regex.Replace(firstSectionBody, "<.*?>", string.Empty);
+                                        var length = Math.Min(plainText.Length, 150);
+
+                                        <text>@plainText.Substring(0, length)...</text>
+                                    }
+                                    else
+                                    {
+                                        <text>Fragments of an untold chronicle. Read the full entry to uncover its structure.</text>
+                                    }
+                                }
+                            </p>
+                        </div>
+                    </article>
+                </div>
+
+                index++;
+            }
         </div>
     </div>
 </section>
 
-<section class="about">
-    <div class="about-container">
-        <div class="about-body">
-            <h1>The Vision</h1>
-            <p>
-                Vanitas Studios dwells within the shadows, stirring the heavy veil of darkness for those who wander through it. We read what has never been written.<br />
+<!-- SECTION 3: THE MANIFESTO (ABOUT) -->
+<section class="v-manifesto-section">
+    <div class="container">
+        <div class="row justify-content-center position-relative">
 
-                Every environment conceals a story—an unyielding truth. It lives in the silence of a weathered wall, a chair collapsed upon the floor, the dust suspended in the air. Silence offers what words cannot; it grants the player space to metabolize what has passed, to truly grasp the narrative.<br />
-
-                We study and apply the design of silence in our works. We craft stories without moral boundaries, reflecting only our inherent nature. There is no perfection—only the raw beauty of authenticity.<br />
-
-                Vanitas Studios: observing time through the lens of matter.
-            </p>
-        </div>
-        <div class="about-visual">
-            <div class="square">
-                <p>02/09/2025</p>
+            <!-- Il micro-dettaglio temporale che avevi inserito -->
+            <div class="v-manifesto-timestamp text-monumental">
+                Index Ref: 02/09/2025
             </div>
+
+            <div class="col-lg-8 v-manifesto-core">
+                <span class="text-monumental text-gold d-block mb-3">02 // The Vision</span>
+                <h2 class="v-section-title mb-4">We read what has never been written.</h2>
+
+                <div class="v-manifesto-text">
+                    <p>
+                        Vanitas Studios dwells within the shadows, stirring the heavy veil of darkness for those who wander through it.
+                    </p>
+                    <p>
+                        Every environment conceals a story—an unyielding truth. It lives in the silence of a weathered wall, a chair collapsed upon the floor, the dust suspended in the air. Silence offers what words cannot; it grants the player space to metabolize what has passed, to truly grasp the narrative.
+                    </p>
+                    <p>
+                        We study and apply the design of silence in our works. We craft stories without moral boundaries, reflecting only our inherent nature. There is no perfection—only the raw beauty of authenticity.
+                    </p>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>

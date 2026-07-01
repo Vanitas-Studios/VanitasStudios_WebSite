@@ -1,0 +1,153 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model VanitasStudios_WebApp.Pages.ArticlesManagementViewModel
+@using VanitasStudios_WebApp.Models
+@using System.Text.Encodings.Web
+
+<div class="animate-fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0">Gestione Contenuti</h2>
+            <p class="text-muted small m-0">Modifica, pubblica o rimuovi gli articoli all'interno del database.</p>
+        </div>
+        <a asp-page="/Admin/Editor" class="btn btn-dark btn-sm px-3">
+            <i class="bi bi-plus-lg me-1"></i> Nuovo Articolo
+        </a>
+    </div>
+
+    <div class="card border-0 bg-light p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle m-0">
+                <thead>
+                    <tr class="text-muted small text-uppercase font-monospace border-bottom">
+                        <th style="width: 35%;">Titolo</th>
+                        <th style="width: 15%;">Categoria</th>
+                        <th style="width: 12%;">Stato</th>
+                        <th style="width: 10%;" class="text-center">Pinned</th> <th style="width: 13%;">Ultima Modifica</th>
+                        <th style="width: 15%;" class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Articles.Any())
+                    {
+                        foreach (var article in Model.Articles)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 320px;">
+                                        @article.Title
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <span class="badge bg-dark-subtle text-dark x-small px-1.5 py-0.5" style="font-size: 0.7rem;">
+                                            <i class="bi bi-person-fill me-1"></i>@article.AuthorName
+                                        </span>
+                                        <span class="text-muted font-monospace" style="font-size: 0.7rem;">ID: #@article.Id</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (article.Category == "Senza Tag")
+                                    {
+                                        <span class="badge bg-light text-muted border font-monospace">@article.Category</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary opacity-75 font-monospace">@article.Category</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (article.EliminatedAt != null)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1">Cestinato</span>
+                                    }
+                                    else if (article.PublishState == PublishState.Pubblico)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1">Online</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1">Bozza</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (article.EliminatedAt != null)
+                                    {
+                                        <button type="button" class="btn btn-link text-muted p-0 opacity-25" disabled title="Impossibile pinnare un articolo cestinato">
+                                            <i class="bi bi-pin-angle fs-5"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" 
+                                                id="pin-btn-@article.Id"
+                                                class="btn btn-link p-0 dynamic-pin-toggle @(article.IsPinned ? "text-warning" : "text-secondary opacity-50")" 
+                                                title="@(article.IsPinned ? "Rimuovi dalla prima pagina" : "Metti in evidenza in prima pagina")"
+                                                onclick="toggleArticlePin(@article.Id)">
+                                            <i class="bi @(article.IsPinned ? "bi-pin-angle-fill" : "bi-pin-angle") fs-5"></i>
+                                            Pin
+                                        </button>
+                                    }
+                                </td>
+                                <td class="text-muted small">
+                                    @{
+                                        string dataDaMostrare;
+
+                                        if (article.UpdatedAt != DateTime.MinValue)
+                                        {
+                                            dataDaMostrare = article.UpdatedAt.ToString("dd/MM/yyyy HH:mm");
+                                        }
+                                        else if (article.CreatedAt != DateTime.MinValue)
+                                        {
+                                            dataDaMostrare = article.CreatedAt.ToString("dd/MM/yyyy HH:mm");
+                                        }
+                                        else
+                                        {
+                                            dataDaMostrare = "N/D";
+                                        }
+                                    }
+
+                                    Aggiornato il @dataDaMostrare
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        @if (article.EliminatedAt != null)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                    title="Ripristina e aggiorna articolo"
+                                                    onclick="restoreArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Ripristina
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="/Admin/Editor" asp-route-id="@article.Id" class="btn btn-sm btn-outline-dark" title="Modifica articolo">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteArticle(@article.Id, '@JavaScriptEncoder.Default.Encode(article.Title)')"
+                                                    title="Sposta nel Cestino">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-journal-text fs-2 d-block mb-2"></i>
+                                <p class="m-0">Nessun articolo trovato nel database. Comincia creandone uno nuovo!</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

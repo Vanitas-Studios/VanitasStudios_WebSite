@@ -1,15 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VanitasStudios_WebApp.Models;
 
+[Table("Tags")]
 public partial class Tag
 {
-    public int IdT { get; set; }
+    [Key]
+    public int Id { get; set; }
 
-    public string TagName { get; set; } = null!;
+    [Required]
+    [StringLength(100)] // Un tag difficilmente supererà i 100 caratteri
+    public string Name { get; set; } = null!;
 
-    public string TypeT { get; set; } = null!;
+    //public string TypeT { get; set; } = null!; Nessuna distinzione
+    [StringLength(100)]
+    public string? CategoryGroup { get; set; } // Aggiunto per il raggruppamento logico
 
-    public virtual ICollection<Content> ContentOrds { get; set; } = new List<Content>();
+    [InverseProperty("Tag")]
+    public virtual ICollection<ContentTag> ContentTags { get; set; } = new List<ContentTag>();
+    [InverseProperty("Tag")]
+    public virtual ICollection<TagSynonym> Synonyms { get; set; } = new List<TagSynonym>();
 }

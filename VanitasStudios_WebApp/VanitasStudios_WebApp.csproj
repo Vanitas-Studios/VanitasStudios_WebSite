@@ -11,6 +11,7 @@
     <Content Remove="wwwroot\img\background.png" />
     <Content Remove="wwwroot\img\Horus.png" />
     <Content Remove="wwwroot\img\Logo.png" />
+    <Content Remove="wwwroot\img\mask-monolith.png" />
     <Content Remove="wwwroot\img\StatueVS.png" />
     <Content Remove="wwwroot\img\VanitasLogo.png" />
     <Content Remove="wwwroot\img\VanitasStudio_NOBG.png" />
@@ -30,6 +31,7 @@
     <Resource Include="wwwroot\img\background.png" />
     <Resource Include="wwwroot\img\Horus.png" />
     <Resource Include="wwwroot\img\Logo.png" />
+    <Resource Include="wwwroot\img\mask-monolith.png" />
     <Resource Include="wwwroot\img\StatueVS.png" />
     <Resource Include="wwwroot\img\VanitasLogo.png" />
     <Resource Include="wwwroot\img\VanitasStudio_NOBG.png" />

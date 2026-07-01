@@ -1,0 +1,121 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model VanitasStudios_WebApp.Pages.DashboardViewModel
+
+<div class="animate-fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0">Panoramica Canale</h2>
+            <p class="text-muted small m-0">Ecco i dati analitici reali estratti dall'algoritmo di Vanitas Studios.</p>
+        </div>
+        <span class="badge bg-dark px-3 py-2">Live</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light p-3">
+                <div class="text-muted small text-uppercase fw-bold">Ricerche Totali (Akinator)</div>
+                <div class="d-flex align-items-baseline gap-2 mt-2">
+                    <span class="fs-2 fw-bold tracking-tight">@Model.TotalSearchesExecuted</span>
+                    <span class="text-muted small">interazioni totali</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light p-3">
+                <div class="text-muted small text-uppercase fw-bold">Articoli Pubblicati</div>
+                <div class="d-flex align-items-baseline gap-2 mt-2">
+                    <span class="fs-2 fw-bold tracking-tight">@Model.TotalArticlesOnline</span>
+                    <span class="text-muted small">su @(Model.TotalArticlesOnline + Model.TotalArticlesDraft) totali (@Model.TotalArticlesDraft in bozza)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light p-3">
+                <div class="text-muted small text-uppercase fw-bold">Accuratezza Algoritmo</div>
+                <div class="d-flex align-items-baseline gap-2 mt-2">
+                    <span class="fs-2 fw-bold tracking-tight text-success">@Model.AlgorithmSuccessRate%</span>
+                    <span class="text-muted small">tasso di successo</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 bg-light p-3 h-100">
+                <h6 class="fw-bold mb-3 text-uppercase small text-muted">Argomenti più caldi del portale (Top 5 Tag)</h6>
+                <div class="d-flex flex-column gap-3 justify-content-center h-100 pb-3">
+                    @if (Model.TopTags.Any())
+                    {
+                        foreach (var tag in Model.TopTags)
+                        {
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="fw-bold">#@tag.TagName <span class="text-muted font-monospace text-lowercase">(@tag.Category)</span></span>
+                                    <span class="text-secondary fw-bold">@tag.TotalGlobalWeight pts</span>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    @{
+                                        // Calcoliamo la percentuale della barra rispetto al tag più pesante
+                                        var maxWeight = Model.TopTags.First().TotalGlobalWeight;
+                                        var percentage = maxWeight > 0 ? (tag.TotalGlobalWeight * 100) / maxWeight : 0;
+                                    }
+                                    <div class="progress-bar bg-dark" role="progressbar" style="width: @percentage%"></div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-tags fs-3 d-block mb-2"></i>
+                            <p class="small m-0">Nessun dato statistico sui tag disponibile al momento.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light p-3 h-100">
+                <h6 class="fw-bold mb-3 text-uppercase small text-muted">Contenuti più Apprezzati</h6>
+                <div class="d-flex flex-column gap-3">
+                    @if (Model.TopArticles.Any())
+                    {
+                        var index = 0;
+                        string[] borders = { "border-primary", "border-secondary", "border-dark" };
+
+                        foreach (var article in Model.TopArticles)
+                        {
+                            var borderClass = borders[index % borders.Length];
+                            index++;
+
+                            <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded border-start @borderClass border-3 shadow-sm">
+                                <div class="text-truncate me-2">
+                                    <div class="fw-bold text-truncate small">@article.Title</div>
+                                    <span class="text-muted" style="font-size: 0.75rem;">
+                                        Aggiornato il @article.UpdatedAt.ToString("dd/MM/yyyy")
+                                    </span>
+                                </div>
+                                <span class="badge bg-secondary">@article.CumulativeWeight pts</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-journal-x fs-3 d-block mb-2"></i>
+                            <p class="small m-0">Nessun articolo ha ancora accumulato punteggio.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

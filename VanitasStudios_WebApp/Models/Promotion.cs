@@ -1,19 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VanitasStudios_WebApp.Models;
 
+[Table("Promotions")]
 public partial class Promotion
 {
-    public int IdPromotion { get; set; }
+    [Key]
+    public int Id { get; set; }
 
+    [Required]
     public int PromotedId { get; set; }
 
-    public int AdminPromoterId { get; set; }
+    [Required]
+    public int PromoterId { get; set; }
 
+    [ForeignKey("PromotedId")]
     public virtual ApplicationUser Promoted { get; set; } = null!;
 
-    public virtual ApplicationUser AdminPromoter { get; set; } = null!;
+    [ForeignKey("PromoterId")]
+    public virtual ApplicationUser Promoter { get; set; } = null!;
 
-    public DateTime DataPromotion { get; set; }
+    [Required]
+    public DateTime PromotedAt { get; set; } = DateTime.UtcNow;
 }

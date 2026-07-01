@@ -1,491 +1,729 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
+ï»¿/* ==========================================================================
+   VANITAS STUDIOS - CORE DESIGN SYSTEM (UNIVERSALE)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
-    --main-font-family: 'Syne', sans-serif;
-    --main-color: #0a0a0a;
-    --main-secondary-color: #1a1a1a;
-    --secondary-background-color: #333333;
-    --main-font-color: #e0e0e0;
-    --secondary-font-color: rgba(255, 255, 255, 0.4);
-    --danger-color: #950101;
-}
-html {
-  font-size: 14px;
-}
+    /* --- PALETTE CROMATICA (Regola 60-30-10 Semantica) --- */
+    --bg-void: #0e0e11; /* 60% Lo Scuro Morbido - Sfondo universale rilassante */
+    --bg-surface: #15151a; /* Sfondo per Card, Sidebar ed Editor blocchi */
+    --bg-surface-light: #1f1f26; /* Per elementi di hover, input attivi o focus */
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
+    --text-pure: #EAEAEA; /* IL TUO CORRETTO: Bianco morbido/avorio per i titoli d'impatto */
+    --text-silver: #C5C6C7; /* 30% La Polvere - Testo lettura, morbido e satinato */
+    --text-ashes: #626270; /* Metadati, date, descrizioni e stati disattivati */
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    --accent-gold: #D4AF37; /* 10% Le Rovine - Oro antico per focus, interazioni e badge */
+    --accent-gold-glow: rgba(212, 175, 55, 0.12);
+    /* --- TIPOGRAFIA --- */
+    --font-header: 'Montserrat', sans-serif;
+    --font-body: 'Lora', Georgia, serif;
+    /* --- SPAZIATURA E GEOMETRIA --- */
+    --max-text-width: 72ch;
+    --sidebar-width: 260px;
+    --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-    width: 100%;
-    margin-bottom: 60px;
-    font-family: var(--main-font-family);
-}
-
-section{
-    position: relative;
-    width : 100%;
-    height : 100vh;
-}
-
-header {
-    height: 100px;
-    max-height: 100px;
-    width: 100%;
-    position: absolute;
-    z-index: 100;
-}
-/*Style for the index page*/
-
-.hero {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 100vh;
-    background-image: linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.05)), url('../img/background.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    top: 0;
-    overflow: hidden;
-}
-
-.hero-container {
-    width: 100%;
-    padding: 0rem 5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.hero-text {
-    flex: 1;
-}
-
-.hero-text h5 {
-    text-transform: uppercase;
-    letter-spacing: .2rem;
-}
-
-.hero-image-wrapper {
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    overflow: hidden;
-}
-
-.hero-image-wrapper img{
-    width: 100%;
-    /* 1. La rendiamo più alta dello schermo per avere spazio per muoverla */
-    height: 120vh !important; 
-    
-    /* 2. Fondamentale per non schiacciarla */
-    object-fit: cover; 
-    
-    /* 3. Adesso 80% funzionerà perché c'è spazio extra! */
-    object-position: center 0%; 
-    
-    /* 4. Opzionale: la tiriamo su leggermente se scende troppo */
-    margin-top: 10vh;
-}
-
-.side-indicator {
-    position: absolute;
-    bottom: 5rem;
-    left: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    z-index: 5;
-}
-
-.side-text {
-    writing-mode: vertical-rl; /* Ruota il testo verticalmente */
-    transform: rotate(180px); /* Lo orienta correttamente per la lettura dal basso */
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4); /* Grigio tenue come nel mockup */
-    font-size: 0.75rem;
-    letter-spacing: 0.3rem;
-}
-
-.side-line {
-    width: 1px;
-    height: 60px; /* Lunghezza della linea verticale */
-    background-color: rgba(255, 255, 255, 0.3);
-}
-
-.mission {
-    background-color: var(--main-secondary-color);
-}
-
-.mission-container {
-    width: 100%;
-    height: 100%;
-    padding: 6rem 5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5rem;
-}
-
-.mission-title {
-    display: flex;
-    flex-direction: column;
-    color: var(--main-font-color);
-    text-align: center;
-    gap: 1.5rem;
-}
-
-.mission-title h1 {
-    text-transform: uppercase;
-    letter-spacing: 1.5rem;
-}
-
-.mission-title p {
-   font-size: 1.25rem;
-   text-transform: uppercase;
-}
-
-.mission-projects {
-    width: 100%;
-    max-width: 1200px;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    gap: 5rem;
-}
-
-.mission-projects .project-content{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    max-width: 400px;
-}
-
-.project-content h5 {
-    text-transform: uppercase;
-    color: var(--main-font-color);
-    font-weight: 600;
-    letter-spacing: .3rem;
-}
-
-.project-content p {
-    color: var(--secondary-font-color);
-    text-align: left;
-}
-
-.project-content .mission-btn {
-    background-color: var(--danger-color);
-    color: var(--main-font-color);
-    border: 0.5px solid var(--secondary-font-color);
-}
-
-.about {
-    padding: 2rem 5rem;
-    display: flex;
-    align-items: center;
-    background-color: var(--main-color);
-}
-
-.about-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 100%;
-}
-
-.about-container .about-body{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 2rem;
-}
-
-.about-body h1 {
-    text-transform: uppercase;
-    letter-spacing: 1rem;
-    color: var(--main-font-color);
-}
-
-.about-body p {
-    color: var(--secondary-font-color);
-    line-height: 1.5;
-}
-
-.about-container .about-visual{
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.about-visual .square {
-    width: 200px;
-    height: 200px;
-    background-color: transparent;
-    border: 1px solid var(--secondary-font-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: var(--main-font-color);
-}
-
-/*Style for the documentation page*/
-
-section.hero-doc {
-    width: 100%;
-    height: 50vh;
-    padding: 5rem 5rem 0 5rem;
-    display: flex;
-    align-items: center;
-    background-color: var(--main-secondary-color);
-    overflow: hidden;
-}
-
-.doc-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 100%;
-}
-
-.doc-container .doc-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.doc-container .doc-text h1 {
-    text-transform: uppercase;
-    letter-spacing: 1rem;
-    color: var(--main-font-color);
-}
-
-.doc-container .doc-text p {
-    color: var(--secondary-font-color);
-    line-height: 1.5;
-}
-
-.doc-visual {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-.doc-visual img{
-    width: 100%;      /* Prende tutta la larghezza del contenitore */
-    height: 100%;     /* Prende tutta l'altezza del contenitore */
-    object-fit: cover; 
-    object-position: center 0%;
-}
-
-.doc-archive {
-    display: flex;
-    padding: 2rem 5rem;
-    background-color: var(--main-color);
-}
-
-.doc-archive .archive-container{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.archive-container .header-archive {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    width: 100%;
-}
-
-.header-archive h3{
-    text-transform: uppercase;
-    letter-spacing: 0.5rem;
-    color: var(--main-font-color);
-}
-
-.header-archive .archive-search {
-    flex: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-/*Style for the Blog page*/
-
-section.hero-blog {
-    width: 100%;
-    height: 50vh;
-    padding: 5rem 5rem 0 5rem;
-    display: flex;
-    align-items: center;
-    background-color: var(--main-secondary-color);
-    overflow: hidden;
-}
-
-.blog-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 100%;
-}
-
-.blog-container .blog-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.blog-container .blog-text h1 {
-    text-transform: uppercase;
-    letter-spacing: 1rem;
-    color: var(--main-font-color);
-}
-
-.blog-container .blog-text p {
-    color: var(--secondary-font-color);
-    line-height: 1.5;
-}
-
-.blog-visual {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-.blog-visual img{
-    width: 100%;      /* Prende tutta la larghezza del contenitore */
-    height: 100%;     /* Prende tutta l'altezza del contenitore */
-    object-fit: cover; 
-    object-position: center 0%;
-}
-
-.blog-archive {
-    display: flex;
-    padding: 2rem 5rem;
-    background-color: var(--main-color);
-}
-
-.blog-archive .archive-container {
-     display: flex;
-     flex-direction: column;
-     width: 100%;
-}
-
-.archive-container .header-archive {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    width: 100%;
-}
-
-.header-archive h3 {
-    text-transform: uppercase;
-    letter-spacing: 0.5rem;
-    color: var(--main-font-color);
-}
-
-.header-archive .archive-search {
-    flex: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-/*Style for the Add_Content Page*/
-
-.editor-container {
-    padding: 7rem 5rem;
-    background: #1a1a1a;
-    color: white;
-}
-
-#article-title {
-    width: 100%;
-    margin-bottom: 15px;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid #444;
-    color: white;
-    font-size: 1.5rem;
-    outline: none;
-}
-
-#markdown-editor {
-    background: #121212;
-    color: #dcdcdc;
-    border: 1px solid #333;
-    padding: 15px;
-    border-radius: 4px;
-    resize: none;
-}
-
-#section-checklist {
-    background: #222;
-    padding: 15px;
-    border-radius: 4px;
-    border: 1px solid #333;
-}
-
-#checklist-items {
-    list-style: none;
+/* --- RESET & LAYER MATERICO COMPLESSO --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
     padding: 0;
 }
 
-#checklist-items li {
-    padding: 5px 0;
-    border-bottom: 1px solid #333;
-    font-size: 0.9rem;
-    color: #888;
+body {
+    color: var(--text-silver) !important;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+    /* Colore solido di base scuro e profondo, con sfumatura radiale per la vignettatura */
+    background-color: var(--bg-void) !important;
+    background-image: radial-gradient(circle at 50% 45%, transparent 10%, #050507 80%), linear-gradient(to bottom, var(--bg-void), #070709) !important;
+    background-attachment: fixed;
 }
 
-.drop-zone-overlay {
-    position: absolute;
+    /* --- OVERLAY MATERICO: RUMORE SOTTILE E GRANULARE (PIETRA SCURA) --- */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* Generatore SVG di rumore frattale ad alta frequenza per dare consistenza micro-granulare */
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='stoneNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23stoneNoise)' opacity='0.022'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999; /* Sovrapposto a tutto per uniformare la texture del sito */
+    }
+
+/* --- TIPOGRAFIA GLOBALE (Mitigazione Bootstrap) --- */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: var(--font-header) !important;
+    color: var(--text-pure) !important;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+a {
+    color: var(--text-silver);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+    a:hover {
+        color: var(--accent-gold) !important;
+    }
+
+/* --- NEUTRALIZZAZIONE COMPONENTI BOOTSTRAP BLINDATA --- */
+
+/* 1. Reset degli Input e delle Textarea (Essenziale per l'Editor) */
+.form-control, .form-select {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-silver) !important;
+    font-family: var(--font-body);
+    border-radius: 4px !important;
+    transition: var(--transition-smooth) !important;
+}
+
+    /* Rimuove l'alone azzurro orribile di default di Bootstrap al click */
+    .form-control:focus, .form-select:focus {
+        background-color: var(--bg-surface-light) !important;
+        border-color: var(--accent-gold) !important;
+        box-shadow: 0 0 0 3px var(--accent-gold-glow) !important;
+        color: var(--text-pure) !important;
+    }
+
+    /* Placeholder morbidi come la polvere */
+    .form-control::placeholder {
+        color: var(--text-ashes) !important;
+        opacity: 1;
+    }
+
+/* 2. Reset dei Bottoni di Bootstrap per farli Vanitas-style */
+.btn {
+    font-family: var(--font-header);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: var(--transition-smooth) !important;
+    border-radius: 4px !important;
+}
+
+/* Trasformiamo i bottoni primari in pulsanti d'oro minimali */
+.btn-primary {
+    background-color: transparent !important;
+    border: 1px solid var(--accent-gold) !important;
+    color: var(--accent-gold) !important;
+}
+
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: var(--accent-gold) !important;
+        color: var(--bg-surface) !important; /* Il testo diventa scuro sullo sfondo oro */
+        box-shadow: 0 0 15px var(--accent-gold-glow) !important;
+    }
+
+/* 3. Reset dei Badge (I tuoi futuri blocchi ## nell'editor) */
+.badge {
+    font-family: var(--font-header);
+    background-color: var(--bg-surface) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-silver) !important;
+    font-weight: 600;
+}
+
+/* Scrollbar Personalizzata */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-void);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-gold);
+    }
+
+
+/* ==========================================================================
+   VANITAS STUDIOS - NAVBAR & FOOTER SYSTEM
+   ========================================================================== */
+/* --- CORNICE DI NAVIGAZIONE (NAVBAR) --- */
+.v-navbar {
+    padding: 1rem 0; /* Spazio controllato sopra e sotto */
+    background: transparent !important;
+    position: absolute; /* Fluttua sopra la hero dell'applicazione */
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: rgba(0, 123, 255, 0.9); /* Blu semi-trasparente */
-    color: white;
+    z-index: 100;
+    transition: var(--transition-smooth);
+    /* Mantiene un'altezza minima strutturale bilanciata */
+    min-height: 85px;
+    display: flex !important;
+    align-items: center !important;
+}
+
+    /* Forza la centratura geometrica assoluta di tutti i blocchi interni */
+    .v-navbar .container {
+        height: 100%;
+    }
+
+/* --- GESTIONE LOGO (TORNA GRANDE E CENTRATO) --- */
+.v-nav-brand-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 3 dashed #fff;
-    border-radius: 5px;
-    z-index: 10;
-    visibility: hidden; /* Nascosto di default */
-    opacity: 0;
-    transition: opacity 0.3s ease;
 }
 
-    /* Classe attivata da JS quando l'utente trascina qualcosa */
-    .drop-zone-overlay.active {
-        visibility: visible;
-        opacity: 1;
+    .v-nav-brand-wrapper .navbar-brand {
+        padding: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
     }
+
+.v-logo-img {
+    height: 60px; /* Ripristina la dimensione visibile e fiera del brand */
+    width: auto; /* Calcola la larghezza in automatico mantenendo le proporzioni nativa (es. ~50px) */
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.6));
+    transition: transform 0.3s ease;
+}
+
+/* Leggero effetto interattivo sul logo al passaggio del mouse */
+.v-nav-brand-wrapper .navbar-brand:hover .v-logo-img {
+    transform: scale(1.02);
+}
+
+/* --- COLLEGAMENTI MENU --- */
+.v-menu-links {
+    gap: 3rem;
+    display: flex;
+    align-items: center !important; /* Forza i link a stare sulla stessa mezzeria del logo */
+    margin: 0;
+    padding: 0;
+}
+
+    .v-menu-links .nav-link {
+        font-family: var(--font-header);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-silver) !important;
+        padding: 0.5rem 1rem !important;
+        position: relative;
+        transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+    }
+
+        /* Scintilla d'oro sotto i link */
+        .v-menu-links .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; /* Abbassato leggermente per non toccare il testo */
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background-color: var(--accent-gold);
+            transition: var(--transition-smooth);
+            transform: translateX(-50%);
+        }
+
+        .v-menu-links .nav-link:hover {
+            color: var(--text-pure) !important;
+        }
+
+            .v-menu-links .nav-link:hover::after {
+                width: 60%;
+            }
+
+/* Gestionali */
+.v-nav-admin {
+    color: #a881af !important;
+}
+
+.v-nav-write {
+    color: #76a085 !important;
+}
+
+/* Wrapper Login laterale */
+.v-nav-login-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+/* --- MEDIA QUERY MOBILE REVISIONATA --- */
+@media (max-width: 991px) {
+    .v-navbar {
+        position: relative; /* Evita sovrapposizioni distruttive su mobile */
+        background: #141418 !important; /* Sfondo scuro compatto all'apertura */
+        min-height: auto;
+        padding: 0.75rem 0;
+    }
+
+    .v-logo-img {
+        height: 48px; /* Leggermente piÃ¹ piccolo sui display degli smartphone per salvare spazio */
+    }
+
+    .v-menu-links {
+        flex-direction: column;
+        gap: 1.2rem;
+        padding: 2rem 0 1rem 0;
+        text-align: center;
+    }
+
+    .v-nav-login-wrapper {
+        justify-content: center;
+        padding-bottom: 1.5rem;
+    }
+}
+
+/* --- IL FOOTER ANCORATO --- */
+.v-footer {
+    background-color: var(--bg-surface); /* Onyx profondo, non il nero pece di Bootstrap */
+    padding: 3rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.02) !important; /* Linea quasi invisibile */
+    margin-top: auto; /* Trucco finale: dice al flexbox di spingere se stesso al fondo */
+}
+
+.v-footer-text, .v-footer-text a {
+    color: var(--text-ashes) !important;
+    font-size: 0.7rem !important;
+}
+
+    .v-footer-text a:hover {
+        color: var(--accent-gold) !important;
+    }
+
+.v-footer-links a {
+    color: var(--text-ashes) !important;
+    font-size: 0.7rem !important;
+    transition: var(--transition-smooth);
+    margin-left: 1.5rem;
+}
+
+    .v-footer-links a:hover {
+        color: var(--text-pure) !important;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+/* Allineamento corretto per le colonne dei flex wrapper */
+.v-nav-brand-wrapper, .v-nav-login-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 991px) {
+    .v-menu-links {
+        gap: 1rem;
+        padding: 2rem 0 1rem 0;
+        text-align: center;
+    }
+
+    .v-nav-login-wrapper {
+        justify-content: center;
+    }
+}
+
+/* ==========================================================================
+   VANITAS STUDIOS - NAVBAR AUTHENTICATION OVERRIDES
+   ========================================================================== */
+
+/* Il pulsante quando l'utente non Ã¨ loggato */
+.btn-login-nav {
+    color: var(--accent-gold, #c5a880) !important;
+    font-family: var(--font-header, monospace);
+    font-size: 0.8rem !important;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+    .btn-login-nav:hover {
+        opacity: 1;
+        text-shadow: 0 0 8px rgba(197, 168, 128, 0.4);
+        transform: translateY(-1px);
+    }
+
+/* Il selettore dropdown dell'utente connesso */
+.btn-profile-dropdown {
+    color: var(--text-pure, #ffffff) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.4rem 0.8rem !important;
+    transition: all 0.25s ease;
+}
+
+.profile-marker {
+    color: var(--accent-gold, #c5a880);
+    font-weight: 700;
+    margin-right: 2px;
+}
+
+/* Il box del menu a tendina che scivola giÃ¹ */
+.auth-dropdown-box {
+    background: rgba(20, 20, 24, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    margin-top: 10px !important;
+    border-radius: 4px !important;
+    padding: 0.5rem 0 !important;
+}
+
+    .auth-dropdown-box .dropdown-item {
+        font-size: 0.8rem !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        transition: all 0.2s ease;
+    }
+
+        .auth-dropdown-box .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: #fff !important;
+        }
+
+        .auth-dropdown-box .dropdown-item.text-danger:hover {
+            background: rgba(220, 53, 69, 0.08) !important;
+            color: #ff4d5a !important;
+        }
+
+
+
+
+/* Rimozione stili nativi distruttivi sul bottone di logout */
+.backend-logout-btn {
+    border: none !important;
+    background: transparent !important;
+}
+
+
+/* Stile specifico per il processo a step della 2FA */
+.step-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent-gold, #c5a880);
+}
+
+.step-link {
+    color: #fff;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+    .step-link:hover {
+        color: #bc9cff;
+    }
+
+.custom-kbd {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff !important;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.qr-canvas-frame {
+    background: rgba(20, 20, 24, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 1.5rem;
+    border-radius: 6px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+/* ==========================================================================
+   VANITAS STUDIOS - CORE AUTHENTICATION & IDENTITY LAYOUTS
+   ========================================================================== */
+
+/* --- 1. SCHERMATE DI AUTENTICAZIONE (Login, Register, Logout) --- */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    padding: 6rem 1rem 3rem 1rem; /* Aumentato il padding-top a 6rem per spingere il box piÃ¹ in basso */
+}
+
+.auth-box {
+    background: rgba(20, 20, 24, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    max-width: 460px;
+    padding: 3rem 2.5rem;
+    border-radius: 4px;
+}
+
+.auth-brand {
+    font-family: var(--font-header, monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent-gold, #c5a880);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.auth-title {
+    font-family: var(--font-header, monospace);
+    font-size: 1.75rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+}
+
+/* --- 2. CAMPI DI INPUT CUSTOM & ETICHETTE --- */
+.input-group-custom {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label-custom {
+    font-family: var(--font-header, monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.form-control-custom {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+    .form-control-custom:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-color: var(--accent-gold, #c5a880) !important;
+        box-shadow: 0 0 12px rgba(197, 168, 128, 0.15) !important;
+    }
+
+    .form-control-custom::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+/* --- 3. PULSANTI, LINK E UTILITY --- */
+.btn-auth-submit {
+    background: var(--accent-gold, #c5a880);
+    border: 1px solid var(--accent-gold, #c5a880);
+    color: #141418 !important;
+    font-family: var(--font-header, monospace);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .btn-auth-submit:hover {
+        background: transparent;
+        color: var(--accent-gold, #c5a880) !important;
+        box-shadow: 0 0 20px rgba(197, 168, 128, 0.25);
+    }
+
+.auth-link-secondary {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    .auth-link-secondary:hover {
+        color: var(--accent-gold, #c5a880);
+    }
+
+.auth-link-muted {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.75rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    .auth-link-muted:hover {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+/* Checkbox personalizzato */
+.checkbox-custom {
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-check {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 2px !important;
+    width: 14px;
+    height: 14px;
+}
+
+    .custom-check:checked {
+        background-color: var(--accent-gold, #c5a880) !important;
+        border-color: var(--accent-gold, #c5a880) !important;
+    }
+
+.checkbox-text {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+}
+
+/* Messaggi di errore Identity scuri */
+.auth-error-summary {
+    background: rgba(220, 53, 69, 0.06);
+    border-left: 3px solid #ff4d5a;
+    padding: 0.75rem 1rem;
+    border-radius: 2px;
+}
+
+    .auth-error-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        color: #ff4d5a;
+        font-size: 0.75rem;
+    }
+
+/* --- 4. PANNELLO DI GESTIONE ACCOUNT (MANAGE AREA A DUE COLONNE) --- */
+.manage-account-wrapper {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 6rem auto 3rem auto; /* Aumentato il margine superiore a 6rem rispetto al menu */
+    padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .manage-account-wrapper {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin: 5rem auto 1.5rem auto; /* Regolato anche per i dispositivi mobili */
+    }
+}
+
+.manage-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+    padding-right: 2rem;
+}
+
+@media (max-width: 768px) {
+    .manage-sidebar {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        padding-right: 0;
+        padding-bottom: 1.5rem;
+    }
+}
+
+.sidebar-brand-ctx {
+    font-family: var(--font-header, monospace);
+    font-size: 0.65rem;
+    color: var(--accent-gold, #c5a880);
+    letter-spacing: 0.15em;
+    font-weight: 700;
+}
+
+.sidebar-ctx-title {
+    font-family: var(--font-header, monospace);
+    font-size: 1.25rem;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+/* Navigazione interna (_ManageNav) */
+.design-manage-nav .nav-link {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    font-size: 0.8rem !important;
+    padding: 0.6rem 1rem !important;
+    border-left: 2px solid transparent;
+    border-radius: 0 !important;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+    .design-manage-nav .nav-link:hover {
+        color: rgba(255, 255, 255, 0.8) !important;
+        padding-left: 1.25rem !important;
+    }
+
+    .design-manage-nav .nav-link.active {
+        color: #ffffff !important;
+        border-left-color: var(--accent-gold, #c5a880);
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.01) !important;
+    }
+
+/* Area dei Contenuti di Destra */
+.manage-content-core {
+    max-width: 680px;
+}
+
+.manage-core-title {
+    font-family: var(--font-header, monospace);
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+}
+
+.manage-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.header-line-left {
+    width: 40px;
+    height: 1px;
+    background: var(--accent-gold, #c5a880);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Colpisce solo il contenitore del Manage Account di Identity */
+main.flex-grow-1 > div:has(ul.design-manage-nav),
+main.flex-grow-1 > h1:has(+ div > hr + .row ul.design-manage-nav) {
+    margin-top: 7rem !important;
+}
+
+/* Soluzione alternativa piÃ¹ sicura basata sulla gerarchia HTML che hai ispezionato */
+main.flex-grow-1 > h1 + div > .row:has(.design-manage-nav) {
+    margin-top: 5rem !important;
+}

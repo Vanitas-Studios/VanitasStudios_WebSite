@@ -103,12 +103,10 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -144,12 +142,10 @@ namespace VanitasStudios_WebApp.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
@@ -159,22 +155,48 @@ namespace VanitasStudios_WebApp.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Order", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.AdminLog", b =>
                 {
-                    b.Property<int>("ContentOrdId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("Content_Ord_ID");
+                        .HasColumnName("Id");
 
-                    b.Property<int>("TagOrdId")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("ActionType");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Description");
+
+                    b.Property<DateTime>("ExecutedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("ExecutedAt")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)")
+                        .HasColumnName("IpAddress");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("int")
-                        .HasColumnName("Tag_Ord_ID");
+                        .HasColumnName("UserId");
 
-                    b.HasKey("ContentOrdId", "TagOrdId")
-                        .HasName("PK__Order__16EB5FFAF718821E");
+                    b.HasKey("Id")
+                        .HasName("PK_AdminLogs");
 
-                    b.HasIndex("TagOrdId");
+                    b.HasIndex("UserId");
 
-                    b.ToTable("Order", (string)null);
+                    b.ToTable("AdminLogs", (string)null);
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.ApplicationUser", b =>
@@ -247,292 +269,417 @@ namespace VanitasStudios_WebApp.Migrations
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Comment", b =>
                 {
-                    b.Property<int>("IdComm")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ID_Comm");
+                        .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdComm"));
-
-                    b.Property<int?>("AnswerId")
-                        .HasColumnType("int")
-                        .HasColumnName("Answer_ID");
-
-                    b.Property<string>("CommText")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("Comm_Text");
-
-                    b.Property<int>("CommentUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("Comment_User_ID");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContentId")
                         .HasColumnType("int")
-                        .HasColumnName("Content_ID");
+                        .HasColumnName("ContentId");
 
-                    b.Property<DateTime>("DataPub")
+                    b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
                         .HasColumnType("datetime2(0)")
-                        .HasColumnName("Data_Pub")
+                        .HasColumnName("CreatedAt")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.HasKey("IdComm")
-                        .HasName("PK__Comment__560C251E2B77EB82");
+                    b.Property<int?>("ParentCommentId")
+                        .HasColumnType("int")
+                        .HasColumnName("ParentCommentId");
 
-                    b.HasIndex("AnswerId");
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("Text");
 
-                    b.HasIndex("CommentUserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Comments");
 
                     b.HasIndex("ContentId");
 
-                    b.ToTable("Comment", (string)null);
+                    b.HasIndex("ParentCommentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comments", (string)null);
+                });
+
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.CommentLike", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("UserId")
+                        .HasColumnOrder(1);
+
+                    b.Property<int>("CommentId")
+                        .HasColumnType("int")
+                        .HasColumnName("CommentId")
+                        .HasColumnOrder(2);
+
+                    b.Property<bool>("IsLike")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsLike");
+
+                    b.HasKey("UserId", "CommentId")
+                        .HasName("PK_CommentLikes");
+
+                    b.HasIndex("CommentId");
+
+                    b.ToTable("CommentLikes", (string)null);
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Content", b =>
                 {
-                    b.Property<int>("IdC")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ID_C");
+                        .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdC"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("DataEdit")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
-                        .HasColumnName("Data_Edit");
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int")
+                        .HasColumnName("AuthorId");
 
-                    b.Property<DateTime>("DataPub")
+                    b.Property<string>("CoverImageUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)")
+                        .HasColumnName("CoverImageUrl");
+
+                    b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
                         .HasColumnType("datetime2(0)")
-                        .HasColumnName("Data_Pub")
+                        .HasColumnName("CreatedAt")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<string>("DescC")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("Desc_C");
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Description");
 
-                    b.Property<int>("EditorId")
-                        .HasColumnType("int")
-                        .HasColumnName("Editor_ID");
+                    b.Property<DateTime?>("EliminatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("EliminatedAt");
+
+                    b.Property<float>("GlobalScore")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("real")
+                        .HasDefaultValue(0f)
+                        .HasColumnName("GlobalScore");
 
                     b.Property<bool>("IsPinned")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsPinned");
+
+                    b.Property<int>("PublishState")
+                        .HasColumnType("int")
+                        .HasColumnName("PublishState");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Slug");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Title");
 
-                    b.Property<string>("TypeC")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)")
-                        .HasDefaultValue("articolo")
-                        .HasColumnName("Type_C");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("UpdatedAt");
 
-                    b.HasKey("IdC")
-                        .HasName("PK__Content__B87EA50961BA4A46");
+                    b.HasKey("Id")
+                        .HasName("PK_Contents");
 
-                    b.HasIndex("EditorId");
+                    b.HasIndex("AuthorId");
 
-                    b.ToTable("Content", (string)null);
+                    b.ToTable("Contents", (string)null);
                 });
 
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Evaluate", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.ContentTag", b =>
                 {
-                    b.Property<int>("UserLikeId")
+                    b.Property<int>("ContentId")
                         .HasColumnType("int")
-                        .HasColumnName("User_Like_ID");
+                        .HasColumnName("ContentId")
+                        .HasColumnOrder(1);
 
-                    b.Property<int>("CommLikeId")
+                    b.Property<int>("TagId")
                         .HasColumnType("int")
-                        .HasColumnName("Comm_Like_ID");
+                        .HasColumnName("TagId")
+                        .HasColumnOrder(2);
 
-                    b.Property<bool>("IsLike")
-                        .HasColumnType("bit")
-                        .HasColumnName("isLike");
+                    b.Property<float>("Weight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("real")
+                        .HasDefaultValue(0f)
+                        .HasColumnName("Weight");
 
-                    b.HasKey("UserLikeId", "CommLikeId")
-                        .HasName("PK__Evaluate__1F28091D4ECADA78");
+                    b.HasKey("ContentId", "TagId")
+                        .HasName("PK_ContentTags");
 
-                    b.HasIndex("CommLikeId");
+                    b.HasIndex("TagId");
 
-                    b.ToTable("Evaluate", (string)null);
+                    b.ToTable("ContentTags", (string)null);
                 });
 
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Image", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.Media", b =>
                 {
-                    b.Property<int>("IdI")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ID_I");
+                        .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdI"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("Image_Url");
+                    b.Property<string>("Caption")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Caption");
 
                     b.Property<bool>("IsThumbnail")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasColumnName("Is_Thumbnail");
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsThumbnail");
 
-                    b.Property<int>("SectionImageId")
+                    b.Property<int>("Order")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("Section_Image_ID");
+                        .HasDefaultValue(0)
+                        .HasColumnName("Order");
 
-                    b.HasKey("IdI")
-                        .HasName("PK__Image__B87EA503141B6819");
+                    b.Property<int>("ReferenceCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("ReferenceCount");
 
-                    b.HasIndex("SectionImageId");
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int")
+                        .HasColumnName("SectionId");
 
-                    b.ToTable("Image", (string)null);
+                    b.Property<int>("Type")
+                        .HasColumnType("int")
+                        .HasColumnName("Type");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)")
+                        .HasColumnName("Url");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Media");
+
+                    b.HasIndex("SectionId");
+
+                    b.ToTable("Media", (string)null);
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Promotion", b =>
                 {
-                    b.Property<int>("IdPromotion")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ID_Promotion");
+                        .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdPromotion"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AdminPromoterId")
-                        .HasColumnType("int")
-                        .HasColumnName("Admin_Promoter_ID");
-
-                    b.Property<DateTime>("DataPromotion")
+                    b.Property<DateTime>("PromotedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Data_Promotion")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("PromotedAt")
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<int>("PromotedId")
                         .HasColumnType("int")
-                        .HasColumnName("Promoted_ID");
+                        .HasColumnName("PromotedId");
 
-                    b.HasKey("IdPromotion")
-                        .HasName("PK__Promotio__ECECECBEA1BEC634");
+                    b.Property<int>("PromoterId")
+                        .HasColumnType("int")
+                        .HasColumnName("PromoterId");
 
-                    b.HasIndex("AdminPromoterId");
+                    b.HasKey("Id")
+                        .HasName("PK_Promotions");
 
                     b.HasIndex("PromotedId");
 
-                    b.ToTable("Promotion", (string)null);
+                    b.HasIndex("PromoterId");
+
+                    b.ToTable("Promotions", (string)null);
+                });
+
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.SearchHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsSuccessful")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsSuccessful");
+
+                    b.Property<string>("QueryTags")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("QueryTags");
+
+                    b.Property<int?>("ResultContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("ResultContentId");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Timestamp");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("Id")
+                        .HasName("PK_SearchHistory");
+
+                    b.HasIndex("ResultContentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SearchHistory", (string)null);
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Section", b =>
                 {
-                    b.Property<int>("IdS")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ID_S");
+                        .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdS"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ContentSId")
+                    b.Property<int>("ContentId")
                         .HasColumnType("int")
-                        .HasColumnName("Content_S_ID");
+                        .HasColumnName("ContentId");
 
-                    b.Property<int>("OrderNum")
-                        .HasColumnType("int")
-                        .HasColumnName("Order_num");
-
-                    b.Property<string>("SectionText")
+                    b.Property<string>("HtmlText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Section_Text");
+                        .HasColumnName("Text");
+
+                    b.Property<int>("Order")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("Order");
 
                     b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("Title");
 
-                    b.HasKey("IdS")
-                        .HasName("PK__Section__B87EA5193321E3F5");
+                    b.HasKey("Id")
+                        .HasName("PK_Sections");
 
-                    b.HasIndex("ContentSId");
+                    b.HasIndex("ContentId");
 
-                    b.ToTable("Section", (string)null);
+                    b.ToTable("Sections", (string)null);
+                });
+
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.StatisticalWeights", b =>
+                {
+                    b.Property<int>("TagId")
+                        .HasColumnType("int")
+                        .HasColumnName("TagId");
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("ContentId");
+
+                    b.Property<int>("PopularityWeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("PopularityWeight");
+
+                    b.HasKey("TagId", "ContentId")
+                        .HasName("PK_StatisticalWeights");
+
+                    b.HasIndex("ContentId");
+
+                    b.ToTable("StatisticalWeights", (string)null);
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Tag", b =>
                 {
-                    b.Property<int>("IdT")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ID_T");
+                        .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdT"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("TagName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)")
-                        .HasColumnName("Tag_Name");
+                    b.Property<string>("CategoryGroup")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("CategoryGroup");
 
-                    b.Property<string>("TypeT")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)")
-                        .HasDefaultValue("articolo")
-                        .HasColumnName("Type_T");
-
-                    b.HasKey("IdT")
-                        .HasName("PK__Tag__B87EA51889DF0D54");
-
-                    b.ToTable("Tag", (string)null);
-                });
-
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Video", b =>
-                {
-                    b.Property<int>("IdV")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("ID_V");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdV"));
-
-                    b.Property<int>("ImageVideoId")
-                        .HasColumnType("int")
-                        .HasColumnName("Image_Video_ID");
-
-                    b.Property<int>("SectionVideoId")
-                        .HasColumnType("int")
-                        .HasColumnName("Section_Video_ID");
-
-                    b.Property<string>("VideoUrl")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("Video_Url");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Name");
 
-                    b.HasKey("IdV")
-                        .HasName("PK__Video__B87EA516CAC63B2A");
+                    b.HasKey("Id")
+                        .HasName("PK_Tags");
 
-                    b.HasIndex("SectionVideoId");
+                    b.ToTable("Tags", (string)null);
+                });
 
-                    b.HasIndex(new[] { "ImageVideoId" }, "UQ__Video__57417FA3F6E793E4")
-                        .IsUnique();
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.TagSynonym", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
 
-                    b.ToTable("Video", (string)null);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("SynonymName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("SynonymName");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("int")
+                        .HasColumnName("TagId");
+
+                    b.HasKey("Id")
+                        .HasName("PK_TagSynonyms");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("TagSynonyms", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -586,173 +733,233 @@ namespace VanitasStudios_WebApp.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Order", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.AdminLog", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.Content", null)
-                        .WithMany()
-                        .HasForeignKey("ContentOrdId")
+                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "User")
+                        .WithMany("AdminLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_Content_Ord_ID");
+                        .HasConstraintName("FK_AdminLogs_Users");
 
-                    b.HasOne("VanitasStudios_WebApp.Models.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagOrdId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Tag_Ord_ID");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Comment", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.Comment", "Answer")
-                        .WithMany("InverseAnswer")
-                        .HasForeignKey("AnswerId")
-                        .HasConstraintName("FK_Answer_ID");
-
-                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "User")
-                        .WithMany("Comments")
-                        .HasForeignKey("CommentUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_Comment_User_ID");
-
                     b.HasOne("VanitasStudios_WebApp.Models.Content", "Content")
                         .WithMany("Comments")
                         .HasForeignKey("ContentId")
                         .IsRequired()
-                        .HasConstraintName("FK_Content_ID");
+                        .HasConstraintName("FK_Comments_Contents");
 
-                    b.Navigation("Answer");
+                    b.HasOne("VanitasStudios_WebApp.Models.Comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentCommentId")
+                        .HasConstraintName("FK_Comments_ParentComments");
+
+                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Comments_Users");
 
                     b.Navigation("Content");
+
+                    b.Navigation("ParentComment");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.CommentLike", b =>
+                {
+                    b.HasOne("VanitasStudios_WebApp.Models.Comment", "Comment")
+                        .WithMany("CommentLikes")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentLikes_Comments");
+
+                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "User")
+                        .WithMany("GivenCommentLikes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_CommentLikes_Users");
+
+                    b.Navigation("Comment");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Content", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "Editor")
-                        .WithMany("Contents")
-                        .HasForeignKey("EditorId")
+                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "Author")
+                        .WithMany("AuthoredArticles")
+                        .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_Editor");
+                        .HasConstraintName("FK_Contents_Users");
 
-                    b.Navigation("Editor");
+                    b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Evaluate", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.ContentTag", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.Comment", "CommLike")
-                        .WithMany("Evaluates")
-                        .HasForeignKey("CommLikeId")
+                    b.HasOne("VanitasStudios_WebApp.Models.Content", "Content")
+                        .WithMany("ContentTags")
+                        .HasForeignKey("ContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_Comm_Like_ID");
+                        .HasConstraintName("FK_ContentTags_Contents");
 
-                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "UserLike")
-                        .WithMany("Evaluates")
-                        .HasForeignKey("UserLikeId")
+                    b.HasOne("VanitasStudios_WebApp.Models.Tag", "Tag")
+                        .WithMany("ContentTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_User_Like_ID");
+                        .HasConstraintName("FK_ContentTags_Tags");
 
-                    b.Navigation("CommLike");
+                    b.Navigation("Content");
 
-                    b.Navigation("UserLike");
+                    b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Image", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.Media", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.Section", "SectionImage")
-                        .WithMany("Images")
-                        .HasForeignKey("SectionImageId")
+                    b.HasOne("VanitasStudios_WebApp.Models.Section", "Section")
+                        .WithMany("MediaElements")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_Section_Image_ID");
+                        .HasConstraintName("FK_Media_Sections");
 
-                    b.Navigation("SectionImage");
+                    b.Navigation("Section");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Promotion", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "AdminPromoter")
-                        .WithMany()
-                        .HasForeignKey("AdminPromoterId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Admin_Promoter_ID");
-
                     b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "Promoted")
-                        .WithMany()
+                        .WithMany("ReceivedPromotions")
                         .HasForeignKey("PromotedId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_Promoted_ID");
+                        .HasConstraintName("FK_Promotions_Users_Promoted");
 
-                    b.Navigation("AdminPromoter");
+                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "Promoter")
+                        .WithMany("GrantedPromotions")
+                        .HasForeignKey("PromoterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Promotions_Users_Promoter");
 
                     b.Navigation("Promoted");
+
+                    b.Navigation("Promoter");
+                });
+
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.SearchHistory", b =>
+                {
+                    b.HasOne("VanitasStudios_WebApp.Models.Content", "ResultContent")
+                        .WithMany()
+                        .HasForeignKey("ResultContentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VanitasStudios_WebApp.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ResultContent");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Section", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.Content", "ContentS")
+                    b.HasOne("VanitasStudios_WebApp.Models.Content", "Content")
                         .WithMany("Sections")
-                        .HasForeignKey("ContentSId")
+                        .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_Content_S_ID");
+                        .HasConstraintName("FK_Sections_Contents");
 
-                    b.Navigation("ContentS");
+                    b.Navigation("Content");
                 });
 
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Video", b =>
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.StatisticalWeights", b =>
                 {
-                    b.HasOne("VanitasStudios_WebApp.Models.Image", "ImageVideo")
-                        .WithOne("Video")
-                        .HasForeignKey("VanitasStudios_WebApp.Models.Video", "ImageVideoId")
+                    b.HasOne("VanitasStudios_WebApp.Models.Content", "Content")
+                        .WithMany()
+                        .HasForeignKey("ContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VanitasStudios_WebApp.Models.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Content");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.TagSynonym", b =>
+                {
+                    b.HasOne("VanitasStudios_WebApp.Models.Tag", "Tag")
+                        .WithMany("Synonyms")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_Image_Video_ID");
+                        .HasConstraintName("FK_TagSynonyms_Tags");
 
-                    b.HasOne("VanitasStudios_WebApp.Models.Section", "SectionVideo")
-                        .WithMany("Videos")
-                        .HasForeignKey("SectionVideoId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Section_Video_ID");
-
-                    b.Navigation("ImageVideo");
-
-                    b.Navigation("SectionVideo");
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("AdminLogs");
+
+                    b.Navigation("AuthoredArticles");
+
                     b.Navigation("Comments");
 
-                    b.Navigation("Contents");
+                    b.Navigation("GivenCommentLikes");
 
-                    b.Navigation("Evaluates");
+                    b.Navigation("GrantedPromotions");
+
+                    b.Navigation("ReceivedPromotions");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Comment", b =>
                 {
-                    b.Navigation("Evaluates");
+                    b.Navigation("CommentLikes");
 
-                    b.Navigation("InverseAnswer");
+                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Content", b =>
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("Sections");
-                });
+                    b.Navigation("ContentTags");
 
-            modelBuilder.Entity("VanitasStudios_WebApp.Models.Image", b =>
-                {
-                    b.Navigation("Video");
+                    b.Navigation("Sections");
                 });
 
             modelBuilder.Entity("VanitasStudios_WebApp.Models.Section", b =>
                 {
-                    b.Navigation("Images");
+                    b.Navigation("MediaElements");
+                });
 
-                    b.Navigation("Videos");
+            modelBuilder.Entity("VanitasStudios_WebApp.Models.Tag", b =>
+                {
+                    b.Navigation("ContentTags");
+
+                    b.Navigation("Synonyms");
                 });
 #pragma warning restore 612, 618
         }

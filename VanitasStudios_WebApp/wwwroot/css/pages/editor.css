@@ -1,0 +1,109 @@
+﻿/* ==========================================
+   VANITAS STUDIOS - WRITER & EDITOR STYLES (REM)
+   ========================================== */
+
+:root {
+    --site-navbar-height: 3.5rem; /* Stessa identica proporzione della dashboard */
+}
+
+/* Evita che l'editor venga coperto dalla navbar del sito */
+.editor-page-wrapper {
+    margin-top: calc(var(--site-navbar-height) + 1rem) !important;
+    min-height: calc(100vh - var(--site-navbar-height) - 2rem);
+}
+
+/* Stile dell'area di foglio di scrittura (Stile Word/Medium professionale) */
+#editor {
+    outline: none;
+    font-family: 'Georgia', Cambria, "Times New Roman", Times, serif;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #222;
+    min-height: 60vh;
+}
+
+/* Struttura interna delle sezioni editabili */
+.editor-section {
+    position: relative;
+    transition: background-color 0.2s ease;
+    border-radius: 0.35rem;
+}
+
+    .editor-section:hover {
+        border: 1px solid blue;
+    }
+
+/* Badge del titolo sezione modificato per non sembrare un normale bottone */
+.section-title-badge {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05rem;
+    text-uppercase: true;
+    font-size: 0.75rem;
+}
+
+/* Indicatore visivo dello stato di salvataggio automatico */
+.status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: #28a745; /* Verde salvato */
+    transition: background-color 0.3s ease;
+}
+
+    .status-dot.saving {
+        background-color: #ffc107; /* Giallo in corso */
+        animation: pulse 1s infinite alternate;
+    }
+
+@keyframes pulse {
+    0% {
+        opacity: 0.4;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Personalizzazione della lista indice strutturale */
+.custom-structure-list li {
+    padding: 0.4rem 0.5rem;
+    border-left: 2px solid #dee2e6;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-truncate: ellipsis;
+}
+
+/* Forza lo stile dell'input del titolo */
+#main-title {
+    font-weight: 700;
+    letter-spacing: -0.02rem;
+}
+
+/* Modifica la regola nel tuo file CSS */
+#tagSuggestionsMenu {
+    display: none;
+    position: absolute;
+    /* TRUCCO: Invertiamo l'apertura verso l'alto */
+    bottom: 100% !important;
+    top: auto !important;
+    margin-bottom: 0.5rem; /* Distanza minima dall'input */
+
+    left: 0;
+    z-index: 9999 !important;
+    width: 100%;
+    background-color: #ffffff;
+    box-shadow: 0 -0.5rem 1rem rgba(0, 0, 0, 0.15) !important; /* Ombra invertita verso l'alto */
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+/* Assicuriamo che il contenitore della ricerca non blocchi l'altezza */
+.style-tags-search {
+    position: relative;
+}

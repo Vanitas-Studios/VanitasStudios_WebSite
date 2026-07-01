@@ -1,234 +1,183 @@
 ﻿@page
+@using VanitasStudios_WebApp.Models
 @model VanitasStudios_WebApp.Pages.Add_ContentModel
 @{
+    ViewData["Title"] = "Editor Contenuti";
+}
+@Html.AntiForgeryToken();
+
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/pages/editor.css" asp-append-version="true" />
 }
 
+<input type="hidden" id="ArticleId" value="@Model.ArticleId" />
 
-<section class="editor-container">
-   <form method="post">
+<section id="editor-page" class="editor-page-wrapper container-xl p-3 px-4 d-flex flex-column">
 
-        <!-- <select id="content-type-select" asp-for="ContentType" class="form-select bg-dark text-light border-secondary" aria-label="Select the type of content">
-                    <option selected>Choose type document</option>
-                    <option value="Doc">Documentation</option>
-                    <option value="Blog">Article</option>
-             </select>-->
-
-        <input type="text" id="article-title" asp-for="@Model.Section.Title" placeholder="Titolo dell'opera..." />
-
-        <div class="editor-wrapper" style="display: flex; gap: 20px; position: relative;">
-            <textarea id="markdown-editor" name="Content" asp-for="@Model.Section.Content" style="flex-grow: 1; height: 500px; font-family: monospace;"></textarea>
-
-            <div id="drop-overlay" class="drop-zone-overlay">
-                <div class="overlay-content">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Rilascia il file per caricarlo nel documento</p>
-                </div>
-            </div>
-
-            <aside id="section-checklist" style="width: 200px;">
-                <h4>Struttura Vanitas</h4>
-                <ul id="checklist-items">
-                </ul>
-                <h4>Media Allegati</h4>
-                <ul id="media-list" class="media-management-list">
-                </ul>
-            </aside>
+    <div class="row align-items-center g-3 mb-3 pb-3 border-bottom">
+        <div class="col-md-8 col-lg-9">
+            <label class="fw-bold text-uppercase text-muted small d-block mb-1">Titolo Articolo</label>
+            <input type="text" id="main-title" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Inserisci il titolo dell'articolo..." />
         </div>
-        <div class="tags-mvp-container mt-4 p-3 border border-secondary rounded bg-dark">
-            <label class="text-secondary small d-block mb-2 text-uppercase fw-bold">Associa Tag al Contenuto</label>
 
-            <div id="tag-area" class="mt-4">
-                <label>Tag disponibili:</label>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var tag in Model.AvailableTags)
+        <div class="col-md-4 col-lg-3">
+            <div class="border rounded p-2 bg-light d-flex align-items-center gap-2 shadow-sm" style="height: calc(2.75rem + 2px);">
+                <div class="flex-grow-1 min-width-0">
+                    <h6 class="m-0 fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">Immagine di Copertina</h6>
+                    <span id="cover-status-text" class="text-truncate d-block text-muted small" style="font-size: 0.75rem;">
+                        @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "Nessuna immagine" : "Immagine presente")
+                    </span>
+                </div>
+
+                <div class="position-relative" style="width: 50px; height: 100%;">
+                    <img id="coverPreview" src="@Model.CurrentContent?.CoverImageUrl"
+                         alt="Preview" class="img-fluid rounded border position-absolute top-50 start-50 translate-middle"
+                         style="max-height: 100%; max-width: 100%; object-fit: cover; display: @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "none" : "block");" />
+
+                    <div id="coverPlaceholder" class="text-muted text-center border border-dashed rounded position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex align-items-center justify-content-center"
+                         style="display: @(string.IsNullOrEmpty(Model.CurrentContent?.CoverImageUrl) ? "flex" : "none"); background: #eee;">
+                        <i class="bi bi-image" style="font-size: 1rem;"></i>
+                    </div>
+                </div>
+
+                <input type="file" id="coverFileInput" accept="image/*" class="d-none" onchange="uploadArticleCover()" />
+                <button type="button" class="btn btn-sm btn-dark px-2" onclick="document.getElementById('coverFileInput').click()" title="Carica Copertina">
+                    <i class="bi bi-upload"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="save-status-container" class="d-flex align-items-center mb-3 text-muted" style="font-size: 0.85rem;">
+        <span id="save-status-dot" class="status-dot me-2"></span>
+        <span id="save-status-text">Tutte le modifiche salvate</span>
+    </div>
+
+    <div class="row flex-grow-1 g-4 overflow-hidden">
+
+        <div class="col-lg-9 d-flex flex-column mb-3" style="min-height: 50vh;">
+            <div id="editor" contenteditable="true" class="form-control p-4 bg-white shadow-sm rounded overflow-auto flex-grow-1" style="border-color: #dee2e6;">
+                @if (Model.CurrentContent?.Sections != null && Model.CurrentContent.Sections.Any())
+                {
+                    @foreach (var sezione in Model.CurrentContent.Sections.OrderBy(s => s.Order))
                     {
-                        <span class="badge border border-secondary p-2 tag-item" data-id="@tag.IdT">
-                            #@tag.TagName
-                        </span>
+                        <div class="editor-section mb-4" data-section-id="@sezione.Id">
+                            <span class="badge bg-primary mb-2 px-3 py-2 section-title-badge" contenteditable="false">
+                                @(sezione.Title ?? "Sezione senza titolo")
+                            </span>
+                            <div class="section-content p-2 border-start border-2 border-light" contenteditable="true">
+                                @Html.Raw(sezione.HtmlText ?? "<br>")
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <br>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-3 d-flex flex-column gap-3">
+
+            <div class="publish-zone p-3 border rounded bg-light shadow-sm">
+                <h6 class="fw-bold text-uppercase text-muted mb-2" style="font-size: 0.75rem;">Stato Contenuto</h6>
+                <div class="mb-3">
+                    @if (Model.CurrentContent.PublishState == PublishState.Pubblico)
+                    {
+                        <span class="badge bg-success w-100 py-2 fs-7">Pubblicato il @Model.CurrentContent.UpdatedAt?.ToString("dd/MM/yyyy")</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark w-100 py-2 fs-7">Bozza (Autosalvato)</span>
                     }
                 </div>
+
+                @if (Model.CurrentContent.PublishState == PublishState.Bozza)
+                {
+                    <button type="button" class="btn btn-primary w-100 shadow-sm mb-2" onclick="changeContentStatus('Publish')">
+                        <i class="bi bi-globe me-1"></i> Metti Online
+                    </button>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-success w-100 shadow-sm" onclick="changeContentStatus('Update')">
+                            <i class="bi bi-check-circle me-1"></i> Aggiorna
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="changeContentStatus('ToDraft')">
+                            <i class="bi bi-eye-slash me-1"></i> Riporta a Bozza
+                        </button>
+                    </div>
+                }
+
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="contentPreview()">
+                    <i class="bi bi-eye"></i> Anteprima Veloce
+                </button>
+            </div>
+
+            <div class="p-3 border rounded bg-light shadow-sm flex-grow-1 overflow-auto" style="max-height: 250px;">
+                <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem;">Vanitas Structure</h6>
+                <ul id="editor-structure" class="list-unstyled custom-structure-list">
+                </ul>
+            </div>
+
+            <div class="p-3 border rounded bg-light shadow-sm">
+                <label class="fw-bold text-uppercase text-muted small d-block mb-2" style="font-size: 0.75rem;">Tag Articolo</label>
+
+                <div id="selected-tags-container" class="d-flex flex-wrap gap-1 mb-2">
+                    @if (Model.CurrentContent?.ContentTags != null)
+                    {
+                        foreach (var ct in Model.CurrentContent.ContentTags)
+                        {
+                            <span class="badge bg-secondary d-flex align-items-center gap-1 p-2" data-tag-id="@ct.TagId" style="font-size: 0.75rem;">
+                                @ct.Tag.Name
+                                <span style="cursor: pointer;" class="ms-1 fw-bold text-danger" onclick="removeTagBlock(this, @ct.TagId)">&#x2715;</span>
+                            </span>
+                        }
+                    }
+                </div>
+
+                <div class="position-relative style-tags-search">
+                    <input type="text" id="tagSearchInput" class="form-control form-control-sm" placeholder="Cerca tag..." autocomplete="off" />
+                    <ul id="tagSuggestionsMenu" class="dropdown-menu w-100 shadow-sm"></ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="DocumentPreview" tabindex="-1" aria-labelledby="Article" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="Article">Anteprima Articolo (Vanitas Style)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="sectionsBodyContent" style="height: 75vh; padding: 0; background: #121212;">
+                </div>
             </div>
         </div>
-        <div class="editor-actions">
-            <button type="submit" name="publish" value="false" class="btn-secondary">
-                Salva Bozza
-            </button>
+    </div>
 
-            <button type="submit" name="publish" value="true" class="btn-primary" asp-page-handler="SaveContent">
-                Pubblica
-            </button>
-        </div>
-   </form>
 </section>
 
 @section Scripts {
+    <script src="~/js/editor_logic_mastery.js" asp-append-version="true"></script>
+
     <script>
-        // 1. VARIABILI GLOBALI
-        let editor, checklist, typeSelect, form;
-        let haIntro = false;
-        let haConcl = false;
 
-        // 2. FUNZIONI DI UTILITÀ
-        function updateChecklist() {
-            if (!editor || !checklist) return;
-            const testo = editor.value;
-            haIntro = false;
-            haConcl = false;
-            let nomeIntroTrovato = "Introduzione";
-            let nomeConcluTrovata = "Conclusione";
-            const sezioniExtra = [];
-            const righe = testo.split('\n');
-
-            righe.forEach(riga => {
-                if (riga.startsWith('##')) {
-                    const titolo = riga.replace('##', '').trim();
-                    if (titolo.startsWith("Introduzione")) { haIntro = true; nomeIntroTrovato = titolo; }
-                    else if (titolo.startsWith("Conclusione")) { haConcl = true; nomeConcluTrovata = titolo; }
-                    else if (titolo !== "") { sezioniExtra.push(titolo); }
-                }
-            });
-
-            checklist.innerHTML = "";
-            renderItem(nomeIntroTrovato, haIntro, true);
-            sezioniExtra.forEach(s => renderItem(s, true, false));
-            renderItem(nomeConcluTrovata, haConcl, true);
-        }
-
-        function renderItem(nome, presente, isPilastro) {
-            const li = document.createElement('li');
-            li.textContent = (isPilastro ? (presente ? "✓ " : "✗ ") : "• ") + nome;
-            li.style.color = isPilastro ? (presente ? "#4caf50" : "#ff5252") : "#bbb";
-            if (isPilastro) li.style.fontWeight = "bold";
-            checklist.appendChild(li);
-        }
-
-        function autoSave() {
-            if (!editor) return;
-            const data = {
-                title: document.getElementById("article-title").value,
-                content: editor.value,
-                type: typeSelect.value
-            };
-            localStorage.setItem("vanitas_draft", JSON.stringify(data));
-        }
-
-        function rebuildMediaList(text) {
-            const mediaList = document.getElementById("media-list");
-            if (!mediaList) return;
-            mediaList.innerHTML = "";
-            const regex = /\[(img|video);\s*src="([^"]+)",\s*alt="([^"]+)"[^\]]*\]/g;
-            let match;
-            while ((match = regex.exec(text)) !== null) {
-                const li = document.createElement("li");
-                li.innerHTML = `<span>${match[3]}</span><button type="button" onclick="deleteMedia('${match[2]}', this)" class="btn-delete-small">×</button>`;
-                mediaList.appendChild(li);
-            }
-        }
-
-        async function deleteMedia(fileUrl, buttonElement) {
-            if (!confirm("Eliminare definitivamente il file?")) return;
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-            const response = await fetch(`?handler=DeleteMedia&fileUrl=${encodeURIComponent(fileUrl)}`, {
-                method: 'POST',
-                headers: { "RequestVerificationToken": token }
-            });
-            if (response.ok) {
-                buttonElement.parentElement.remove();
-                const escapedUrl = fileUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                editor.value = editor.value.replace(new RegExp(`\n?\\[(img|video);\\s*src="${escapedUrl}".*?\\]\n?`, "g"), "");
-                updateChecklist();
-                autoSave();
-            }
-        }
-
-        // 3. INIZIALIZZAZIONE DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            editor = document.getElementById("markdown-editor");
-            checklist = document.getElementById("checklist-items");
-            typeSelect = document.getElementById("content-type-select");
-            form = document.querySelector('form');
-            const wrapper = document.querySelector('.editor-wrapper');
-            const overlay = document.getElementById('drop-overlay');
-
-            const defaultTemplate = "##Introduzione: [Titolo]\n\n[Testo]\n\n##Conclusione: [Titolo]\n\n[Fine]";
-            const savedData = localStorage.getItem("vanitas_draft");
-
-            // Ripristino o Template
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                if (confirm("📋 Ripristinare la bozza non salvata?")) {
-                    document.getElementById("article-title").value = data.title;
-                    editor.value = data.content;
-                    typeSelect.value = data.type;
-                    if (data.type !== "") typeSelect.disabled = true;
-                } else {
-                    localStorage.removeItem("vanitas_draft");
-                    editor.value = defaultTemplate;
-                }
-            } else if (editor.value.trim() === "") {
-                editor.value = defaultTemplate;
-            }
-
-            updateChecklist();
-            rebuildMediaList(editor.value);
-
-            // Listeners base
-            editor.addEventListener("input", () => { updateChecklist(); autoSave(); });
-            document.getElementById("article-title").addEventListener("input", autoSave);
-            typeSelect.addEventListener("change", autoSave);
-
-            // 4. LOGICA DROP (Spostata qui dentro per usare le variabili locali)
-            wrapper.addEventListener('dragenter', (e) => { e.preventDefault(); overlay.classList.add('active'); });
-            overlay.addEventListener('dragover', (e) => { e.preventDefault(); });
-            overlay.addEventListener('dragleave', (e) => { overlay.classList.remove('active'); });
-
-            overlay.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                overlay.classList.remove('active');
-
-                //if (!typeSelect.value || typeSelect.value === "") {
-                    //alert("⚠️ Seleziona prima il Type Document!");
-                    //typeSelect.focus();
-                    //return;
-                //}
-
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
-
-                const formData = new FormData();
-                formData.append("file", file);
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-                try {
-                    const response = await fetch(`?handler=UploadMedia`, {
-                        method: 'POST',
-                        headers: { "RequestVerificationToken": token },
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        const tag = `\n\n[${file.type.startsWith("video/") ? 'video' : 'img'}; src="${data.url}", alt="${data.alt}", type="${data.extension}"]\n\n`;
-
-                        const start = editor.selectionStart;
-                        editor.value = editor.value.substring(0, start) + tag + editor.value.substring(editor.selectionEnd);
-
-                        typeSelect.disabled = true;
-                        rebuildMediaList(editor.value);
-                        updateChecklist();
-                        autoSave();
-                        editor.focus();
-                    }
-                } catch (err) { console.error(err); }
-            });
-
-            form.addEventListener('submit', (e) => {
-                if (e.submitter?.value === "true" && (!haIntro || !haConcl)) {
-                    e.preventDefault();
-                    alert("⚠️ Struttura incompleta!");
-                    return;
-                }
-                localStorage.removeItem("vanitas_draft");
+        document.addEventListener("DOMContentLoaded", function() {
+            initMyEditor({
+                editorId: 'editor',
+                sidebarId: 'editor-structure',
+                articleId: '@Model.ArticleId',
+                lastModified: '@Model.LastModified.ToString("yyyy-MM-ddTHH:mm:ss")',
+                tagInput: 'tagSearchInput',
+                suggestionsMenu: 'tagSuggestionsMenu',
+                tagsContainer: 'selected-tags-container',
+                mainTitle: 'main-title'
             });
         });
     </script>
