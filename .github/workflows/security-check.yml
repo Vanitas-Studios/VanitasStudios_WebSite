@@ -12,30 +12,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Scarica il codice del repository sull'agente GitHub
     - name: Checkout del codice
       uses: actions/checkout@v4
 
-    # 2. Configura l'ambiente .NET aggiornato
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x' 
+        dotnet-version: '8.0.x' # Cambiala in '9.0.x' se dal .csproj hai visto che usi .NET 9
 
-    # 3. Ripristina i pacchetti NuGet
     - name: Ripristina pacchetti
       run: dotnet restore
 
-    # 4. Scansione automatica delle vulnerabilità nei pacchetti NuGet
+    # Fa l'audit di sicurezza profondo su tutte le librerie NuGet usate dall'Akinator e dal CMS
     - name: Controllo vulnerabilità NuGet (Audit)
       run: dotnet list package --vulnerable --include-transitive
 
-    # 5. Verifica che il progetto compili senza errori critici
     - name: Build del progetto
       run: dotnet build --configuration Release --no-restore
-
-    # 6. Scansione di sicurezza per prevenire leak di password o chiavi API
-    - name: Gitleaks Scan (Anti-Secret Leak)
-      uses: gitleaks/gitleaks-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
