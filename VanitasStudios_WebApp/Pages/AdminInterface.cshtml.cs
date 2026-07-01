@@ -223,14 +223,16 @@ namespace VanitasStudios_WebApp.Pages
 
                 var recentQueries = await _context.SearchHistories
                     .AsNoTracking()
+                    .Include(s => s.User)
+                    .Include(s => s.ResultContent)
                     .OrderByDescending(s => s.Timestamp)
                     .Take(15)
                     .Select(s => new SearchHistoryRowDto(
                         s.User != null ? s.User.UserName : "Ospite Anonimo",
                         s.Timestamp,
-                        s.QueryTags.Replace("[", "").Replace("]", "").Replace("\"", ""),
+                        !string.IsNullOrEmpty(s.QueryTags) ? s.QueryTags.Replace("[", "").Replace("]", "").Replace("\"", "") : "Esplorazione",
                         s.IsSuccessful,
-                        s.ResultContent != null ? s.ResultContent.Title : null
+                        s.ResultContent != null ? s.ResultContent.Title : "Articolo Sconosciuto"
                     ))
                     .ToListAsync();
 

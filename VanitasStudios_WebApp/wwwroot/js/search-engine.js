@@ -149,39 +149,37 @@ async function commitToServer(handlerName, payload = null, method = 'GET') {
 
 // 🎯 NUOVA FUNZIONE: Ascoltatore centralizzato per incrementare il valore dei saggi cercati
 function setupTrackingListener() {
-    // Intercettiamo i clic su tutto il documento per catturare anche le card generate a runtime
     document.addEventListener("click", async function (e) {
         const trackableLink = e.target.closest(".blog-trackable-link");
 
         if (trackableLink) {
+            e.preventDefault(); // Blocca il comportamento nativo del link
+
+            const contentId = trackableLink.getAttribute("data-content-id");
+            const destinationUrl = trackableLink.getAttribute("href");
             const currentSearchValue = searchInput ? searchInput.value.trim() : "";
 
-            // 🎯 AGGIORNATO: Usiamo activeTags.length invece di activeTagIds.length
-            if (currentSearchValue !== "" || activeTags.length > 0) {
-                e.preventDefault(); // Congela momentaneamente lo spostamento di pagina
+            let trackingPayload = {
+                textSearch: currentSearchValue,
+                tags: []
+            };
 
-                const contentId = trackableLink.getAttribute("data-content-id");
-                const destinationUrl = trackableLink.getAttribute("href");
+            if (activeTags && activeTags.length > 0) {
+                trackingPayload.tags = activeTags.map(t => ({ id: t.id, name: t.name }));
+            }
 
-                // Prepariamo i dati strutturati per l'handler POST
-                const formData = new FormData();
-                formData.append("articleId", contentId);
+            const formData = new FormData();
+            formData.append("articleId", contentId);
+            formData.append("searchQuery", JSON.stringify(trackingPayload));
 
-                // 🎯 AGGIORNATO: Estraiamo al volo gli ID degli oggetti dentro activeTags per fare il join
-                const tagIdsArray = activeTags.map(t => t.id);
-
-                // Se la ricerca è testuale invia il testo, altrimenti invia la nota sui tag attivi
-                formData.append("searchQuery", currentSearchValue !== "" ? currentSearchValue : `[Filtro Tag Attivi: ${tagIdsArray.join(',')}]`);
-
-                try {
-                    // Utilizziamo la tua funzione nativa commitToServer per la POST
-                    await commitToServer("RecordSearchSuccess", formData, 'POST');
-                } catch (err) {
-                    console.error("Errore durante il salvataggio delle metriche:", err);
-                } finally {
-                    // Reindirizza l'utente in ogni caso (anche se la chiamata fallisce)
-                    window.location.href = destinationUrl;
-                }
+            try {
+                // Aspetta che il server risponda OK
+                await commitToServer("RecordSearchSuccess", formData, 'POST');
+            } catch (err) {
+                console.error("Errore durante il salvataggio delle metriche:", err);
+            } finally {
+                // 🚀 Reindirizzamento immediato e pulito non appena la POST si conclude
+                window.location.href = destinationUrl;
             }
         }
     });

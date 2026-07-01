@@ -10,6 +10,7 @@ using VanitasStudios_WebApp.Service;
 
 namespace VanitasStudios_WebApp.Pages
 {
+    [IgnoreAntiforgeryToken]
     public class BlogModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -20,6 +21,19 @@ namespace VanitasStudios_WebApp.Pages
 
         // Un dizionario che raggruppa gli articoli per il nome della macro-categoria
         public Dictionary<string, List<Content>> CategorizedContents { get; set; } = new();
+
+        // Classe di supporto per mappare il payload in arrivo dal JS
+        public class TrackingPayload
+        {
+            public string textSearch { get; set; } = string.Empty;
+            public List<TagPayload> tags { get; set; } = new();
+        }
+
+        public class TagPayload
+        {
+            public int id { get; set; }
+            public string name { get; set; } = string.Empty;
+        }
 
         public BlogModel(ApplicationDbContext context, IAkinatorSearchService searchService)
         {
@@ -74,7 +88,6 @@ namespace VanitasStudios_WebApp.Pages
             return new JsonResult(result);
         }
 
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> OnPostRecordSearchSuccessAsync(int articleId, string searchQuery)
         {
             if (articleId <= 0 || string.IsNullOrWhiteSpace(searchQuery))
@@ -84,14 +97,14 @@ namespace VanitasStudios_WebApp.Pages
 
             try
             {
-                // 1. Recuperiamo il saggio dal database
+                // 1. Recuperiamo l'articolo dal database
                 var articolo = await _context.Contents.FindAsync(articleId);
                 if (articolo == null)
                 {
                     return NotFound(new { error = "Frammento non trovato." });
                 }
 
-                // 2. Incrementiamo direttamente il GlobalScore dell'articolo (+1.0f o una frazione)
+                // 2. Incrementiamo il GlobalScore dell'articolo
                 articolo.GlobalScore += 1.0f;
                 articolo.UpdatedAt = DateTime.UtcNow;
 
@@ -106,11 +119,28 @@ namespace VanitasStudios_WebApp.Pages
                     }
                 }
 
+                // Deserializziamo il payload strutturato inviato dal JS
+                var payload = System.Text.Json.JsonSerializer.Deserialize<TrackingPayload>(searchQuery);
+
+                // Prepariamo la stringa dei tag ottimizzata per la visualizzazione dell'Admin
+                string adminDisplayString = "";
+                if (payload != null && payload.tags.Any())
+                {
+                    // Uniamo i nomi dei tag separati da virgola, racchiusi in parentesi quadre (Es: [Elden Ring, Lore])
+                    adminDisplayString = $"[{string.Join(", ", payload.tags.Select(t => t.name))}]";
+                }
+                else
+                {
+                    adminDisplayString = !string.IsNullOrWhiteSpace(payload?.textSearch)
+                        ? $"[\"{payload.textSearch}\"]"
+                        : "[Esplorazione Casuale]";
+                }
+
                 // 4. Registriamo la ricerca nella cronologia generale
                 var searchRecord = new SearchHistory
                 {
                     UserId = currentUserId,
-                    QueryTags = searchQuery,
+                    QueryTags = adminDisplayString, // Salvato in formato leggibile per la parziale Analytics dell'Admin
                     ResultContentId = articleId,
                     IsSuccessful = true,
                     Timestamp = DateTime.UtcNow
@@ -118,50 +148,40 @@ namespace VanitasStudios_WebApp.Pages
                 _context.SearchHistories.Add(searchRecord);
 
                 // 5. AGGIORNAMENTO PESI AKINATOR (StatisticalWeights)
-                // Se la query inviata dal JS contiene i tag attivi (es. "[Filtro Tag Attivi: 3,5]") li andiamo a premiare
-                if (searchQuery.Contains("[Filtro Tag Attivi:"))
+                if (payload != null && payload.tags.Any())
                 {
-                    // Estraiamo i numeri dei tag dalla stringa usando un po' di manipolazione di stringhe
-                    var cleanTags = searchQuery.Replace("[Filtro Tag Attivi:", "").Replace("]", "").Trim();
-                    var tagIdsString = cleanTags.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-                    foreach (var tagIdStr in tagIdsString)
+                    foreach (var tagObj in payload.tags)
                     {
-                        if (int.TryParse(tagIdStr.Trim(), out int activeTagId))
-                        {
-                            // Cerchiamo se esiste già un record di peso per questa accoppiata Tag-Contenuto
-                            var weightRecord = await _context.StatisticalWeights
-                                .FirstOrDefaultAsync(w => w.TagId == activeTagId && w.ContentId == articleId);
+                        // Cerchiamo se esiste già il record di peso usando direttamente il TagId numerico sicuro
+                        var weightRecord = await _context.StatisticalWeights
+                            .FirstOrDefaultAsync(w => w.TagId == tagObj.id && w.ContentId == articleId);
 
-                            if (weightRecord != null)
+                        if (weightRecord != null)
+                        {
+                            weightRecord.PopularityWeight += 1;
+                        }
+                        else
+                        {
+                            var newWeight = new StatisticalWeights
                             {
-                                // Se esiste, incrementiamo il contatore cumulativo dei click
-                                weightRecord.PopularityWeight += 1;
-                            }
-                            else
-                            {
-                                // Se non esiste ancora una correlazione pesata, la creiamo da zero
-                                var newWeight = new StatisticalWeights
-                                {
-                                    TagId = activeTagId,
-                                    ContentId = articleId,
-                                    PopularityWeight = 1
-                                };
-                                _context.StatisticalWeights.Add(newWeight);
-                            }
+                                TagId = tagObj.id,
+                                ContentId = articleId,
+                                PopularityWeight = 1
+                            };
+                            _context.StatisticalWeights.Add(newWeight);
                         }
                     }
                 }
 
-                // 6. Salviamo tutte le modifiche in un'unica transazione atomica sul database
+                // 6. Salviamo le modifiche sul database
                 await _context.SaveChangesAsync();
 
                 return new JsonResult(new { success = true, newGlobalScore = articolo.GlobalScore });
             }
             catch (Exception ex)
             {
-                // Inserisci un eventuale logger qui
-                return StatusCode(500, new { error = "Errore durante l'aggiornamento dei pesi statistici." });
+                System.Diagnostics.Debug.WriteLine($"[ERROR RECORD SEARCH SUCCESS]: {ex.Message}");
+                return StatusCode(500, new { error = "Errore durante l'aggiornamento delle metriche dell'algoritmo." });
             }
         }
 
