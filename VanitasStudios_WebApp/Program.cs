@@ -13,8 +13,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// Attiva l'ottimizzatore di codice
+builder.Services.AddWebOptimizer(pipeline =>
+{
+    // Minifica tutti i file JavaScript e CSS rimuovendo commenti e spazi
+    pipeline.MinifyJsFiles();
+    pipeline.MinifyCssFiles();
+});
+
+// Registra l'HttpClient e dice a Identity di usare il tuo EmailService per ApplicationUser
+builder.Services.AddHttpClient<IEmailSender<ApplicationUser>, EmailService>();
+
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(options => {
-    options.SignIn.RequireConfirmedAccount = false; // Da impostare a vero, per maggiore sicurezza
+    options.SignIn.RequireConfirmedAccount = true; // Da impostare a vero, per maggiore sicurezza
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultUI()
@@ -35,6 +46,11 @@ else
     app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+}
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseWebOptimizer();
 }
 
 app.UseHttpsRedirection();
