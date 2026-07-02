@@ -63,7 +63,7 @@ namespace VanitasStudios_WebApp.Service
             var requestUri = "https://api.resend.com/emails";
             var payload = new
             {
-                from = "Vanitas Studios <onboarding@resend.dev>",
+                from = "Vanitas Studios <noreply@vanitas-studios.com>", // Usa un indirizzo del dominio verificato
                 to = new[] { message.To },
                 subject = message.Subject,
                 html = message.Body
