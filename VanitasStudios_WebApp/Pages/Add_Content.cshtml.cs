@@ -147,23 +147,23 @@ namespace VanitasStudios_WebApp.Pages
                 return RedirectToPage(new { id = CurrentContent.Id });
             }
 
-            // Seed dei tag di test se il database è vuoto
-            if (!await _context.Tags.AnyAsync())
-            {
-                var tagDiTest = new List<Tag>
-                {
-                    new() { Name = "Calisthenics", CategoryGroup = "Allenamento" },
-                    new() { Name = "Programmazione", CategoryGroup = "Tech" },
-                    new() { Name = "C#", CategoryGroup = "Tech" },
-                    new() { Name = "Game Development", CategoryGroup = "Design" },
-                    new() { Name = "Unity", CategoryGroup = "Design" },
-                    new() { Name = "Minimalism", CategoryGroup = "Art" },
-                    new() { Name = "Dark Fantasy", CategoryGroup = "Scrittura" },
-                    new() { Name = "Web Design", CategoryGroup = "Tech" }
-                };
-                _context.Tags.AddRange(tagDiTest);
-                await _context.SaveChangesAsync();
-            }
+            //// Seed dei tag di test se il database è vuoto
+            //if (!await _context.Tags.AnyAsync())
+            //{
+            //    var tagDiTest = new List<Tag>
+            //    {
+            //        new() { Name = "Calisthenics", CategoryGroup = "Allenamento" },
+            //        new() { Name = "Programmazione", CategoryGroup = "Tech" },
+            //        new() { Name = "C#", CategoryGroup = "Tech" },
+            //        new() { Name = "Game Development", CategoryGroup = "Design" },
+            //        new() { Name = "Unity", CategoryGroup = "Design" },
+            //        new() { Name = "Minimalism", CategoryGroup = "Art" },
+            //        new() { Name = "Dark Fantasy", CategoryGroup = "Scrittura" },
+            //        new() { Name = "Web Design", CategoryGroup = "Tech" }
+            //    };
+            //    _context.Tags.AddRange(tagDiTest);
+            //    await _context.SaveChangesAsync();
+            //}
 
             return Page();
         }
