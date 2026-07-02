@@ -76,6 +76,7 @@ namespace VanitasStudios_WebApp.Service
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
 
             var response = await _httpClient.PostAsync(requestUri, content);
+
             return response.IsSuccessStatusCode;
         }
     }

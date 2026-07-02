@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using VanitasStudios_WebApp.Data;
 using VanitasStudios_WebApp.Models;
+using VanitasStudios_WebApp.Service;
 
 namespace VanitasStudios_WebApp.Pages
 {
@@ -19,6 +20,7 @@ namespace VanitasStudios_WebApp.Pages
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
+        private readonly CloudinaryService _cloudinaryService;
 
         public int? ArticleId { get; set; }
         public DateTime LastModified { get; set; }
@@ -85,10 +87,11 @@ namespace VanitasStudios_WebApp.Pages
             public string Action { get; set; } = null!;
         }
 
-        public Add_ContentModel(ApplicationDbContext context, IConfiguration config)
+        public Add_ContentModel(ApplicationDbContext context, IConfiguration config, CloudinaryService cloudinaryService)
         {
             _context = context;
             _config = config;
+            _cloudinaryService = cloudinaryService;
         }
 
         // ==========================================
@@ -421,6 +424,7 @@ namespace VanitasStudios_WebApp.Pages
         // ==========================================
         // HANDLER UPLOAD FILE: COVER E MEDIA INTERNI
         // ==========================================
+
         public async Task<IActionResult> OnPostUploadMediaAsync([FromForm] IFormFile file, [FromForm] int articleId, [FromForm] string uploadType, [FromForm] int sectionId)
         {
             if (file == null || file.Length == 0) return BadRequest(new { messaggio = "File vuoto o non valido" });
@@ -434,38 +438,36 @@ namespace VanitasStudios_WebApp.Pages
             var article = await _context.Contents.FirstOrDefaultAsync(c => c.Id == articleId);
             if (article == null) return NotFound(new { messaggio = "Articolo non trovato" });
 
-            string contentType = currentExtension == ".mp4" ? "video" : "image";
-            string subPath = uploadType.ToLower() == "cover"
-                ? Path.Combine("image", "covers")
-                : GenerateFolderPath(contentType, file.FileName);
+            // 1. Determina il tipo di risorsa per Cloudinary
+            string resourceType = currentExtension == ".mp4" ? "video" : "image";
 
-            string? baseroot = _config["ExternalAssetsPath"];
-            if (string.IsNullOrEmpty(baseroot))
+            // 2. Genera il path virtuale delle cartelle su Cloudinary (usando gli slash / invece di Path.Combine)
+            string cloudinaryFolder = "vanitas";
+            if (uploadType.ToLower() == "cover")
             {
-                return StatusCode(500, new { messaggio = "Configurazione ExternalAssetsPath mancante sul server." });
+                cloudinaryFolder += "/covers";
+            }
+            else
+            {
+                string year = DateTime.UtcNow.ToString("yyyy");
+                string monthDay = DateTime.UtcNow.ToString("MM_dd");
+                cloudinaryFolder += $"/{resourceType}/{year}/{monthDay}";
             }
 
-            string fullPath = Path.Combine(baseroot, subPath);
-            if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
-
-            string hashName = GenerateImageHashName(file.FileName + file.Length);
-            string finalName = $"{hashName}{currentExtension}";
-            string physicalSavePath = Path.Combine(fullPath, finalName);
-
-            string webSubPath = subPath.Replace("\\", "/");
-            string publicUrl = $"/media/{webSubPath}/{finalName}";
-
+            // 3. Genera l'Alt Text per l'immagine partendo dal nome file originale
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FileName);
             string[] values = fileNameWithoutExt.Split(new[] { '/', '-', '_', '|', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string imageAlt = string.Join(" ", values);
 
-            // Salvataggio effettivo su disco se l'hash univoco non è presente
-            if (!System.IO.File.Exists(physicalSavePath))
+            // 4. Esegui l'upload su Cloudinary e ottieni l'URL pubblico sicuro (https)
+            string? publicUrl = await _cloudinaryService.UploadMediaAsync(file, cloudinaryFolder, resourceType);
+
+            if (string.IsNullOrEmpty(publicUrl))
             {
-                await using var stream = new FileStream(physicalSavePath, FileMode.Create);
-                await file.CopyToAsync(stream);
+                return StatusCode(500, new { messaggio = "Errore durante il caricamento del file sul cloud storage." });
             }
 
+            // 5. Salva l'URL nel database esattamente come facevi prima
             if (uploadType.ToLower() == "cover")
             {
                 article.CoverImageUrl = publicUrl;
@@ -479,7 +481,7 @@ namespace VanitasStudios_WebApp.Pages
                 {
                     Url = publicUrl,
                     Caption = imageAlt,
-                    Type = MediaType.Image,
+                    Type = currentExtension == ".mp4" ? MediaType.LocalVideo : MediaType.Image, // Agganciato al tuo enum
                     SectionId = sectionId,
                     Order = currentCountInSection + 1
                 };
@@ -487,6 +489,7 @@ namespace VanitasStudios_WebApp.Pages
             }
 
             await _context.SaveChangesAsync();
+
             return new JsonResult(new { success = true, url = publicUrl, alt = imageAlt, extension = currentExtension, uploadType });
         }
 

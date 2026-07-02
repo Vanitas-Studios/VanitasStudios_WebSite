@@ -64,7 +64,7 @@ namespace VanitasStudios_WebApp.Data
                 // Manteniamo la tua precisione e il recupero automatico della data su SQL Server
                 entity.Property(e => e.CreatedAt)
                     .HasPrecision(0)
-                    .HasDefaultValueSql("(getdate())")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnName("CreatedAt");
 
                 // 4. Relazione verso l'Utente (Chi scrive il commento)
@@ -135,7 +135,7 @@ namespace VanitasStudios_WebApp.Data
                 // Manteniamo la tua logica nativa di SQL Server per la data di creazione
                 entity.Property(e => e.CreatedAt)
                     .HasPrecision(0)
-                    .HasDefaultValueSql("(getdate())")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnName("CreatedAt");
 
                 entity.Property(e => e.UpdatedAt)
@@ -205,7 +205,7 @@ namespace VanitasStudios_WebApp.Data
 
                 entity.Property(e => e.PromotedAt)
                     .HasPrecision(0)
-                    .HasDefaultValueSql("(getdate())") // Se ti dimentichi la data, ci pensa SQL Server
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP") // Se ti dimentichi la data, ci pensa SQL Server
                     .HasColumnName("PromotedAt");
 
                 // 4. Configurazione Relazione 1: L'utente promosso
@@ -462,7 +462,7 @@ namespace VanitasStudios_WebApp.Data
                 // Recupero automatico del timestamp su SQL Server con alta precisione
                 entity.Property(e => e.ExecutedAt)
                     .HasPrecision(0)
-                    .HasDefaultValueSql("(getdate())")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnName("ExecutedAt");
 
                 entity.Property(e => e.IpAddress)

@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VanitasStudios_WebApp.Data;
 
 #nullable disable
@@ -18,36 +18,35 @@ namespace VanitasStudios_WebApp.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.24")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                        .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
                 });
@@ -56,18 +55,18 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -80,18 +79,18 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -103,16 +102,16 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -124,10 +123,10 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -139,16 +138,16 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
@@ -159,36 +158,36 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ActionType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("ActionType");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Description");
 
                     b.Property<DateTime>("ExecutedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
+                        .HasColumnType("timestamp(0) with time zone")
                         .HasColumnName("ExecutedAt")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)")
+                        .HasColumnType("character varying(45)")
                         .HasColumnName("IpAddress");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id")
@@ -203,56 +202,56 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -261,8 +260,7 @@ namespace VanitasStudios_WebApp.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                        .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -271,34 +269,34 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("ContentId");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
+                        .HasColumnType("timestamp(0) with time zone")
                         .HasColumnName("CreatedAt")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int?>("ParentCommentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("ParentCommentId");
 
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("Text");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id")
@@ -316,17 +314,17 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("VanitasStudios_WebApp.Models.CommentLike", b =>
                 {
                     b.Property<int>("UserId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("UserId")
                         .HasColumnOrder(1);
 
                     b.Property<int>("CommentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("CommentId")
                         .HasColumnOrder(2);
 
                     b.Property<bool>("IsLike")
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasColumnName("IsLike");
 
                     b.HasKey("UserId", "CommentId")
@@ -341,34 +339,34 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AuthorId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("AuthorId");
 
                     b.Property<string>("CoverImageUrl")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)")
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("CoverImageUrl");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
+                        .HasColumnType("timestamp(0) with time zone")
                         .HasColumnName("CreatedAt")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Description");
 
                     b.Property<DateTime?>("EliminatedAt")
                         .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
+                        .HasColumnType("timestamp(0) with time zone")
                         .HasColumnName("EliminatedAt");
 
                     b.Property<float>("GlobalScore")
@@ -379,29 +377,29 @@ namespace VanitasStudios_WebApp.Migrations
 
                     b.Property<bool>("IsPinned")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("IsPinned");
 
                     b.Property<int>("PublishState")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("PublishState");
 
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
+                        .HasColumnType("character varying(255)")
                         .HasColumnName("Slug");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
+                        .HasColumnType("character varying(255)")
                         .HasColumnName("Title");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
+                        .HasColumnType("timestamp(0) with time zone")
                         .HasColumnName("UpdatedAt");
 
                     b.HasKey("Id")
@@ -415,12 +413,12 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("VanitasStudios_WebApp.Models.ContentTag", b =>
                 {
                     b.Property<int>("ContentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("ContentId")
                         .HasColumnOrder(1);
 
                     b.Property<int>("TagId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("TagId")
                         .HasColumnOrder(2);
 
@@ -442,46 +440,46 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Caption")
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
+                        .HasColumnType("character varying(255)")
                         .HasColumnName("Caption");
 
                     b.Property<bool>("IsThumbnail")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("IsThumbnail");
 
                     b.Property<int>("Order")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("Order");
 
                     b.Property<int>("ReferenceCount")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasDefaultValue(1)
                         .HasColumnName("ReferenceCount");
 
                     b.Property<int>("SectionId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("SectionId");
 
                     b.Property<int>("Type")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Type");
 
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)")
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("Url");
 
                     b.HasKey("Id")
@@ -496,24 +494,24 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("PromotedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
+                        .HasColumnType("timestamp(0) with time zone")
                         .HasColumnName("PromotedAt")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("PromotedId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("PromotedId");
 
                     b.Property<int>("PromoterId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("PromoterId");
 
                     b.HasKey("Id")
@@ -530,32 +528,32 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsSuccessful")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("IsSuccessful");
 
                     b.Property<string>("QueryTags")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("QueryTags");
 
                     b.Property<int?>("ResultContentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("ResultContentId");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("Timestamp");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id")
@@ -572,29 +570,29 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("ContentId");
 
                     b.Property<string>("HtmlText")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Text");
 
                     b.Property<int>("Order")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("Order");
 
                     b.Property<string>("Title")
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
+                        .HasColumnType("character varying(255)")
                         .HasColumnName("Title");
 
                     b.HasKey("Id")
@@ -608,16 +606,16 @@ namespace VanitasStudios_WebApp.Migrations
             modelBuilder.Entity("VanitasStudios_WebApp.Models.StatisticalWeights", b =>
                 {
                     b.Property<int>("TagId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("TagId");
 
                     b.Property<int>("ContentId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("ContentId");
 
                     b.Property<int>("PopularityWeight")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("PopularityWeight");
 
@@ -633,20 +631,20 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CategoryGroup")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("CategoryGroup");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("Name");
 
                     b.HasKey("Id")
@@ -659,19 +657,19 @@ namespace VanitasStudios_WebApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("SynonymName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("SynonymName");
 
                     b.Property<int>("TagId")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("TagId");
 
                     b.HasKey("Id")
