@@ -65,11 +65,11 @@ app.UseStaticFiles();
 
 string folderPath = builder.Configuration["ExternalAssetsPath"] ?? "C:\\Temp\\DefaultAssets";
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(folderPath),
-    RequestPath = "/media"
-});
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(folderPath),
+//    RequestPath = "/media"
+//});
 
 app.UseRouting();
 
