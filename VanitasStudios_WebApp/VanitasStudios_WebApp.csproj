@@ -9,8 +9,6 @@
 
   <ItemGroup>
     <Content Remove="wwwroot\img\background.png" />
-    <Content Remove="wwwroot\img\favicon\FavIcon_VS.ico" />
-    <Content Remove="wwwroot\img\favicon\LogoFavicon.ico" />
     <Content Remove="wwwroot\img\favicon\VS_favicon.ico" />
     <Content Remove="wwwroot\img\Horus.png" />
     <Content Remove="wwwroot\img\Logo.png" />
@@ -35,8 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="wwwroot\img\favicon\FavIcon_VS.ico" />
-    <Resource Include="wwwroot\img\favicon\LogoFavicon.ico" />
     <Resource Include="wwwroot\img\favicon\VS_favicon.ico" />
     <Resource Include="wwwroot\img\Horus.png" />
     <Resource Include="wwwroot\img\Logo.png" />

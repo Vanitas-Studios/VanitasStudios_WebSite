@@ -97,18 +97,24 @@ namespace VanitasStudios_WebApp.Pages
         // ==========================================
         // HANDLER CORE: ON GET
         // ==========================================
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public async Task<IActionResult> OnGetAsync(int? id, string slug )
         {
             if (id.HasValue)
             {
                 // Caricamento articolo esistente con sezioni incluse
                 CurrentContent = await _context.Contents
                     .Include(c => c.Sections)
+                        .ThenInclude(s => s.MediaElements)
                     .Include(c => c.ContentTags)
                         .ThenInclude(ct => ct.Tag)
                     .FirstOrDefaultAsync(m => m.Id == id);
 
                 if (CurrentContent == null) return NotFound();
+
+                if(CurrentContent.Slug != slug)
+                {
+                    return RedirectToPagePermanent("/Editor", new { id = CurrentContent.Id, slug = CurrentContent.Slug });
+                }
 
                 LastModified = CurrentContent.UpdatedAt ?? DateTime.UtcNow;
                 ArticleId = id;

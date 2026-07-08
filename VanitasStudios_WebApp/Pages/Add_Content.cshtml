@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "/Editor/{id:int}/{slug}"
 @using VanitasStudios_WebApp.Models
 @model VanitasStudios_WebApp.Pages.Add_ContentModel
 @{
@@ -18,7 +18,7 @@
     <div class="row align-items-center g-3 mb-3 pb-3 border-bottom">
         <div class="col-md-8 col-lg-9">
             <label class="fw-bold text-uppercase text-muted small d-block mb-1">Titolo Articolo</label>
-            <input type="text" id="main-title" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Inserisci il titolo dell'articolo..." />
+            <input type="text" id="main-title" asp-for="CurrentContent.Title" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Inserisci il titolo dell'articolo..." />
         </div>
 
         <div class="col-md-4 col-lg-3">
@@ -68,13 +68,34 @@
                             </span>
                             <div class="section-content p-2 border-start border-2 border-light" contenteditable="true">
                                 @Html.Raw(sezione.HtmlText ?? "<br>")
+
+                                @if(sezione.MediaElements != null && sezione.MediaElements.Any())
+                                {
+                                    @foreach (var media in sezione.MediaElements.OrderBy(m => m.Order))
+                                    {
+                                        <div class="media-wrapper my-3 d-block w-100 border p-2 rounded" contenteditable="false" data-type="@media.Type" data-media-id="@media.Id">
+                                            @{
+                                                string badgeClassName = "badge me-1";
+                                                if (media.Type == MediaType.Image) badgeClassName += "bg-success";
+                                                else if (media.Type == MediaType.LocalVideo) badgeClassName += "bg-warning";
+                                                else badgeClassName += "bg-secondary";
+                                            }
+                                            <span class="@badgeClassName" contenteditable="false">[img alt="@media.Caption" url="@media.Url"]</span>
+                                        </div>
+                                        <br/>
+                                    }
+                                }
+                                else
+                                {
+                                    <br />
+                                }
                             </div>
                         </div>
                     }
                 }
                 else
                 {
-                    <br>
+                    <br/>
                 }
             </div>
         </div>

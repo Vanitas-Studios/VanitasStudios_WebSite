@@ -107,7 +107,8 @@ namespace VanitasStudios_WebApp.Pages
                         c.Author != null ? c.Author.UserName : "Vanitas Staff",
                         c.ContentTags.Select(ct => ct.Tag != null ? ct.Tag.CategoryGroup : "Senza Tag").FirstOrDefault() ?? "Senza Tag",
                         c.EliminatedAt,
-                        c.IsPinned
+                        c.IsPinned,
+                        c.Slug
                     ))
                     .ToListAsync();
             }
@@ -624,7 +625,7 @@ namespace VanitasStudios_WebApp.Pages
     {
         public List<ArticleRowDto> Articles { get; set; } = new();
     }
-    public record ArticleRowDto(int Id, string Title, PublishState PublishState, DateTime CreatedAt, DateTime UpdatedAt, string AuthorName, string Category, DateTime? EliminatedAt, bool IsPinned);
+    public record ArticleRowDto(int Id, string Title, PublishState PublishState, DateTime CreatedAt, DateTime UpdatedAt, string AuthorName, string Category, DateTime? EliminatedAt, bool IsPinned, string Slug);
 
     // --- TAGS MANAGEMENT ---
     public class TagsManagementViewModel

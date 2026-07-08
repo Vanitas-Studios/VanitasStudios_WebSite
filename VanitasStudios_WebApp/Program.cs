@@ -98,7 +98,7 @@ app.MapRazorPages();
 
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
+    var services = scope.ServiceProvider; 
     try
     {
         // TEST 1: Il DbContext si inizializza?
