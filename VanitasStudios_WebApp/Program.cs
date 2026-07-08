@@ -4,6 +4,8 @@ using Microsoft.Extensions.FileProviders;
 using VanitasStudios_WebApp.Data;
 using VanitasStudios_WebApp.Models;
 using VanitasStudios_WebApp.Service;
+using WebMarkupMin.AspNetCore6;
+using WebMarkupMin.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,20 @@ builder.Services.AddWebOptimizer(pipeline =>
     // Minifica tutti i file JavaScript e CSS rimuovendo commenti e spazi
     pipeline.MinifyJsFiles();
     pipeline.MinifyCssFiles();
+});
+
+builder.Services.AddWebMarkupMin(options =>
+{
+    options.AllowMinificationInDevelopmentEnvironment = true;
+    options.AllowCompressionInDevelopmentEnvironment = true;
+})
+.AddHtmlMinification(options =>
+{
+    var settings = options.MinificationSettings;
+    settings.RemoveHtmlComments = true;
+    settings.RemoveRedundantAttributes = true;
+    settings.MinifyEmbeddedCssCode = true;
+    settings.MinifyEmbeddedJsCode = true;
 });
 
 // Registra l'HttpClient e dice a Identity di usare il tuo EmailService per ApplicationUser
@@ -63,6 +79,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseWebMarkupMin();
 
 string folderPath = builder.Configuration["ExternalAssetsPath"] ?? "C:\\Temp\\DefaultAssets";
 
