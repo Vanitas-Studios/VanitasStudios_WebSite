@@ -1404,3 +1404,61 @@ async function changeContentStatus(action) {
         console.error("Errore pubblicazione:", err);
     }
 }
+
+
+const BlockConfig = {
+    'Section': {tag: 'div', baseClass: 'editor-section mb-3 loading'},
+    'Header': {tag: 'span', baseClass: 'badge me-1 loading'},
+    'Body': { tag: 'div', baseClass: 'section-content loading' }
+}
+
+const structureDic = {
+    'Section': (el, data) => { },
+    'Header': (el, data) => { el.textContent = `## ${data.content}`; },
+    'Body': (el, data) => { el.textContent = data.content; }
+}
+
+let data = {
+    type: '',
+    content: '',
+    attributes: {},
+    sonsList: [],
+    classAdd: '',
+    doOverride: false
+}
+
+function BlockFactory(dataObject) {
+    if (!dataObject) return null;
+
+    const parentEl = createAndConfigure(dataObject);
+
+    if (dataObject.sonsList && dataObject.sonsList.length > 0) {
+        for (const son of dataObject.sonsList) {
+            const childEl = BlockFactory(son);
+
+            if (childEl) {
+                parentEl.appendChild(childEl);
+            }
+        }
+    }
+
+    return parentEl;
+}
+
+function createAndConfigure(data) {
+    if (!data || !data.type) return null;
+
+    const config = BlockConfig[data.type];
+    const el = document.createElement(config.tag);
+
+    const baseClass = config.baseClass || '';
+    el.className = data.doOverride ? data.classAdd : `${baseClass} ${data.classAdd || ''}`.trim();
+
+    Object.entries(data.attributes || {}).forEach(([key, value]) => { el.setAttribute(key, value) });
+
+    if (structureDic[data.type]) {
+        structureDic[data.type](el, data);
+    }
+
+    return el;
+}
