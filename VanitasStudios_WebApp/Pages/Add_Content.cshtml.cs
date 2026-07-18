@@ -37,11 +37,19 @@ namespace VanitasStudios_WebApp.Pages
         public Dictionary<string, int> OrderIndex { get; set; } = new();
 
         [BindProperty]
-        public List<Section> SectionsList { get; set; } = new();
+        public List<SectionDto> SectionsDtoList { get; set; } = new();
 
         // ==========================================
         // DTO & PAYLOADS (Invariati per il JS)
         // ==========================================
+
+        public class SectionDto
+        {
+            public int Id { get; set; }
+            public string Title { get; set; }
+            public string Content { get; set; }
+            public int Order { get; set; }
+        }
         public class EditorSavePayload
         {
             public int ArticleId { get; set; }
@@ -111,7 +119,19 @@ namespace VanitasStudios_WebApp.Pages
 
                 if (CurrentContent == null) return NotFound();
 
-                if(CurrentContent.Slug != slug)
+                // Caricamento delle sezioni per l'inizializzazione del documentState nel JS
+                SectionsDtoList = CurrentContent.Sections
+                    .OrderBy(s => s.Order)
+                    .Select(s => new SectionDto
+                    {
+                        Id = s.Id,
+                        Title = s.Title,
+                        Content = s.HtmlText,
+                        Order = s.Order
+                    })
+                    .ToList();
+
+                if (CurrentContent.Slug != slug)
                 {
                     return RedirectToPagePermanent("/Editor", new { id = CurrentContent.Id, slug = CurrentContent.Slug });
                 }

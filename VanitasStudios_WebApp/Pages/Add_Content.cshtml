@@ -190,6 +190,9 @@
     <script>
 
         document.addEventListener("DOMContentLoaded", function() {
+
+            const sectionsFromServer = @Json.Serialize(Model.SectionsDtoList);
+
             initMyEditor({
                 editorId: 'editor',
                 sidebarId: 'editor-structure',
@@ -198,7 +201,8 @@
                 tagInput: 'tagSearchInput',
                 suggestionsMenu: 'tagSuggestionsMenu',
                 tagsContainer: 'selected-tags-container',
-                mainTitle: 'main-title'
+                mainTitle: 'main-title', 
+                sections : sectionsFromServer
             });
         });
     </script>

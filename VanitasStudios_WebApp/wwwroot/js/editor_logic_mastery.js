@@ -1,6 +1,11 @@
 ﻿let editor, sidebarList, articleId, articleLastModifiedFromServer, mainTitle;
 let existingIds = [];
 
+// Stato del documento per salvataggio efficiente 
+let documentState = {
+    sections: [ ]
+}
+
 //Variabili per salvataggio debounce
 let isDirty = false;
 const DEBOUNCE_DELAY = 5000;
@@ -32,12 +37,18 @@ function initMyEditor(config) {
     tagInput = document.getElementById(config.tagInput);
     suggestionsMenu = document.getElementById(config.suggestionsMenu);
     tagsContainer = document.getElementById(config.tagsContainer);
-    mainTitle = document.getElementById(config.mainTitle)
+    mainTitle = document.getElementById(config.mainTitle);
 
     // Ora attacchiamo gli eventi perché siamo sicuri che il DOM c'è
     setupEventListeners();
 
     // Sincronizziamo e ripristiniamo
+
+    if (config.sections) {
+        // Nuova funzione: Inizializzazione documentState
+        initDocument(config.sections); //Dobbiamo passare un oggetto DTO
+    }
+
     syncExistingIds();
     checkAndRestoreBackup();
     updateSidebar();
@@ -47,6 +58,23 @@ function setupEventListeners() {
 
     // Forza il browser a usare <br> invece di creare nuovi <div> o <p>
     document.execCommand('defaultParagraphSeparator', false, 'br');
+
+    // Listener per il focus su elementi dell'editor, per gestire modifica di titoli e altri badge
+    editor.addEventListener("focusin", (e) => {
+        const target = e.target;
+
+        if (target.classList.contains("editable-trigger")) {
+            makeEditable(target);
+        }
+    });
+
+    editor.addEventListener("focusout", (e) => {
+        const target = e.target;
+
+        if (target.classList.contains("editor-mode-active")) {
+            finalizeEditable(target);
+        }
+    });
 
     editor.addEventListener("keydown", async (e) => {
         if (e.key === "Enter") {
@@ -141,6 +169,18 @@ function syncExistingIds() {
     existingIds = Array.from(editor.querySelectorAll(".editor-section"))
         .map(wrapper => wrapper.getAttribute("data-section-id"))
         .filter(id => id !== null && !id.startsWith("temp-"));
+}
+
+function initDocument(dtoFromServer) {
+    if (!dtoFromServer) return;
+
+    documentState.sections = dtoFromServer.map(item => ({
+        id: item.id, 
+        title: item.title, 
+        content: item.content, 
+        order: item.order, 
+        isDirty: false
+    }));
 }
 
 async function handleEnterKey(e) {
@@ -1405,7 +1445,7 @@ async function changeContentStatus(action) {
     }
 }
 
-
+//Variabili e configurazioni per il BlockFactory
 const BlockConfig = {
     'Section': {tag: 'div', baseClass: 'editor-section mb-3 loading'},
     'Header': {tag: 'span', baseClass: 'badge me-1 loading'},
@@ -1413,12 +1453,13 @@ const BlockConfig = {
 }
 
 const structureDic = {
-    'Section': (el, data) => { },
+    'Section': (el, data) => {  },
     'Header': (el, data) => { el.textContent = `## ${data.content}`; },
     'Body': (el, data) => { el.textContent = data.content; }
 }
 
 let data = {
+    action: 'Create' | 'Update',
     type: '',
     content: '',
     attributes: {},
@@ -1430,6 +1471,9 @@ let data = {
 function BlockFactory(dataObject) {
     if (!dataObject) return null;
 
+    if (dataObject.action === 'Update') {
+        const target = document.querySelector()
+    }
     const parentEl = createAndConfigure(dataObject);
 
     if (dataObject.sonsList && dataObject.sonsList.length > 0) {
@@ -1461,4 +1505,40 @@ function createAndConfigure(data) {
     }
 
     return el;
+}
+
+// Funzione per aggiornare un blocco non editabile (come un badge per il titolo) 
+const saveClass = new weakMap();
+
+function makeEditable(el) {
+    if (el.getAttribute("contenteditable") === "true") return;
+
+    saveClass.set(el, el.className);
+
+    el.className = "editor-mode-active";
+    el.contentEditable = "true";
+    el.focus();
+}
+
+function finalizeEditable(el) {
+    if (el.getAttribute("contenteditable") !== "true") return;
+
+    el.className = saveClass.get(el) || "";
+    el.contentEditable = "false";
+
+    // Prepariamo i dati da salvare nel nostro oggetto di stato globale
+    const newContent = { title: el.textContent.replace(/^##/, "").trim() }; // Rimuoviamo eventuali ## iniziali e spazi bianchi
+    const sectionId = el.closest(".editor-section").getAttribute("data-section-id");
+
+    updateStateAndFlag(sectionId, newContent);
+}
+
+function updateStateAndFlag(sectionId, changes) {
+    const section = documentState.sections.find(s => s.id === sectionId);
+    if (!section) return;
+
+    delete changes.id; // Non vogliamo sovrascrivere l'ID
+
+    Object.assign(section, changes);
+    section.isDirty = true; // Flag per indicare che questa sezione ha cambiamenti non salvati nel server
 }
